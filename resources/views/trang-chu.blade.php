@@ -44,7 +44,7 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
             <button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#keoMoi" aria-expanded="{{ $moSan ? 'true' : 'false' }}">
                 ⚔ {{ $soKeoMo }} kèo đang tìm đối{{ $moSan ? ' trong tỉnh đã chọn' : '' }} <i class="bi bi-chevron-down"></i></button>
-            <a href="{{ route('keo.index', array_filter(['tinh' => $loc['tinh'] ?? null])) }}" class="small">Xem tất cả & lọc kèo →</a>
+            <a href="{{ route('keo.index', array_filter(['tinh' => $loc['tinh'] ?? null])) }}" class="btn btn-sm btn-danger fw-semibold"><i class="bi bi-funnel"></i> Xem tất cả & lọc kèo</a>
         </div>
         <div class="collapse {{ $moSan ? 'show' : '' }}" id="keoMoi">
             <div class="row g-2 mt-1">
@@ -55,7 +55,7 @@
                             <img src="{{ $k->doiA?->logoUrl() ?? 'https://ui-avatars.com/api/?background=dc3545&color=fff&name='.urlencode($sk->ten) }}" width="40" height="40" class="rounded-circle object-fit-cover flex-shrink-0" alt="">
                             <span class="small text-break">
                                 <strong>{{ $k->laDoiDau() ? ($k->doiA?->ten ?? 'Ô kèo của sân').' ⚔ chờ đối thủ' : 'Ghép lẻ · cần '.$k->so_nguoi_can.' người' }}</strong><br>
-                                {{ $k->batDauLuc()->format('d/m') }} {{ $k->nhanGio() }} · <span class="text-muted">{{ $sk->ten }}</span>
+                                {{ $k->batDauLuc()->format('d/m/Y') }} {{ $k->nhanGio() }} · <span class="text-muted">{{ $sk->ten }}</span>
                             </span>
                         </a>
                     </div>
@@ -65,7 +65,7 @@
     </div>
 @endif
 
-<div class="small text-muted mb-2">{{ $sans->total() }} sân · Lịch hôm nay {{ today()->format('d/m') }}:
+<div class="small text-muted mb-2">{{ $sans->total() }} sân · Lịch hôm nay {{ today()->format('d/m/Y') }}:
     <span class="badge bg-success">trống</span> <span class="badge bg-danger">đã đặt</span> <span class="badge bg-warning text-dark">đang giữ</span></div>
 
 <div class="row g-3">

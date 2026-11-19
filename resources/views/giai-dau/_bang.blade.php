@@ -26,7 +26,7 @@
                 @php $xong = $t->trang_thai === 'da_xong'; $sua = ! empty($choSua) && $g->trang_thai === 'dang_dien_ra'; @endphp
                 <div class="border rounded p-2 mb-2 {{ $xong ? 'bg-light' : 'bg-white' }}">
                     <div class="d-flex justify-content-between small text-muted mb-1">
-                        <span>{{ $t->thoi_gian?->format('d/m H:i') ?? 'Chưa xếp giờ' }}</span>
+                        <span>{{ $t->thoi_gian?->format('d/m/Y H:i') ?? 'Chưa xếp giờ' }}</span>
                         <span class="badge {{ $xong ? 'bg-success' : 'bg-secondary' }}">{{ $xong ? 'Đã xong' : 'Chưa đá' }}</span>
                     </div>
                     @if ($sua && (! $xong || request('sua') == $t->id))

@@ -17,7 +17,7 @@
         <div class="card-body py-2">
             <div class="d-flex flex-wrap justify-content-between gap-2">
                 <div>
-                    <div class="fw-semibold">{{ \Carbon\Carbon::parse($d->ngay)->format('d/m') }} · {{ $d->khungGioNhan() }} — {{ $d->san->ten }}</div>
+                    <div class="fw-semibold">{{ \Carbon\Carbon::parse($d->ngay)->format('d/m/Y') }} · {{ $d->khungGioNhan() }} — {{ $d->san->ten }}</div>
                     <div class="small">{{ $d->tenNguoiDat() }} · <a href="tel:{{ $d->sdtNguoiDat() }}">{{ $d->sdtNguoiDat() }}</a></div>
                     <div class="small">Nội dung CK: <strong class="font-monospace">{{ $d->ma_don }}</strong> · Cọc <strong>{{ $tien($d->tien_coc) }}</strong>
                         · giữ tới {{ $d->giu_cho_den?->format('H:i') }}</div>
@@ -83,7 +83,7 @@
     <div class="list-group shadow-sm mb-3">
         @foreach ($keoXuLy as $k)
             <a href="{{ route('keo.show', $k) }}" class="list-group-item list-group-item-action small d-flex justify-content-between">
-                <span>Kèo #{{ $k->id }} · {{ \Carbon\Carbon::parse($k->datSan->ngay)->format('d/m') }} {{ $k->datSan->khungGioNhan() }} — {{ $k->datSan->san->ten }}</span>
+                <span>Kèo #{{ $k->id }} · {{ \Carbon\Carbon::parse($k->datSan->ngay)->format('d/m/Y') }} {{ $k->datSan->khungGioNhan() }} — {{ $k->datSan->san->ten }}</span>
                 <span class="badge bg-{{ $k->trang_thai === 'tranh_chap' ? 'danger' : 'warning text-dark' }}">{{ \App\Models\Keo::TRANG_THAI[$k->trang_thai] }}</span>
             </a>
         @endforeach
@@ -97,7 +97,7 @@
         <div class="card border-0 shadow-sm mb-2 border-start border-danger border-4">
             <div class="card-body py-2 d-flex flex-wrap justify-content-between gap-2 align-items-center">
                 <div class="small">
-                    <strong>{{ $d->ma_don }}</strong> · {{ \Carbon\Carbon::parse($d->ngay)->format('d/m') }} {{ $d->khungGioNhan() }} — {{ $d->san->ten }}<br>
+                    <strong>{{ $d->ma_don }}</strong> · {{ \Carbon\Carbon::parse($d->ngay)->format('d/m/Y') }} {{ $d->khungGioNhan() }} — {{ $d->san->ten }}<br>
                     Hoàn <strong>{{ $tien($d->tien_coc) }}</strong> cho {{ $d->tenNguoiDat() }} ({{ $d->sdtNguoiDat() }}) · Lý do: {{ $d->ly_do_huy }}
                 </div>
                 <form method="POST" action="{{ route('quan-ly.dat-san.da-hoan', $d) }}">@csrf @method('PATCH')

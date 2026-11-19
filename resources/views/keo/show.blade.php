@@ -50,7 +50,7 @@
 
         @if ($keo->trang_thai === 'cho_coc')
             <div class="alert alert-warning small py-2 mt-3 mb-0"><i class="bi bi-lock"></i> <strong>Đã chốt kèo, sân đã được giữ.</strong>
-                Mỗi đội cọc {{ $tien($keo->coc_moi_ben) }} trước <strong>{{ $keo->han_coc_luc->format('H:i d/m') }}</strong>.
+                Mỗi đội cọc {{ $tien($keo->coc_moi_ben) }} trước <strong>{{ $keo->han_coc_luc->format('H:i d/m/Y') }}</strong>.
                 Đội không cọc kịp: kèo huỷ, đội đó bị trừ uy tín, đội đã cọc được hoàn tiền.</div>
         @endif
         @if (! $keo->cong_khai && ($keo->laDaiDien($u ?? new \App\Models\User) || $laSan))
@@ -217,7 +217,7 @@
     @if ($keo->laDoiDau() && $daToiGio && in_array($keo->trang_thai, ['da_chot', 'cho_xac_nhan', 'tranh_chap'], true))
         <div class="card border-0 shadow-sm mb-3"><div class="card-body">
             <h2 class="h6">Kết quả trận</h2>
-            <p class="small text-muted mb-2">Hạn xác nhận: <strong>{{ $keo->han_xac_nhan_luc->format('H:i d/m') }}</strong>. Hai bên báo khớp nhau thì kèo hoàn tất; bấm nhầm thì báo lại.</p>
+            <p class="small text-muted mb-2">Hạn xác nhận: <strong>{{ $keo->han_xac_nhan_luc->format('H:i d/m/Y') }}</strong>. Hai bên báo khớp nhau thì kèo hoàn tất; bấm nhầm thì báo lại.</p>
             @if ($laDaiDien)
                 <form method="POST" action="{{ route('keo.ket-qua', $keo) }}" class="d-flex flex-wrap gap-2">@csrf
                     @foreach (\App\Models\Keo::KET_QUA as $ma => $nhan)

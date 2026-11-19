@@ -30,7 +30,7 @@ class KhachBaoDaChuyen extends Notification
             ->greeting('Chào '.$notifiable->name.',')
             ->line('Khách **'.$d->tenNguoiDat().'** báo đã chuyển **'.$tien.'** với nội dung **'.$d->ma_don.'**.')
             ->line('Sân '.$d->san->ten.' · '.\Carbon\Carbon::parse($d->ngay)->format('d/m/Y').' · '.$d->khungGioNhan().'.')
-            ->line('Mở app ngân hàng kiểm tra rồi bấm **Đã nhận cọc** hoặc **Không thấy tiền**. Giữ chỗ tới '.$d->giu_cho_den->format('H:i d/m').', quá giờ đơn tự huỷ.')
+            ->line('Mở app ngân hàng kiểm tra rồi bấm **Đã nhận cọc** hoặc **Không thấy tiền**. Giữ chỗ tới '.$d->giu_cho_den->format('H:i d/m/Y').', quá giờ đơn tự huỷ.')
             ->action('Xem đơn chờ duyệt', route('quan-ly.dat-san.index', ['trang_thai' => 'cho_thanh_toan']));
     }
 }

@@ -39,7 +39,7 @@
             <div class="card border-0 shadow-sm mb-2">
                 <div class="card-body py-2 d-flex justify-content-between align-items-center gap-2">
                     <div>
-                        <div class="fw-semibold">{{ \Carbon\Carbon::parse($d->ngay)->format('d/m') }} · {{ $d->khungGioNhan() }} — {{ $d->san->ten }}</div>
+                        <div class="fw-semibold">{{ \Carbon\Carbon::parse($d->ngay)->format('d/m/Y') }} · {{ $d->khungGioNhan() }} — {{ $d->san->ten }}</div>
                         <div class="small text-muted">{{ $d->ma_don }} · {{ $d->san->diaChiDayDu() }}</div>
                         <div class="small">
                             <span class="badge bg-{{ $mauTt[$d->trang_thai] }}">{{ \App\Models\DatSan::TRANG_THAI[$d->trang_thai] }}</span>
@@ -70,7 +70,7 @@
             <div class="list-group shadow-sm mb-2">
                 @foreach ($keoCuaToi as $k)
                     <a href="{{ route('keo.show', ['keo' => $k, 'ma' => $k->cong_khai ? null : $k->ma_moi]) }}" class="list-group-item list-group-item-action small d-flex justify-content-between">
-                        <span>⚔ {{ $k->batDauLuc()->format('d/m') }} · {{ $k->nhanGio() }} — {{ $k->sanThuc()->ten }}
+                        <span>⚔ {{ $k->batDauLuc()->format('d/m/Y') }} · {{ $k->nhanGio() }} — {{ $k->sanThuc()->ten }}
                             · {{ $k->doiA?->ten ?? '?' }} vs {{ $k->doiB?->ten ?? '...' }}</span>
                         <span class="badge bg-secondary">{{ \App\Models\Keo::TRANG_THAI[$k->trang_thai] }}</span>
                     </a>

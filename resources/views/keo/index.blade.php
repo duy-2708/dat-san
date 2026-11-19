@@ -86,7 +86,7 @@
                     @if ($nguoi) <i class="bi bi-person"></i> Người ra kèo: <strong class="text-body">{{ $nguoi->name }}</strong>{{ $doi && $doi->laDoiTruong($nguoi) ? ' (đội trưởng)' : '' }} · uy tín {{ $nguoi->diem_uy_tin }}
                     @else <i class="bi bi-shop"></i> Sân tạo, chờ đội vào @endif
                 </div>
-                <div><i class="bi bi-calendar-event"></i> <strong>{{ $k->batDauLuc()->format('d/m') }} · {{ $k->nhanGio() }}</strong> · {{ $san->tenHienThi() }} · sân {{ $san->loai_san }}</div>
+                <div><i class="bi bi-calendar-event"></i> <strong>{{ $k->batDauLuc()->format('d/m/Y') }} · {{ $k->nhanGio() }}</strong> · {{ $san->tenHienThi() }} · sân {{ $san->loai_san }}</div>
                 <div class="text-muted"><i class="bi bi-geo-alt"></i> {{ $san->diaChiDayDu() }}</div>
                 <div class="mt-1">
                     @if ($k->laDoiDau())

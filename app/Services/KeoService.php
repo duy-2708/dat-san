@@ -523,7 +523,7 @@ class KeoService
             ->get()
             ->first(fn (Keo $k) => $k->batDauLuc()->lt($kt) && $bd->lt($k->ketThucLuc()));
         if ($trung) {
-            $this->loi($doi->ten.' đã có kèo #'.$trung->id.' lúc '.$trung->batDauLuc()->format('H:i d/m').' trùng giờ này.');
+            $this->loi($doi->ten.' đã có kèo #'.$trung->id.' lúc '.$trung->batDauLuc()->format('H:i d/m/Y').' trùng giờ này.');
         }
     }
 

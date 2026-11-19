@@ -22,7 +22,7 @@
 @endphp
 <div class="d-flex align-items-center justify-content-between mb-2">
     <a href="{{ $url }}?tu={{ $truoc->toDateString() }}" class="btn btn-sm btn-outline-secondary {{ $cheDo === 'khach' && $tu->lte(today()) ? 'disabled' : '' }}"><i class="bi bi-chevron-left"></i></a>
-    <span class="small fw-semibold">{{ $tu->format('d/m') }} – {{ $tu->copy()->addDays(6)->format('d/m/Y') }}</span>
+    <span class="small fw-semibold">{{ $tu->format('d/m/Y') }} – {{ $tu->copy()->addDays(6)->format('d/m/Y') }}</span>
     <a href="{{ $url }}?tu={{ $sau->toDateString() }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-right"></i></a>
 </div>
 
@@ -32,7 +32,7 @@
         <li class="nav-item flex-shrink-0">
             <button class="nav-link px-3 py-1 text-center {{ $i === 0 ? 'active' : '' }}" data-bs-toggle="pill" data-bs-target="#ngay{{ $i }}" type="button" style="min-width: 64px">
                 <div class="small">{{ $n['ngay']->isToday() ? 'Hôm nay' : $thu[$n['ngay']->dayOfWeek] }}</div>
-                <div class="fw-bold">{{ $n['ngay']->format('d/m') }}</div>
+                <div class="fw-bold">{{ $n['ngay']->format('d/m/Y') }}</div>
                 <div class="small {{ $i === 0 ? '' : 'text-muted' }}" style="font-size:.7rem">{{ $conTrong }} trống</div>
             </button>
         </li>
@@ -105,7 +105,7 @@
                             <button type="button" class="btn btn-sm btn-outline-success w-100 mt-1" data-bs-toggle="modal" data-bs-target="#modalTaiCho"
                                     data-ngay="{{ $n['ngay']->toDateString() }}" data-khung="{{ $k->id }}"
                                     data-thoi-luong='@json(collect($k->cacThoiLuong($dongPhut))->map(fn ($p) => ['p' => $p, 'nhan' => $nhanPhut($p).' · '.$tien($k->giaTheoPhut($p)).'đ', 'chon' => $p === $k->soPhut()]))'
-                                    data-nhan="{{ $n['ngay']->format('d/m') }} {{ $k->nhan() }}">+ Đặt tại chỗ</button>
+                                    data-nhan="{{ $n['ngay']->format('d/m/Y') }} {{ $k->nhan() }}">+ Đặt tại chỗ</button>
                             <a href="{{ route('keo.tao-truoc', ['san' => $san->id, 'ngay' => $n['ngay']->toDateString(), 'khung' => $k->id]) }}"
                                class="btn btn-sm btn-outline-danger w-100 mt-1">⚔ Mở ô cáp kèo</a>
                         @elseif ($don)

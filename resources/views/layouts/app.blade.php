@@ -10,7 +10,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         body { background: #f4f6f5; }
-        .navbar-brand { font-weight: 700; letter-spacing: -.3px; }
+        .navbar-brand { font-weight: 800; font-size: 1.45rem; letter-spacing: -.3px; display: flex; align-items: center; gap: .4rem; }
+        .navbar-brand .bong { font-size: 1.6rem; line-height: 1; display: inline-block; transition: transform .6s; }
+        .navbar-brand:hover .bong { transform: rotate(360deg); }
         .the-form { max-width: 440px; }
         .btn, .form-control, .form-select { min-height: 44px; } /* vùng chạm đủ lớn trên điện thoại */
     </style>
@@ -19,7 +21,7 @@
 <body class="d-flex flex-column min-vh-100">
 <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
     <div class="container">
-        <a class="navbar-brand" href="{{ route('trang-chu') }}"><i class="bi bi-dribbble"></i> {{ config('app.name') }}</a>
+        <a class="navbar-brand" href="{{ route('trang-chu') }}"><span class="bong">⚽</span> <span>{{ config('app.name') }}</span></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuChinh" aria-label="Mở menu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -91,8 +93,11 @@
     @yield('content')
 </main>
 
-<footer class="py-3 text-center text-muted small border-top bg-white">
-    © {{ date('Y') }} {{ config('app.name') }}
+<footer class="py-3 border-top bg-white small">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span class="text-muted">© {{ date('Y') }} ⚽ {{ config('app.name') }}</span>
+        <span><i class="bi bi-person-badge"></i> Liên hệ hợp tác mở sân: <strong>Duy</strong> · MSSV <strong>66130649</strong></span>
+    </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

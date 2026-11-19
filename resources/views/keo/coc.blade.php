@@ -6,7 +6,7 @@
 <div class="mx-auto text-center" style="max-width: 440px">
     <div class="card border-0 shadow-sm"><div class="card-body">
         <h1 class="h5">Cọc vào kèo #{{ $k->id }}</h1>
-        <div class="small text-muted mb-3">{{ $k->sanThuc()->ten }} · {{ $k->batDauLuc()->format('d/m') }} {{ $k->nhanGio() }}</div>
+        <div class="small text-muted mb-3">{{ $k->sanThuc()->ten }} · {{ $k->batDauLuc()->format('d/m/Y') }} {{ $k->nhanGio() }}</div>
 
         @if ($gd->trang_thai === 'cho_thanh_toan' && $qr)
             <div class="alert alert-warning py-2 small">Giữ chỗ tới <strong>{{ $tg->giu_cho_den?->format('H:i') }}</strong></div>

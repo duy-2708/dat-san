@@ -9,7 +9,7 @@
         <span class="badge bg-success">{{ \App\Models\GiaiDau::TRANG_THAI[$g->trang_thai] }}</span>
         <h1 class="h4 mt-2 mb-1"><i class="bi bi-trophy text-warning"></i> {{ $g->ten }}</h1>
         <div class="small text-muted">Tổ chức: {{ $g->chuSan->hoSoChuSan?->ten_co_so }} · Sân {{ $g->loai_san }} · {{ \App\Models\GiaiDau::THE_THUC[$g->the_thuc] }}</div>
-        <div class="small">{{ \Carbon\Carbon::parse($g->tu_ngay)->format('d/m') }} – {{ \Carbon\Carbon::parse($g->den_ngay)->format('d/m/Y') }}
+        <div class="small">{{ \Carbon\Carbon::parse($g->tu_ngay)->format('d/m/Y') }} – {{ \Carbon\Carbon::parse($g->den_ngay)->format('d/m/Y') }}
             · tối đa {{ $g->so_doi_toi_da }} đội @if ($g->le_phi) · lệ phí {{ number_format($g->le_phi, 0, ',', '.') }}đ/đội @endif</div>
         @if ($g->mo_ta) <p class="small mt-2 mb-0" style="white-space: pre-line">{{ $g->mo_ta }}</p> @endif
         @auth
