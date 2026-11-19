@@ -45,6 +45,7 @@ Route::get('/dia-chi/xa-phuong', [DiaChiController::class, 'xaPhuong'])->name('d
 Route::get('/san/{san:slug}', [SanCongKhaiController::class, 'show'])->name('san.show'); // ai cũng xem được lịch trống/đã đặt
 Route::get('/keo', [KeoController::class, 'index'])->name('keo.index');
 Route::get('/keo/{keo}', [KeoController::class, 'show'])->whereNumber('keo')->name('keo.show');
+Route::get('/doi', [DoiController::class, 'index'])->name('doi.index');
 Route::get('/doi/{doi}', [DoiController::class, 'show'])->name('doi.show');
 Route::get('/cau-thu/{user}', [CauThuController::class, 'show'])->whereNumber('user')->name('cau-thu.show');
 Route::get('/giai-dau', [GiaiDauController::class, 'index'])->name('giai-dau.index');
@@ -121,6 +122,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/keo/{keo}/huy', [QuanLyKeoController::class, 'huy'])->name('keo.huy');                                   // chỉ chủ sân
             Route::patch('/coc-keo/{giaoDich}/da-hoan', [QuanLyKeoController::class, 'daHoanCoc'])->name('coc-keo.da-hoan');         // chỉ chủ sân
 
+            // Giải đấu: nhân viên cũng xem, thêm trận và nhập tỉ số (tạo/duyệt/kết thúc giải chỉ chủ sân)
+            Route::get('/giai-dau', [QuanLyGiaiDauController::class, 'index'])->name('giai-dau.index');
+            Route::get('/giai-dau/tao', [QuanLyGiaiDauController::class, 'create'])->name('giai-dau.create')->middleware('vai_tro:chu_san');
+            Route::get('/giai-dau/{giaiDau}', [QuanLyGiaiDauController::class, 'show'])->name('giai-dau.show');
+            Route::post('/giai-dau/{giaiDau}/tran', [QuanLyGiaiDauController::class, 'themTran'])->name('giai-dau.tran');
+            Route::patch('/tran-dau/{tranDau}', [QuanLyGiaiDauController::class, 'ketQua'])->name('giai-dau.ket-qua');
+
             // Chỉ chủ sân
             Route::middleware('vai_tro:chu_san')->group(function () {
                 Route::get('/san/tao', [SanController::class, 'create'])->name('san.create');
@@ -140,15 +148,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::put('/khung-gio/{khungGio}', [KhungGioController::class, 'update'])->name('khung-gio.update');
                 Route::delete('/khung-gio/{khungGio}', [KhungGioController::class, 'destroy'])->name('khung-gio.destroy');
 
-                Route::get('/giai-dau', [QuanLyGiaiDauController::class, 'index'])->name('giai-dau.index');
-                Route::get('/giai-dau/tao', [QuanLyGiaiDauController::class, 'create'])->name('giai-dau.create');
                 Route::post('/giai-dau', [QuanLyGiaiDauController::class, 'store'])->name('giai-dau.store');
-                Route::get('/giai-dau/{giaiDau}', [QuanLyGiaiDauController::class, 'show'])->name('giai-dau.show');
                 Route::patch('/giai-dau/{giaiDau}/dong-dang-ky', [QuanLyGiaiDauController::class, 'dongDangKy'])->name('giai-dau.dong-dang-ky');
-                Route::post('/giai-dau/{giaiDau}/tran', [QuanLyGiaiDauController::class, 'themTran'])->name('giai-dau.tran');
                 Route::patch('/giai-dau/{giaiDau}/ket-thuc', [QuanLyGiaiDauController::class, 'ketThuc'])->name('giai-dau.ket-thuc');
                 Route::patch('/dang-ky-giai/{dangKy}', [QuanLyGiaiDauController::class, 'duyet'])->name('giai-dau.duyet');
-                Route::patch('/tran-dau/{tranDau}', [QuanLyGiaiDauController::class, 'ketQua'])->name('giai-dau.ket-qua');
 
                 Route::get('/thanh-toan', [ThanhToanController::class, 'edit'])->name('thanh-toan.edit');
                 Route::put('/thanh-toan', [ThanhToanController::class, 'update'])->name('thanh-toan.update');

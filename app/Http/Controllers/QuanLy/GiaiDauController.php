@@ -24,7 +24,7 @@ class GiaiDauController extends Controller
     public function index(Request $request): View
     {
         return view('quan-ly.giai-dau.index', [
-            'giais' => GiaiDau::where('chu_san_id', $request->user()->id)->withCount('doiThamGias')->latest()->get(),
+            'giais' => GiaiDau::where('chu_san_id', $this->chuCua($request))->withCount('doiThamGias')->latest()->get(),
         ]);
     }
 
@@ -60,7 +60,7 @@ class GiaiDauController extends Controller
         return view('quan-ly.giai-dau.show', [
             'g' => $giaiDau,
             'bxh' => $this->giai->bangXepHang($giaiDau),
-            'sans' => San::where('chu_san_id', $request->user()->id)->orderBy('ten')->get(),
+            'sans' => San::where('chu_san_id', $this->chuCua($request))->orderBy('ten')->get(),
         ]);
     }
 
@@ -114,8 +114,16 @@ class GiaiDauController extends Controller
         return back()->with('thanh_cong', 'Giải đã kết thúc. Thành tích đã hiện trên trang đội và hồ sơ cầu thủ.');
     }
 
+    /** Chủ sân của người đang đăng nhập (nhân viên → chủ sân của họ). */
+    private function chuCua(Request $request): int
+    {
+        $u = $request->user();
+
+        return $u->laChuSan() ? $u->id : (int) $u->chu_san_id;
+    }
+
     private function cuaToi(Request $request, GiaiDau $g): void
     {
-        abort_unless((int) $g->chu_san_id === $request->user()->id, 403);
+        abort_unless((int) $g->chu_san_id === $this->chuCua($request), 403);
     }
 }

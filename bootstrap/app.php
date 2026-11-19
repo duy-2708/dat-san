@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ChanTaiKhoanBiKhoa;
 use App\Http\Middleware\KiemTraVaiTro;
+use App\Http\Middleware\ChuanHoaTien;
 use App\Http\Middleware\YeuCauConHanGoi;
 use App\Http\Middleware\YeuCauSoDienThoai;
 use Illuminate\Foundation\Application;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Chạy cho mọi request thuộc nhóm "web"
         $middleware->appendToGroup('web', ChanTaiKhoanBiKhoa::class);
+        $middleware->appendToGroup('web', ChuanHoaTien::class);
 
         // Webhook cổng thanh toán (giai đoạn 5) không có CSRF token
         $middleware->validateCsrfTokens(except: ['webhook/*']);

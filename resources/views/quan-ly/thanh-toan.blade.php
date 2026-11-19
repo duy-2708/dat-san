@@ -37,12 +37,10 @@
         <div class="row g-3">
             <div class="col-12">
                 <label class="form-label" for="ngan_hang_bin">Ngân hàng</label>
-                <select id="ngan_hang_bin" name="ngan_hang_bin" class="form-select @error('ngan_hang_bin') is-invalid @enderror">
-                    <option value="">— Chọn ngân hàng —</option>
-                    @foreach (\App\Support\VietQr::NGAN_HANG as $bin => $ten)
-                        <option value="{{ $bin }}" @selected(old('ngan_hang_bin', $hoSo->ngan_hang_bin) === (string) $bin)>{{ $ten }}</option>
-                    @endforeach
-                </select>
+                <input id="ngan_hang_bin" name="ngan_hang_bin" list="ds-ngan-hang" autocomplete="off" placeholder="Gõ tên để tìm, VD: TPBank, Vietcombank, MB..."
+                       value="{{ ($v = old('ngan_hang_bin', $hoSo->ngan_hang_bin)) ? \App\Support\VietQr::tenNganHang($v) : '' }}"
+                       class="form-control @error('ngan_hang_bin') is-invalid @enderror">
+                <datalist id="ds-ngan-hang">@foreach (\App\Support\VietQr::NGAN_HANG as $ten) <option value="{{ $ten }}"> @endforeach</datalist>
                 @error('ngan_hang_bin') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-6">

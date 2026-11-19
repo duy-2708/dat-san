@@ -40,9 +40,10 @@ class ThanhToanController extends Controller
     {
         $hoSo = $request->user()->hoSoChuSan;
 
+        $request->merge(['ngan_hang_bin' => VietQr::timBin($request->input('ngan_hang_bin'))]);
         $d = $request->validate([
             'phuong_thuc_tt' => ['nullable', Rule::in(['vietqr', 'payos'])],
-            'ngan_hang_bin' => ['required_unless:phuong_thuc_tt,payos', 'nullable', Rule::in(array_keys(VietQr::NGAN_HANG))],
+            'ngan_hang_bin' => ['required_unless:phuong_thuc_tt,payos', 'nullable', Rule::in(array_map('strval', array_keys(VietQr::NGAN_HANG)))],
             'so_tai_khoan' => ['required_unless:phuong_thuc_tt,payos', 'nullable', 'regex:/^[0-9]{6,19}$/'],
             'ten_chu_tai_khoan' => ['required_unless:phuong_thuc_tt,payos', 'nullable', 'string', 'max:100'],
             'sdt_lien_he' => ['nullable', 'string', 'max:15'],
@@ -51,7 +52,7 @@ class ThanhToanController extends Controller
             'payos_client_id' => ['nullable', 'string', 'max:100'],
             'payos_api_key' => ['nullable', 'string', 'max:100'],
             'payos_checksum_key' => ['nullable', 'string', 'max:100'],
-        ], ['so_tai_khoan.regex' => 'Số tài khoản chỉ gồm 6–19 chữ số.']);
+        ], ['so_tai_khoan.regex' => 'Số tài khoản chỉ gồm 6–19 chữ số.', 'ngan_hang_bin.in' => 'Không tìm thấy ngân hàng này, hãy chọn trong danh sách gợi ý.']);
 
         $phuongThuc = $d['phuong_thuc_tt'] ?? 'vietqr';
 

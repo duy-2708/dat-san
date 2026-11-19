@@ -14,12 +14,9 @@
 
         <h2 class="h6">Tài khoản nhận tiền thuê bao (VietQR)</h2>
         <label class="form-label small">Ngân hàng</label>
-        <select name="tk_bin" class="form-select mb-2">
-            <option value="">— Chọn —</option>
-            @foreach (\App\Support\VietQr::NGAN_HANG as $bin => $ten)
-                <option value="{{ $bin }}" @selected((string) old('tk_bin', $cd['tk_bin']) === (string) $bin)>{{ $ten }}</option>
-            @endforeach
-        </select>
+        <input name="tk_bin" list="ds-ngan-hang" autocomplete="off" placeholder="Gõ tên để tìm, VD: TPBank" class="form-control mb-2"
+               value="{{ ($v = old('tk_bin', $cd['tk_bin'])) ? \App\Support\VietQr::tenNganHang($v) : '' }}">
+        <datalist id="ds-ngan-hang">@foreach (\App\Support\VietQr::NGAN_HANG as $ten) <option value="{{ $ten }}"> @endforeach</datalist>
         <label class="form-label small">Số tài khoản</label>
         <input name="tk_so" value="{{ old('tk_so', $cd['tk_so']) }}" class="form-control mb-2">
         <label class="form-label small">Tên chủ tài khoản</label>

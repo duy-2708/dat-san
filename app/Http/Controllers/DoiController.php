@@ -21,6 +21,23 @@ class DoiController extends Controller
     }
 
     /** Trang đội (công khai): logo, thành viên, thành tích giải. */
+    /** Danh sách đội để tìm & xin vào. */
+    public function index(Request $request): View
+    {
+        $tuKhoa = trim((string) $request->query('q'));
+        $tinh = $request->integer('tinh') ?: null;
+
+        return view('doi.index', [
+            'dois' => Doi::with(['tinhThanh', 'doiTruong'])
+                ->withCount(['thanhViens as so_thanh_vien' => fn ($q) => $q->where('trang_thai', 'dang_choi')])
+                ->when($tuKhoa !== '', fn ($q) => $q->where('ten', 'like', '%'.$tuKhoa.'%'))
+                ->when($tinh, fn ($q, $t) => $q->where('tinh_thanh_id', $t))
+                ->latest()->paginate(24)->withQueryString(),
+            'tinhThanhs' => TinhThanh::orderBy('thu_tu')->get(),
+            'tuKhoa' => $tuKhoa, 'tinh' => $tinh,
+        ]);
+    }
+
     public function show(Doi $doi): View
     {
         $doi->load(['doiTruong', 'tinhThanh', 'thanhViens.user']);

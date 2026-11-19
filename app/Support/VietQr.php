@@ -76,6 +76,23 @@ class VietQr
         return substr($svg, strpos($svg, '<svg')); // bỏ dòng khai báo xml ở đầu
     }
 
+    /** "TPBank" / "tp bank" / "970423" → "970423"; không nhận ra thì trả nguyên chuỗi (để báo lỗi). */
+    public static function timBin(?string $nhap): ?string
+    {
+        $n = trim((string) $nhap);
+        if ($n === '' || isset(self::NGAN_HANG[$n])) {
+            return $n === '' ? null : $n;
+        }
+        $rut = fn ($s) => preg_replace('/[^a-z0-9]/', '', \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($s)));
+        foreach (self::NGAN_HANG as $bin => $ten) {
+            if ($rut($ten) === $rut($n)) {
+                return (string) $bin;
+            }
+        }
+
+        return $n;
+    }
+
     public static function tenNganHang(?string $bin): string
     {
         return self::NGAN_HANG[$bin] ?? (string) $bin;

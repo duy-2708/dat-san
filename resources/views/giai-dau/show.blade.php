@@ -12,6 +12,12 @@
         <div class="small">{{ \Carbon\Carbon::parse($g->tu_ngay)->format('d/m') }} – {{ \Carbon\Carbon::parse($g->den_ngay)->format('d/m/Y') }}
             · tối đa {{ $g->so_doi_toi_da }} đội @if ($g->le_phi) · lệ phí {{ number_format($g->le_phi, 0, ',', '.') }}đ/đội @endif</div>
         @if ($g->mo_ta) <p class="small mt-2 mb-0" style="white-space: pre-line">{{ $g->mo_ta }}</p> @endif
+        @auth
+            @php $u = auth()->user(); $chuCua = $u->laChuSan() ? $u->id : ($u->laNhanVien() ? (int) $u->chu_san_id : null); @endphp
+            @if ($chuCua === (int) $g->chu_san_id)
+                <a href="{{ route('quan-ly.giai-dau.show', $g) }}" class="btn btn-sm btn-primary mt-2"><i class="bi bi-pencil-square"></i> Quản lý giải · nhập tỉ số</a>
+            @endif
+        @endauth
     </div></div>
 
     {{-- Đăng ký (đội trưởng) --}}

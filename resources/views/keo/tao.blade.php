@@ -35,9 +35,9 @@
             <div class="col-4"><label class="form-label small">Cần mấy người</label>
                 <input type="number" name="so_nguoi_can" min="1" max="20" value="{{ old('so_nguoi_can', 2) }}" class="form-control"></div>
             <div class="col-4"><label class="form-label small">Tiền mỗi người</label>
-                <input type="number" name="tien_moi_nguoi" min="0" step="1000" value="{{ old('tien_moi_nguoi', 50000) }}" class="form-control"></div>
+                <input name="tien_moi_nguoi" inputmode="numeric" value="{{ old('tien_moi_nguoi', 50000) }}" class="form-control o-tien"></div>
             <div class="col-4"><label class="form-label small">Cọc mỗi người</label>
-                <input type="number" name="tien_coc_ca_nhan" min="0" step="1000" value="{{ old('tien_coc_ca_nhan', 0) }}" class="form-control"></div>
+                <input name="tien_coc_ca_nhan" inputmode="numeric" value="{{ old('tien_coc_ca_nhan', 0) }}" class="form-control o-tien"></div>
             <div class="col-12 small text-muted">Cọc 0đ: tài khoản mới (dưới 7 ngày hoặc chưa đá trận nào) sẽ không vào được.</div>
         </div>
 

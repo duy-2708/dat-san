@@ -84,7 +84,15 @@
                     </div>
                 @endforeach
             @endif
-            <form method="POST" action="{{ route('khach.doi.thanh-vien', $doi) }}" class="d-flex gap-1 mt-3">@csrf
+            <div class="mt-3 small">
+                <div class="fw-semibold mb-1">Mời thành viên</div>
+                <div class="input-group input-group-sm mb-1">
+                    <input id="linkMoi" class="form-control" readonly value="{{ route('doi.show', $doi) }}">
+                    <button type="button" class="btn btn-outline-primary" onclick="navigator.clipboard.writeText(document.getElementById('linkMoi').value); this.textContent='Đã chép'">Chép link mời</button>
+                </div>
+                <div class="text-muted">Gửi link này qua Zalo/Messenger. Người nhận đăng nhập → bấm <strong>Xin vào đội</strong> → bạn bấm <strong>Nhận</strong> ở trên. Hoặc thêm thẳng bằng SĐT/email đã đăng ký:</div>
+            </div>
+            <form method="POST" action="{{ route('khach.doi.thanh-vien', $doi) }}" class="d-flex gap-1 mt-1">@csrf
                 <input name="tim" class="form-control form-control-sm" placeholder="Thêm thành viên: SĐT hoặc email">
                 <input name="so_ao" type="number" min="0" max="99" class="form-control form-control-sm" style="max-width: 80px" placeholder="Số áo">
                 <button class="btn btn-sm btn-success text-nowrap">Thêm</button>

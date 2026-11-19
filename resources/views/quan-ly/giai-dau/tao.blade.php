@@ -24,7 +24,7 @@
             <div class="col-6"><label class="form-label small">Số đội tối đa</label>
                 <input type="number" name="so_doi_toi_da" min="2" max="64" value="{{ old('so_doi_toi_da', 8) }}" class="form-control"></div>
             <div class="col-6"><label class="form-label small">Lệ phí/đội (đ)</label>
-                <input type="number" name="le_phi" min="0" step="10000" value="{{ old('le_phi', 0) }}" class="form-control"></div>
+                <input name="le_phi" inputmode="numeric" value="{{ old('le_phi', 0) }}" class="form-control o-tien"></div>
         </div>
         @if ($errors->any()) <div class="alert alert-danger py-2 small">{{ $errors->first() }}</div> @endif
         <label class="form-label">Điều lệ / giới thiệu</label>

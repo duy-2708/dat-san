@@ -16,7 +16,7 @@
                     </div>
                     <div class="row g-2 small">
                         <div class="col-6"><label class="form-label mb-0">Tên</label><input name="ten" value="{{ $g?->ten }}" class="form-control form-control-sm" required></div>
-                        <div class="col-6"><label class="form-label mb-0">Giá/tháng (đ)</label><input name="gia_thang" type="number" min="0" step="1000" value="{{ $g?->gia_thang ?? 199000 }}" class="form-control form-control-sm"></div>
+                        <div class="col-6"><label class="form-label mb-0">Giá/tháng (đ)</label><input name="gia_thang" inputmode="numeric" value="{{ $g?->gia_thang ?? 199000 }}" class="form-control form-control-sm o-tien"></div>
                         <div class="col-6"><label class="form-label mb-0">Số sân tối đa</label><input name="so_san_toi_da" type="number" min="1" value="{{ $g?->so_san_toi_da ?? 5 }}" class="form-control form-control-sm"></div>
                         <div class="col-6"><label class="form-label mb-0">Số nhân viên tối đa</label><input name="so_nhan_vien_toi_da" type="number" min="0" value="{{ $g?->so_nhan_vien_toi_da ?? 2 }}" class="form-control form-control-sm"></div>
                         <div class="col-12"><label class="form-label mb-0">Mô tả</label><input name="mo_ta" value="{{ $g?->mo_ta }}" class="form-control form-control-sm"></div>

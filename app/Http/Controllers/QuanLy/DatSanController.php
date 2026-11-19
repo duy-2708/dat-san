@@ -69,10 +69,12 @@ class DatSanController extends Controller
             'sdt' => ['required', 'regex:'.ChuanHoa::REGEX_SDT],
             'da_thu_coc' => ['nullable', 'boolean'],
             'ghi_chu' => ['nullable', 'string', 'max:255'],
+            'thoi_luong' => ['nullable', 'integer'],
         ], ['sdt.regex' => 'Số điện thoại không hợp lệ.']);
 
         $don = $this->datSan->datTaiCho($request->user(), $san, $d['ngay'], (int) $d['khung_gio_id'],
-            $d['ten'], $d['sdt'], $request->boolean('da_thu_coc'), $d['ghi_chu'] ?? null);
+            $d['ten'], $d['sdt'], $request->boolean('da_thu_coc'), $d['ghi_chu'] ?? null,
+            isset($d['thoi_luong']) ? (int) $d['thoi_luong'] : null);
 
         return back()->with('thanh_cong', "Đã đặt {$don->khungGioNhan()} cho {$don->ten_khach_tai_cho} ({$don->ma_don}).");
     }

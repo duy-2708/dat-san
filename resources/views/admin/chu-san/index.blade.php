@@ -43,7 +43,7 @@
                     <div class="col-6 col-md-2"><label class="form-label mb-0">Số ngày</label><input name="so_ngay" type="number" min="1" value="30" class="form-control form-control-sm"></div>
                     <div class="col-6 col-md-3"><label class="form-label mb-0">Gói</label><select name="goi_thue_bao_id" class="form-select form-select-sm">
                         @foreach ($gois as $g) <option value="{{ $g->id }}" @selected($hs?->goi_thue_bao_id === $g->id)>{{ $g->ten }}</option> @endforeach</select></div>
-                    <div class="col-6 col-md-2"><label class="form-label mb-0">Đã thu (đ)</label><input name="so_tien" type="number" min="0" value="0" class="form-control form-control-sm"></div>
+                    <div class="col-6 col-md-2"><label class="form-label mb-0">Đã thu (đ)</label><input name="so_tien" inputmode="numeric" value="0" class="form-control form-control-sm o-tien"></div>
                     <div class="col-6 col-md-3"><label class="form-label mb-0">Ghi chú</label><input name="ghi_chu" class="form-control form-control-sm" placeholder="Tiền mặt / tặng"></div>
                     <div class="col-12 col-md-2"><button class="btn btn-sm btn-primary w-100">Cộng hạn</button></div>
                 </form>

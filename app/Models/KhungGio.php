@@ -57,4 +57,37 @@ class KhungGio extends Model
 
         return (int) (ceil($this->gia * $tyLe / 100 / 1000) * 1000);
     }
+
+    public function soPhut(): int
+    {
+        return $this->phutKetThuc() - $this->phutBatDau();
+    }
+
+    /**
+     * Giá khi đá $phut phút tính từ giờ bắt đầu khung: theo tỉ lệ thời gian của khung.
+     * Khung 60' giá 270.000 → 90' = 405.000, 75' = 337.500 → làm tròn 338.000 (tròn nghìn).
+     */
+    public function giaTheoPhut(int $phut): int
+    {
+        return (int) (round($this->gia * $phut / max(1, $this->soPhut()) / 1000) * 1000);
+    }
+
+    public function cocTheoPhut(int $phut, int $tyLe = 30): int
+    {
+        if ($this->tien_coc !== null) {
+            return min((int) (ceil($this->tien_coc * $phut / max(1, $this->soPhut()) / 1000) * 1000), $this->giaTheoPhut($phut));
+        }
+
+        return (int) (ceil($this->giaTheoPhut($phut) * $tyLe / 100 / 1000) * 1000);
+    }
+
+    /** Các thời lượng cho chọn: 60' → 180' (bước 15'), luôn có thời lượng gốc của khung, không vượt giờ đóng cửa. */
+    public function cacThoiLuong(int $gioDongPhut): array
+    {
+        $toiDa = min(180, $gioDongPhut - $this->phutBatDau());
+        $ds = range(60, max(60, $toiDa), 15);
+        $ds[] = $this->soPhut();
+
+        return collect($ds)->filter(fn ($p) => $p <= $toiDa && $p >= 30)->unique()->sort()->values()->all();
+    }
 }

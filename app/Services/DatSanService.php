@@ -35,7 +35,7 @@ class DatSanService
 
     // =============================================================== KHÁCH ĐẶT ONLINE
 
-    public function giuCho(User $khach, San $san, string $ngay, int $khungGioId): DatSan
+    public function giuCho(User $khach, San $san, string $ngay, int $khungGioId, ?int $thoiLuong = null): DatSan
     {
         if ($khach->biHanChe()) {
             $this->loi('Tài khoản đang bị hạn chế đặt sân: '.$khach->ly_do_han_che.'. Liên hệ chủ sân để được gỡ.');
@@ -65,11 +65,12 @@ class DatSanService
             $this->loi('Bạn đang giữ '.$dangGiu.' khung chưa cọc. Hãy cọc hoặc huỷ bớt trước khi giữ thêm.');
         }
 
-        $don = $this->ghiDon($san, $ngayC->toDateString(), $khung->phutBatDau(), $khung->phutKetThuc(), [
+        $phut = $this->kiemThoiLuong($san, $khung, $thoiLuong);
+        $don = $this->ghiDon($san, $ngayC->toDateString(), $khung->phutBatDau(), $khung->phutBatDau() + $phut, [
             'khach_id' => $khach->id,
             'khung_gio_id' => $khung->id,
-            'gia_chot' => $khung->gia,
-            'tien_coc' => $khung->tienCoc($hoSo->ty_le_coc),
+            'gia_chot' => $khung->giaTheoPhut($phut),
+            'tien_coc' => $khung->cocTheoPhut($phut, $hoSo->ty_le_coc),
             'nguon' => 'online',
             'trang_thai' => 'cho_thanh_toan',
             'giu_cho_den' => now()->addMinutes($hoSo->phut_giu_cho),
@@ -153,7 +154,7 @@ class DatSanService
     // =============================================================== CHỦ SÂN / NHÂN VIÊN
 
     /** Đánh dấu đặt tại chỗ (khách gọi điện / đến trực tiếp) → "Đã đặt" ngay. */
-    public function datTaiCho(User $nguoiTao, San $san, string $ngay, int $khungGioId, string $ten, string $sdt, bool $daThuCoc, ?string $ghiChu = null): DatSan
+    public function datTaiCho(User $nguoiTao, San $san, string $ngay, int $khungGioId, string $ten, string $sdt, bool $daThuCoc, ?string $ghiChu = null, ?int $thoiLuong = null): DatSan
     {
         $ngayC = Carbon::parse($ngay)->startOfDay();
         $khung = $this->khungApDung($san, $ngayC, $khungGioId);
@@ -162,13 +163,14 @@ class DatSanService
         }
 
         $tyLe = $san->chuSan->hoSoChuSan?->ty_le_coc ?? 30;
-        $coc = $daThuCoc ? $khung->tienCoc($tyLe) : 0;
+        $phut = $this->kiemThoiLuong($san, $khung, $thoiLuong);
+        $coc = $daThuCoc ? $khung->cocTheoPhut($phut, $tyLe) : 0;
 
-        $don = $this->ghiDon($san, $ngayC->toDateString(), $khung->phutBatDau(), $khung->phutKetThuc(), [
+        $don = $this->ghiDon($san, $ngayC->toDateString(), $khung->phutBatDau(), $khung->phutBatDau() + $phut, [
             'ten_khach_tai_cho' => $ten,
             'sdt_khach_tai_cho' => $sdt,
             'khung_gio_id' => $khung->id,
-            'gia_chot' => $khung->gia,
+            'gia_chot' => $khung->giaTheoPhut($phut),
             'tien_coc' => $coc,
             'nguon' => 'tai_cho',
             'trang_thai' => 'da_dat',
@@ -339,6 +341,20 @@ class DatSanService
         } catch (UniqueConstraintViolationException) {
             $this->loi('Khung giờ này vừa có người đặt (hoặc sân ghép liên quan đang bận). Vui lòng chọn giờ khác.');
         }
+    }
+
+    /** Thời lượng đá tính từ giờ bắt đầu khung: bội số 15', 30'–240', không quá giờ đóng cửa. Trùng giờ đã có người do ghiDon chặn. */
+    private function kiemThoiLuong(San $san, KhungGio $khung, ?int $thoiLuong): int
+    {
+        $phut = $thoiLuong ?: $khung->soPhut();
+        if ($phut % 15 !== 0 || $phut < 30 || $phut > 240) {
+            $this->loi('Thời lượng phải từ 30 phút đến 4 tiếng, theo bước 15 phút.');
+        }
+        if ($khung->phutBatDau() + $phut > \App\Support\ThoiGian::phut($san->gio_dong_cua)) {
+            $this->loi('Đá '.$phut.' phút sẽ quá giờ đóng cửa của sân.');
+        }
+
+        return $phut;
     }
 
     private function khungApDung(San $san, Carbon $ngay, int $khungGioId): KhungGio

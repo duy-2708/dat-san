@@ -11,6 +11,10 @@
     $thu = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
     $truoc = $tu->copy()->subDays(7);
     $sau = $tu->copy()->addDays(7);
+    $dongPhut = \App\Support\ThoiGian::phut($san->gio_dong_cua);
+    $tyLeCoc = (int) ($san->chuSan->hoSoChuSan?->ty_le_coc ?? 30);
+    $nhanPhut = fn ($p) => intdiv($p, 60).'h'.($p % 60 ? sprintf('%02d', $p % 60) : '');
+    $laKhachDangNhap = auth()->check() && auth()->user()->laKhach();
 @endphp
 <div class="d-flex align-items-center justify-content-between mb-2">
     <a href="{{ $url }}?tu={{ $truoc->toDateString() }}" class="btn btn-sm btn-outline-secondary {{ $cheDo === 'khach' && $tu->lte(today()) ? 'disabled' : '' }}"><i class="bi bi-chevron-left"></i></a>
@@ -57,13 +61,23 @@
                     @if ($cheDo === 'khach')
                         @if ($tt === 'trong')
                             @auth
-                                <form method="POST" action="{{ route('khach.dat-san.store') }}" class="mt-1">
-                                    @csrf
-                                    <input type="hidden" name="san_id" value="{{ $san->id }}">
-                                    <input type="hidden" name="ngay" value="{{ $n['ngay']->toDateString() }}">
-                                    <input type="hidden" name="khung_gio_id" value="{{ $k->id }}">
-                                    <button class="btn btn-sm btn-success w-100">Đặt · cọc {{ $tien($k->tienCoc()) }}</button>
-                                </form>
+                                @if ($laKhachDangNhap)
+                                    <form method="POST" action="{{ route('khach.dat-san.store') }}" class="mt-1">
+                                        @csrf
+                                        <input type="hidden" name="san_id" value="{{ $san->id }}">
+                                        <input type="hidden" name="ngay" value="{{ $n['ngay']->toDateString() }}">
+                                        <input type="hidden" name="khung_gio_id" value="{{ $k->id }}">
+                                        <select name="thoi_luong" class="form-select form-select-sm mb-1" title="Đá bao lâu (tính từ {{ substr($k->gio_bat_dau, 0, 5) }})">
+                                            @foreach ($k->cacThoiLuong($dongPhut) as $p)
+                                                <option value="{{ $p }}" @selected($p === $k->soPhut())>{{ $nhanPhut($p) }} · {{ $tien($k->giaTheoPhut($p)) }}đ</option>
+                                            @endforeach
+                                        </select>
+                                        <button class="btn btn-sm btn-success w-100">Đặt · cọc {{ $tien($k->cocTheoPhut($k->soPhut(), $tyLeCoc)) }}</button>
+                                    </form>
+                                @else
+                                    <div class="small text-muted mt-1">Trống — chỉ tài khoản <strong>khách</strong> đặt online.
+                                        @can('view', $san) <a href="{{ route('quan-ly.san.lich', $san) }}">Đặt tại chỗ</a> @endcan</div>
+                                @endif
                             @else
                                 <a href="{{ route('login') }}" class="btn btn-sm btn-outline-success w-100 mt-1">Đăng nhập để đặt</a>
                             @endauth
@@ -74,6 +88,7 @@
                         @if ($tt === 'trong')
                             <button type="button" class="btn btn-sm btn-outline-success w-100 mt-1" data-bs-toggle="modal" data-bs-target="#modalTaiCho"
                                     data-ngay="{{ $n['ngay']->toDateString() }}" data-khung="{{ $k->id }}"
+                                    data-thoi-luong='@json(collect($k->cacThoiLuong($dongPhut))->map(fn ($p) => ['p' => $p, 'nhan' => $nhanPhut($p).' · '.$tien($k->giaTheoPhut($p)).'đ', 'chon' => $p === $k->soPhut()]))'
                                     data-nhan="{{ $n['ngay']->format('d/m') }} {{ $k->nhan() }}">+ Đặt tại chỗ</button>
                         @elseif ($don)
                             <div class="small mt-1">

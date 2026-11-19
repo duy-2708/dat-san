@@ -25,6 +25,8 @@
             <div class="modal-body">
                 <input type="hidden" name="ngay" id="tcNgay" value="{{ old('ngay') }}">
                 <input type="hidden" name="khung_gio_id" id="tcKhung" value="{{ old('khung_gio_id') }}">
+                <div class="mb-2"><label class="form-label small">Đá bao lâu (tính từ giờ bắt đầu khung)</label>
+                    <select name="thoi_luong" id="tcThoiLuong" class="form-select"></select></div>
                 <div class="mb-2"><label class="form-label small">Tên khách</label>
                     <input name="ten" value="{{ old('ten') }}" class="form-control" required></div>
                 <div class="mb-2"><label class="form-label small">Số điện thoại</label>
@@ -50,6 +52,9 @@ document.getElementById('modalTaiCho').addEventListener('show.bs.modal', functio
     document.getElementById('tcNgay').value = b.dataset.ngay;
     document.getElementById('tcKhung').value = b.dataset.khung;
     document.getElementById('tcNhan').textContent = b.dataset.nhan;
+    const chon = document.getElementById('tcThoiLuong');
+    chon.innerHTML = '';
+    JSON.parse(b.dataset.thoiLuong || '[]').forEach((t) => chon.add(new Option(t.nhan, t.p, t.chon, t.chon)));
 });
 </script>
 @endpush

@@ -27,6 +27,7 @@
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ route('keo.index') }}">Cáp kèo</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('giai-dau.index') }}">Giải đấu</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('doi.index') }}">Đội bóng</a></li>
                 @auth
                     @if (auth()->user()->laAdmin())
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.chu-san.index') }}">Chủ sân</a></li>
@@ -38,8 +39,8 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.tong-quan') }}">Quản lý</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.dat-san.index') }}">Đơn đặt</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.san.index') }}">Sân & lịch</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.giai-dau.index') }}">Tổ chức giải</a></li>
                         @if (auth()->user()->laChuSan())
-                            <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.giai-dau.index') }}">Tổ chức giải</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.thanh-toan.edit') }}">Thanh toán</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.nhan-vien.index') }}">Nhân viên</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.goi.index') }}">Gói dịch vụ</a></li>

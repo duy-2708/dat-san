@@ -26,9 +26,11 @@ class DatSanController extends Controller
             'san_id' => ['required', 'integer', 'exists:san,id'],
             'ngay' => ['required', 'date_format:Y-m-d'],
             'khung_gio_id' => ['required', 'integer'],
+            'thoi_luong' => ['nullable', 'integer'],
         ]);
 
-        $don = $this->datSan->giuCho($request->user(), San::findOrFail($d['san_id']), $d['ngay'], (int) $d['khung_gio_id']);
+        $don = $this->datSan->giuCho($request->user(), San::findOrFail($d['san_id']), $d['ngay'], (int) $d['khung_gio_id'],
+            isset($d['thoi_luong']) ? (int) $d['thoi_luong'] : null);
 
         return redirect()->route('dat-san.thanh-toan', $don);
     }
