@@ -11,6 +11,7 @@ use App\Http\Controllers\KhachController;
 use App\Http\Controllers\QuanLy\DatSanController as QuanLyDatSanController;
 use App\Http\Controllers\QuanLy\ThanhToanController;
 use App\Http\Controllers\SanCongKhaiController;
+use App\Http\Controllers\TrangChuController;
 use App\Http\Controllers\QuanLy\AnhSanController;
 use App\Http\Controllers\QuanLy\KhungGioController;
 use App\Http\Controllers\QuanLy\NgayLeController;
@@ -25,11 +26,7 @@ use Illuminate\Support\Facades\Route;
 | Gõ `php artisan route:list` để xem đầy đủ.
 */
 
-// Tạm thời: liệt kê sân đang mở. Giai đoạn 4 thay bằng trang chủ có bộ lọc + lịch hôm nay.
-Route::get('/', fn () => view('trang-chu', [
-    'sans' => \App\Models\San::with('anhSans', 'xaPhuong.tinhThanh')->where('trang_thai', 'hoat_dong')
-        ->whereHas('chuSan.hoSoChuSan', fn ($q) => $q->where('het_han_luc', '>', now()))->orderBy('ten')->get(),
-]))->name('trang-chu');
+Route::get('/', [TrangChuController::class, 'index'])->name('trang-chu');
 Route::get('/dia-chi/xa-phuong', [DiaChiController::class, 'xaPhuong'])->name('dia-chi.xa-phuong');
 Route::get('/san/{san:slug}', [SanCongKhaiController::class, 'show'])->name('san.show'); // ai cũng xem được lịch trống/đã đặt
 
