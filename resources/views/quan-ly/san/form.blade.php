@@ -71,16 +71,15 @@
 
             <div class="col-6">
                 <label class="form-label" for="gio_mo_cua">Mở cửa</label>
-                <select id="gio_mo_cua" name="gio_mo_cua" class="form-select @error('gio_mo_cua') is-invalid @enderror">
-                    @foreach ($cacMoc as $m) <option @selected($chonGio('gio_mo_cua') === $m)>{{ $m }}</option> @endforeach
-                </select>
+                @error('gio_mo_cua') <div class="text-danger small">{{ $message }}</div> @enderror
+                <input id="gio_mo_cua" name="gio_mo_cua" value="{{ $chonGio('gio_mo_cua') }}" list="ds-gio" placeholder="VD 06:00" class="form-control @error('gio_mo_cua') is-invalid @enderror">
             </div>
             <div class="col-6">
                 <label class="form-label" for="gio_dong_cua">Đóng cửa</label>
-                <select id="gio_dong_cua" name="gio_dong_cua" class="form-select @error('gio_dong_cua') is-invalid @enderror">
-                    @foreach ($cacMoc as $m) <option @selected($chonGio('gio_dong_cua') === $m)>{{ $m }}</option> @endforeach
-                </select>
+                <input id="gio_dong_cua" name="gio_dong_cua" value="{{ $chonGio('gio_dong_cua') }}" list="ds-gio" placeholder="VD 06:00" class="form-control @error('gio_dong_cua') is-invalid @enderror">
                 @error('gio_dong_cua') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-12 small text-muted mt-0">Gõ tự do hoặc chọn gợi ý (bước 15 phút). Sân mở <strong>xuyên đêm</strong>: Mở cửa 00:00, Đóng cửa 24:00.
             </div>
 
             <div class="col-12">

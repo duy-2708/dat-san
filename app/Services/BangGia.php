@@ -105,4 +105,37 @@ class BangGia
 
         return $soTao;
     }
+
+    /**
+     * Tạo nhanh với nhiều mức giá theo buổi. $muc = [['tu' => '06:00', 'den' => '11:00', 'gia' => 200000, 'vang' => false], ...].
+     * Khung lấy giá của mức chứa GIỜ BẮT ĐẦU khung (mức đứng trước được ưu tiên); không thuộc mức nào thì bỏ qua.
+     */
+    public function taoNhanhTheoMuc(San $san, array $loaiNgays, int $thoiLuong, array $muc, bool $ghiDe = false): int
+    {
+        $mo = ThoiGian::phut($san->gio_mo_cua);
+        $dong = ThoiGian::phut($san->gio_dong_cua);
+        $soTao = 0;
+
+        DB::transaction(function () use ($san, $loaiNgays, $thoiLuong, $muc, $ghiDe, $mo, $dong, &$soTao) {
+            foreach ($loaiNgays as $loai) {
+                if ($ghiDe) {
+                    KhungGio::where('san_id', $san->id)->where('loai_ngay', $loai)->delete();
+                }
+                for ($bd = $mo; $bd + $thoiLuong <= $dong; $bd += $thoiLuong) {
+                    $kt = $bd + $thoiLuong;
+                    $m = collect($muc)->first(fn ($m) => $bd >= ThoiGian::phut($m['tu']) && $bd < ThoiGian::phut($m['den']));
+                    if (! $m || $this->biChong($san, $loai, $bd, $kt)) {
+                        continue;
+                    }
+                    $san->khungGios()->create([
+                        'loai_ngay' => $loai, 'gio_bat_dau' => ThoiGian::csdl($bd), 'gio_ket_thuc' => ThoiGian::csdl($kt),
+                        'gia' => (int) $m['gia'], 'la_gio_vang' => (bool) $m['vang'], 'dang_ap_dung' => true,
+                    ]);
+                    $soTao++;
+                }
+            }
+        });
+
+        return $soTao;
+    }
 }

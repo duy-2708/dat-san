@@ -39,6 +39,27 @@ class ThoiGian
         return $kq;
     }
 
+    /** Chuẩn hoá giờ người dùng gõ: "6", "6h", "6:5", "0630", "6h30", "06.30" → "06:00", ..., "06:30". Sai thì trả về null. */
+    public static function chuanHoa(?string $gio): ?string
+    {
+        $g = strtolower(trim((string) $gio));
+        if ($g === '') {
+            return null;
+        }
+        if (preg_match('/^(\d{1,2})\s*(?:[:h.]\s*(\d{1,2})?)?\s*(?:p|ph|phut)?$/', $g, $m)) {
+            [$h, $p] = [(int) $m[1], (int) ($m[2] ?? 0)];
+        } elseif (preg_match('/^(\d{2})(\d{2})$/', $g, $m)) {
+            [$h, $p] = [(int) $m[1], (int) $m[2]];
+        } else {
+            return null;
+        }
+        if ($p > 59 || $h * 60 + $p > 1440) {
+            return null;
+        }
+
+        return sprintf('%02d:%02d', $h, $p);
+    }
+
     public static function hopLe(string $gio): bool
     {
         if (! preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $gio)) {

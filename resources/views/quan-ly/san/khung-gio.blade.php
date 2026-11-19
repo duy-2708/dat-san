@@ -12,8 +12,8 @@
     <h1 class="h4 mb-0">Khung giờ & giá — {{ $san->ten }}</h1>
     @if ($laChu) <a href="{{ route('quan-ly.san.edit', $san) }}" class="btn btn-sm btn-outline-secondary ms-auto"><i class="bi bi-pencil"></i> Thông tin sân</a> @endif
 </div>
-<p class="text-muted small">Mở cửa {{ $gio($san->gio_mo_cua) }}–{{ $gio($san->gio_dong_cua) }}. Khách đặt theo từng khung; cọc = 30% giá khung.
-    Ngày lễ chưa đặt giá riêng thì dùng giá cuối tuần.</p>
+<p class="text-muted small">Mở cửa {{ $gio($san->gio_mo_cua) }}–{{ $gio($san->gio_dong_cua) }}. Khách đặt theo từng khung. Cọc để trống = tự tính {{ $tyLe }}% giá khung, hoặc tự nhập số tiền cọc mong muốn.
+    Ngày lễ chưa đặt giá riêng thì dùng giá cuối tuần. Giờ gõ tự do (VD <code>6h30</code>, <code>22:15</code>), bước 15 phút; mở xuyên đêm đặt 00:00–24:00.</p>
 
 @if ($errors->any())
     <div class="alert alert-danger py-2">{{ $errors->first() }}</div>
@@ -37,28 +37,25 @@
                 @endforeach
             </div>
             <div class="col-6 col-md-3">
-                <label class="form-label small">Mỗi trận</label>
-                <select name="thoi_luong" class="form-select">
-                    <option value="60">60 phút</option><option value="90" selected>90 phút</option><option value="120">120 phút</option>
-                </select>
+                <label class="form-label small">Mỗi trận (phút)</label>
+                <input name="thoi_luong" type="number" min="30" max="300" step="15" value="90" list="ds-thoi-luong" class="form-control">
+                <datalist id="ds-thoi-luong"><option value="60"><option value="90"><option value="120"></datalist>
             </div>
-            <div class="col-6 col-md-3">
-                <label class="form-label small">Giá thường (đ)</label>
-                <input name="gia" type="number" min="0" step="1000" class="form-control" placeholder="300000" required>
-            </div>
-            <div class="col-4 col-md-2">
-                <label class="form-label small">Giờ vàng từ</label>
-                <select name="gio_vang_tu" class="form-select"><option value="">—</option>
-                    @foreach ($cacMoc as $m) <option @selected($m === '17:00')>{{ $m }}</option> @endforeach</select>
-            </div>
-            <div class="col-4 col-md-2">
-                <label class="form-label small">đến</label>
-                <select name="gio_vang_den" class="form-select"><option value="">—</option>
-                    @foreach ($cacMoc as $m) <option @selected($m === '21:00')>{{ $m }}</option> @endforeach</select>
-            </div>
-            <div class="col-4 col-md-2">
-                <label class="form-label small">Giá vàng (đ)</label>
-                <input name="gia_vang" type="number" min="0" step="1000" class="form-control" placeholder="450000">
+            <div class="col-12">
+                <div class="small fw-semibold mb-1">Giá theo buổi <span class="text-muted fw-normal">(sửa giờ và giá tuỳ ý; để trống giá = không tạo khung buổi đó)</span></div>
+                @php
+                    $mo = substr($san->gio_mo_cua, 0, 5); $dong = substr($san->gio_dong_cua, 0, 5);
+                    $goiY = [['Sáng', $mo, '11:00', false], ['Trưa', '11:00', '15:00', false], ['Chiều', '15:00', '17:00', false], ['Tối (giờ vàng)', '17:00', '21:00', true], ['Khuya', '21:00', $dong, false]];
+                @endphp
+                @foreach ($goiY as $i => [$ten, $tu, $den, $vang])
+                    <div class="row g-1 align-items-center mb-1">
+                        <div class="col-12 col-md-2 small">{{ $ten }}</div>
+                        <div class="col-4 col-md-2"><input name="muc[{{ $i }}][tu]" value="{{ $tu }}" list="ds-gio" class="form-control form-control-sm" placeholder="từ"></div>
+                        <div class="col-4 col-md-2"><input name="muc[{{ $i }}][den]" value="{{ $den }}" list="ds-gio" class="form-control form-control-sm" placeholder="đến"></div>
+                        <div class="col-4 col-md-3"><div class="input-group input-group-sm"><input name="muc[{{ $i }}][gia]" inputmode="numeric" class="form-control o-tien" placeholder="VD 300.000"><span class="input-group-text">đ</span></div></div>
+                        <div class="col-12 col-md-3 small"><label><input type="checkbox" name="muc[{{ $i }}][vang]" value="1" @checked($vang)> Giờ vàng</label></div>
+                    </div>
+                @endforeach
             </div>
             <div class="col-12 d-flex flex-wrap gap-3 align-items-center">
                 <div class="form-check">
@@ -87,57 +84,59 @@
 @foreach (\App\Models\KhungGio::LOAI_NGAY as $ma => $ten)
     <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab_{{ $ma }}">
         <div class="bg-white rounded shadow-sm">
-            @forelse ($theoLoai->get($ma, collect()) as $k)
-                <div class="border-bottom p-2 {{ $k->dang_ap_dung ? '' : 'opacity-50' }}">
-                    @if ($laChu)
-                        <form method="POST" action="{{ route('quan-ly.khung-gio.update', $k) }}" class="row g-1 align-items-center">
-                            @csrf @method('PUT')
-                            <input type="hidden" name="loai_ngay" value="{{ $ma }}">
-                            <div class="col-6 col-md-2"><select name="gio_bat_dau" class="form-select form-select-sm">
-                                @foreach ($cacMoc as $m) <option @selected($m === $gio($k->gio_bat_dau))>{{ $m }}</option> @endforeach</select></div>
-                            <div class="col-6 col-md-2"><select name="gio_ket_thuc" class="form-select form-select-sm">
-                                @foreach ($cacMoc as $m) <option @selected($m === $gio($k->gio_ket_thuc))>{{ $m }}</option> @endforeach</select></div>
-                            <div class="col-6 col-md-2"><input name="gia" type="number" min="0" step="1000" value="{{ $k->gia }}" class="form-control form-control-sm"></div>
-                            <div class="col-6 col-md-3 d-flex gap-2 small">
-                                <div class="form-check"><input type="hidden" name="la_gio_vang" value="0">
-                                    <input class="form-check-input" type="checkbox" name="la_gio_vang" value="1" id="v{{ $k->id }}" @checked($k->la_gio_vang)>
-                                    <label class="form-check-label" for="v{{ $k->id }}">Giờ vàng</label></div>
-                                <div class="form-check"><input type="hidden" name="dang_ap_dung" value="0">
-                                    <input class="form-check-input" type="checkbox" name="dang_ap_dung" value="1" id="a{{ $k->id }}" @checked($k->dang_ap_dung)>
-                                    <label class="form-check-label" for="a{{ $k->id }}">Mở bán</label></div>
+            @php $ds = $theoLoai->get($ma, collect()); @endphp
+            @if ($laChu && $ds->isNotEmpty())
+                <form method="POST" action="{{ route('quan-ly.san.khung-gio.luu-tat-ca', $san) }}" class="form-khung">
+                    @csrf @method('PUT')
+                    <input type="hidden" name="loai_ngay" value="{{ $ma }}">
+                    <div class="row g-1 px-2 pt-2 small text-muted d-none d-md-flex">
+                        <div class="col-md-2">Bắt đầu</div><div class="col-md-2">Kết thúc</div><div class="col-md-2">Giá (đ)</div>
+                        <div class="col-md-2">Cọc (đ) <i class="bi bi-info-circle" title="Để trống = tự tính {{ $tyLe }}%"></i></div><div class="col-md-3"></div>
+                    </div>
+                    @foreach ($ds as $k)
+                        <div class="row g-1 align-items-center border-bottom p-2 {{ $k->dang_ap_dung ? '' : 'opacity-50' }}">
+                            <div class="col-6 col-md-2"><input name="khung[{{ $k->id }}][gio_bat_dau]" value="{{ $gio($k->gio_bat_dau) }}" list="ds-gio" class="form-control form-control-sm"></div>
+                            <div class="col-6 col-md-2"><input name="khung[{{ $k->id }}][gio_ket_thuc]" value="{{ $gio($k->gio_ket_thuc) }}" list="ds-gio" class="form-control form-control-sm"></div>
+                            <div class="col-6 col-md-2"><input name="khung[{{ $k->id }}][gia]" value="{{ $k->gia }}" inputmode="numeric" class="form-control form-control-sm o-tien o-gia"></div>
+                            <div class="col-6 col-md-2"><input name="khung[{{ $k->id }}][tien_coc]" value="{{ $k->tien_coc }}" inputmode="numeric" class="form-control form-control-sm o-tien o-coc" placeholder="{{ \App\Support\Tien::chuoi($k->tienCoc($tyLe)) }}"></div>
+                            <div class="col-9 col-md-3 d-flex gap-2 small">
+                                <label><input type="checkbox" name="khung[{{ $k->id }}][la_gio_vang]" value="1" @checked($k->la_gio_vang)> Giờ vàng</label>
+                                <label><input type="checkbox" name="khung[{{ $k->id }}][dang_ap_dung]" value="1" @checked($k->dang_ap_dung)> Mở bán</label>
                             </div>
-                            <div class="col-12 col-md-3 d-flex gap-1 justify-content-end">
-                                <span class="small text-muted me-auto align-self-center">Cọc {{ $tien($k->tienCoc()) }}</span>
-                                <button class="btn btn-sm btn-outline-success"><i class="bi bi-check-lg"></i></button>
+                            <div class="col-3 col-md-1 text-end">
                                 <button class="btn btn-sm btn-outline-danger" form="xoa{{ $k->id }}" onclick="return confirm('Xoá khung {{ $k->nhan() }}?')"><i class="bi bi-trash"></i></button>
                             </div>
-                        </form>
-                        <form id="xoa{{ $k->id }}" method="POST" action="{{ route('quan-ly.khung-gio.destroy', $k) }}">@csrf @method('DELETE')</form>
-                    @else
-                        <div class="d-flex justify-content-between">
-                            <span>{{ $k->nhan() }} @if ($k->la_gio_vang) <span class="badge bg-warning text-dark">Giờ vàng</span> @endif</span>
-                            <span class="fw-semibold">{{ $tien($k->gia) }}</span>
                         </div>
-                    @endif
-                </div>
-            @empty
-                <div class="p-4 text-center text-muted">Chưa có khung giờ cho {{ mb_strtolower($ten) }}.</div>
-            @endforelse
+                    @endforeach
+                    <div class="p-2 text-end"><button class="btn btn-success"><i class="bi bi-check-lg"></i> Lưu tất cả thay đổi</button></div>
+                </form>
+                @foreach ($ds as $k)
+                    <form id="xoa{{ $k->id }}" method="POST" action="{{ route('quan-ly.khung-gio.destroy', $k) }}">@csrf @method('DELETE')</form>
+                @endforeach
+            @else
+                @forelse ($ds as $k)
+                    <div class="d-flex justify-content-between border-bottom p-2">
+                        <span>{{ $k->nhan() }} @if ($k->la_gio_vang) <span class="badge bg-warning text-dark">Giờ vàng</span> @endif</span>
+                        <span><span class="fw-semibold">{{ $tien($k->gia) }}</span> <span class="small text-muted">· cọc {{ $tien($k->tienCoc($tyLe)) }}</span></span>
+                    </div>
+                @empty
+                    <div class="p-4 text-center text-muted">Chưa có khung giờ cho {{ mb_strtolower($ten) }}.</div>
+                @endforelse
+            @endif
 
             @if ($laChu)
                 <form method="POST" action="{{ route('quan-ly.san.khung-gio.store', $san) }}" class="row g-1 align-items-center p-2 bg-light rounded-bottom">
                     @csrf
                     <input type="hidden" name="loai_ngay" value="{{ $ma }}">
                     <div class="col-12 small fw-semibold">Thêm một khung</div>
-                    <div class="col-6 col-md-2"><select name="gio_bat_dau" class="form-select form-select-sm">
-                        @foreach ($cacMoc as $m) <option>{{ $m }}</option> @endforeach</select></div>
-                    <div class="col-6 col-md-2"><select name="gio_ket_thuc" class="form-select form-select-sm">
-                        @foreach ($cacMoc as $m) <option @selected($loop->index === 6)>{{ $m }}</option> @endforeach</select></div>
-                    <div class="col-6 col-md-2"><input name="gia" type="number" min="0" step="1000" placeholder="Giá" class="form-control form-control-sm" required></div>
-                    <div class="col-6 col-md-3"><div class="form-check small">
+                    <div class="col-6 col-md-2"><input name="gio_bat_dau" list="ds-gio" placeholder="Bắt đầu" class="form-control form-control-sm" required></div>
+                    <div class="col-6 col-md-2"><input name="gio_ket_thuc" list="ds-gio" placeholder="Kết thúc" class="form-control form-control-sm" required></div>
+                    <div class="col-6 col-md-2"><input name="gia" inputmode="numeric" placeholder="Giá" class="form-control form-control-sm o-tien" required></div>
+                    <div class="col-6 col-md-2"><input name="tien_coc" inputmode="numeric" placeholder="Cọc (tự tính)" class="form-control form-control-sm o-tien"></div>
+                    <div class="col-6 col-md-2"><div class="form-check small">
                         <input class="form-check-input" type="checkbox" name="la_gio_vang" value="1" id="nv_{{ $ma }}">
                         <label class="form-check-label" for="nv_{{ $ma }}">Giờ vàng</label></div></div>
-                    <div class="col-12 col-md-3 text-end"><button class="btn btn-sm btn-success"><i class="bi bi-plus-lg"></i> Thêm</button></div>
+                    <div class="col-6 col-md-2 text-end"><button class="btn btn-sm btn-success"><i class="bi bi-plus-lg"></i> Thêm</button></div>
                 </form>
             @endif
         </div>
@@ -145,3 +144,14 @@
 @endforeach
 </div>
 @endsection
+
+@push('scripts')
+<script>
+// Gõ giá → cập nhật gợi ý cọc {{ $tyLe }}% ngay (khi ô cọc để trống)
+document.querySelectorAll('.form-khung .o-gia').forEach((o) => o.addEventListener('input', () => {
+    const coc = o.closest('.row').querySelector('.o-coc');
+    const gia = Number(o.value.replace(/\D/g, '')) || 0;
+    coc.placeholder = (Math.ceil(gia * {{ $tyLe }} / 100 / 1000) * 1000).toLocaleString('vi-VN');
+}));
+</script>
+@endpush

@@ -88,6 +88,24 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Ô tiền: gõ 100000 hiện 100.000; khi gửi form tự bỏ dấu chấm.
+(function () {
+    const dinhDang = (v) => { const so = String(v).replace(/\D/g, ''); return so ? Number(so).toLocaleString('vi-VN') : ''; };
+    document.addEventListener('input', (e) => {
+        if (! e.target.matches('input.o-tien')) return;
+        const o = e.target, truoc = o.value.length, viTri = o.selectionStart;
+        o.value = dinhDang(o.value);
+        const p = Math.max(0, viTri + o.value.length - truoc);
+        o.setSelectionRange(p, p);
+    });
+    document.querySelectorAll('input.o-tien').forEach((o) => { o.value = dinhDang(o.value); });
+    document.addEventListener('submit', (e) => {
+        e.target.querySelectorAll('input.o-tien').forEach((o) => { o.value = o.value.replace(/\D/g, ''); });
+    }, true);
+})();
+</script>
+<datalist id="ds-gio">@foreach (\App\Support\ThoiGian::cacMoc(0, 1440) as $m) @if (str_ends_with($m, ':00') || str_ends_with($m, ':30'))<option value="{{ $m }}">@endif @endforeach</datalist>
 @stack('scripts')
 </body>
 </html>

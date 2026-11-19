@@ -125,6 +125,11 @@ class SanController extends Controller
 
     private function kiemTra(Request $request, ?San $san = null): array
     {
+        foreach (['gio_mo_cua', 'gio_dong_cua'] as $cot) {
+            if ($request->filled($cot)) {
+                $request->merge([$cot => ThoiGian::chuanHoa($request->input($cot)) ?? $request->input($cot)]);
+            }
+        }
         $moc = ThoiGian::cacMoc();
 
         $duLieu = $request->validate([
@@ -140,6 +145,9 @@ class SanController extends Controller
             'gio_dong_cua' => ['required', Rule::in($moc)],
             'san_con_ids' => ['nullable', 'array'],
             'san_con_ids.*' => ['integer'],
+        ], [
+            'gio_mo_cua.in' => 'Giờ mở cửa phải theo bước 15 phút, VD 06:00, 06:15. Mở xuyên đêm: 00:00.',
+            'gio_dong_cua.in' => 'Giờ đóng cửa phải theo bước 15 phút, VD 22:30. Mở xuyên đêm: 24:00.',
         ]);
 
         if (ThoiGian::phut($duLieu['gio_dong_cua']) <= ThoiGian::phut($duLieu['gio_mo_cua'])) {

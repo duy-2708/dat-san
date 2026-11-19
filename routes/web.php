@@ -136,6 +136,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
                 Route::post('/san/{san}/khung-gio', [KhungGioController::class, 'store'])->name('san.khung-gio.store');
                 Route::post('/san/{san}/khung-gio/tao-nhanh', [KhungGioController::class, 'taoNhanh'])->name('san.khung-gio.tao-nhanh');
+                Route::put('/san/{san}/khung-gio', [KhungGioController::class, 'luuTatCa'])->name('san.khung-gio.luu-tat-ca');
                 Route::put('/khung-gio/{khungGio}', [KhungGioController::class, 'update'])->name('khung-gio.update');
                 Route::delete('/khung-gio/{khungGio}', [KhungGioController::class, 'destroy'])->name('khung-gio.destroy');
 

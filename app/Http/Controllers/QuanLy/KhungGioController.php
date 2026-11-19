@@ -7,6 +7,8 @@ use App\Models\KhungGio;
 use App\Models\San;
 use App\Services\BangGia;
 use App\Support\ThoiGian;
+use App\Support\Tien;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -28,6 +30,7 @@ class KhungGioController extends Controller
             'san' => $san,
             'theoLoai' => $san->khungGios()->get()->groupBy('loai_ngay'),
             'cacMoc' => ThoiGian::cacMoc(ThoiGian::phut($san->gio_mo_cua), ThoiGian::phut($san->gio_dong_cua)),
+            'tyLe' => (int) ($san->chuSan->hoSoChuSan?->ty_le_coc ?? 30),
         ]);
     }
 
@@ -66,44 +69,140 @@ class KhungGioController extends Controller
     {
         Gate::authorize('update', $san);
 
-        $moc = ThoiGian::cacMoc();
+        $this->chuanHoaTien($request, ['gia', 'gia_vang']);
+        $muc = collect($request->input('muc', []))
+            ->map(fn ($m) => ['tu' => ThoiGian::chuanHoa($m['tu'] ?? null), 'den' => ThoiGian::chuanHoa($m['den'] ?? null),
+                'gia' => Tien::so($m['gia'] ?? null), 'vang' => ! empty($m['vang'])])
+            ->filter(fn ($m) => $m['tu'] && $m['den'] && $m['gia'] !== null)
+            ->values();
+
         $d = $request->validate([
             'loai_ngays' => ['required', 'array', 'min:1'],
             'loai_ngays.*' => [Rule::in(array_keys(KhungGio::LOAI_NGAY))],
-            'thoi_luong' => ['required', Rule::in([60, 90, 120])],
-            'gia' => ['required', 'integer', 'min:0', 'max:100000000'],
-            'gio_vang_tu' => ['nullable', Rule::in($moc)],
-            'gio_vang_den' => ['nullable', Rule::in($moc)],
+            'thoi_luong' => ['required', 'integer', 'min:30', 'max:300'],
+            'gia' => [$muc->isEmpty() ? 'required' : 'nullable', 'integer', 'min:0', 'max:100000000'],
+            'gio_vang_tu' => ['nullable', 'string'],
+            'gio_vang_den' => ['nullable', 'string'],
             'gia_vang' => ['nullable', 'integer', 'min:0', 'max:100000000'],
             'ghi_de' => ['nullable', 'boolean'],
         ], [
             'loai_ngays.required' => 'Chọn ít nhất một loại ngày.',
+            'gia.required' => 'Nhập giá cho ít nhất một buổi.',
         ]);
+        if ($d['thoi_luong'] % ThoiGian::BUOC_PHUT !== 0) {
+            throw ValidationException::withMessages(['thoi_luong' => 'Thời lượng trận phải là bội số 15 phút (VD 60, 75, 90).']);
+        }
 
-        $coGioVang = ! empty($d['gio_vang_tu']) && ! empty($d['gio_vang_den']) && ! empty($d['gia_vang']);
+        // Kiểu cũ (1 giá + giờ vàng) quy về danh sách mức giá
+        if ($muc->isEmpty()) {
+            $muc = collect([['tu' => '00:00', 'den' => '24:00', 'gia' => (int) $d['gia'], 'vang' => false]]);
+            $tu = ThoiGian::chuanHoa($d['gio_vang_tu'] ?? null);
+            $den = ThoiGian::chuanHoa($d['gio_vang_den'] ?? null);
+            if ($tu && $den && ! empty($d['gia_vang'])) {
+                $muc->prepend(['tu' => $tu, 'den' => $den, 'gia' => (int) $d['gia_vang'], 'vang' => true]);
+            }
+        }
 
-        $so = $this->bangGia->taoNhanh(
-            $san, $d['loai_ngays'], (int) $d['thoi_luong'], (int) $d['gia'],
-            $coGioVang ? ThoiGian::phut($d['gio_vang_tu']) : null,
-            $coGioVang ? ThoiGian::phut($d['gio_vang_den']) : null,
-            $coGioVang ? (int) $d['gia_vang'] : null,
-            (bool) ($d['ghi_de'] ?? false),
-        );
+        $so = $this->bangGia->taoNhanhTheoMuc($san, $d['loai_ngays'], (int) $d['thoi_luong'], $muc->all(), (bool) ($d['ghi_de'] ?? false));
 
         return back()->with('thanh_cong', $so > 0 ? "Đã tạo {$so} khung giờ." : 'Không tạo thêm khung nào (đã có đủ hoặc bị trùng giờ).');
+    }
+
+    /** Lưu cùng lúc mọi khung của 1 loại ngày (sửa giá, cọc, giờ hàng loạt). */
+    public function luuTatCa(Request $request, San $san): RedirectResponse
+    {
+        Gate::authorize('update', $san);
+
+        $loai = $request->validate(['loai_ngay' => ['required', Rule::in(array_keys(KhungGio::LOAI_NGAY))]])['loai_ngay'];
+        $hienCo = $san->khungGios()->where('loai_ngay', $loai)->get()->keyBy('id');
+        $moi = [];
+        foreach ((array) $request->input('khung', []) as $id => $k) {
+            $kg = $hienCo->get((int) $id);
+            if (! $kg) {
+                continue;
+            }
+            $moi[$kg->id] = $this->sach($san, $k, "khung.$id.", $kg->nhan());
+        }
+
+        // Kiểm tra chồng giờ trên toàn bộ danh sách sau khi sửa
+        $tatCa = $hienCo->map(fn ($kg) => $moi[$kg->id] ?? ['bd' => $kg->phutBatDau(), 'kt' => $kg->phutKetThuc(), 'nhan' => $kg->nhan()])->values();
+        foreach ($tatCa as $i => $a) {
+            foreach ($tatCa as $j => $b) {
+                if ($i < $j && ThoiGian::chong($a['bd'], $a['kt'], $b['bd'], $b['kt'])) {
+                    throw ValidationException::withMessages(['khung' => 'Khung '.ThoiGian::chuoi($a['bd']).'–'.ThoiGian::chuoi($a['kt'])
+                        .' chồng lên khung '.ThoiGian::chuoi($b['bd']).'–'.ThoiGian::chuoi($b['kt']).'.']);
+                }
+            }
+        }
+
+        DB::transaction(function () use ($moi, $hienCo) {
+            foreach ($moi as $id => $m) {
+                $hienCo[$id]->update($m['luu']);
+            }
+        });
+
+        return back()->with('thanh_cong', 'Đã lưu '.count($moi).' khung giờ.')->withFragment($loai);
+    }
+
+    /** Kiểm tra 1 dòng khung trong form lưu hàng loạt. */
+    private function sach(San $san, array $k, string $tienTo, string $nhan): array
+    {
+        $bd = ThoiGian::chuanHoa($k['gio_bat_dau'] ?? null);
+        $kt = ThoiGian::chuanHoa($k['gio_ket_thuc'] ?? null);
+        $gia = Tien::so($k['gia'] ?? null);
+        $coc = Tien::so($k['tien_coc'] ?? null);
+        $loi = fn ($s) => throw ValidationException::withMessages([$tienTo.'gia' => "Khung $nhan: $s"]);
+
+        if (! $bd || ! $kt || ! ThoiGian::hopLe($bd) || ! ThoiGian::hopLe($kt)) {
+            $loi('giờ phải theo bước 15 phút (VD 17:00, 17:15, 17:30).');
+        }
+        [$pbd, $pkt] = [ThoiGian::phut($bd), ThoiGian::phut($kt)];
+        if ($pkt <= $pbd) {
+            $loi('giờ kết thúc phải sau giờ bắt đầu.');
+        }
+        if ($pbd < ThoiGian::phut($san->gio_mo_cua) || $pkt > ThoiGian::phut($san->gio_dong_cua)) {
+            $loi('phải nằm trong giờ mở cửa.');
+        }
+        if ($gia === null || $gia > 100000000) {
+            $loi('giá không hợp lệ.');
+        }
+        if ($coc !== null && $coc > $gia) {
+            $loi('tiền cọc không được lớn hơn giá.');
+        }
+
+        return ['bd' => $pbd, 'kt' => $pkt, 'luu' => [
+            'gio_bat_dau' => ThoiGian::csdl($pbd), 'gio_ket_thuc' => ThoiGian::csdl($pkt), 'gia' => $gia, 'tien_coc' => $coc,
+            'la_gio_vang' => ! empty($k['la_gio_vang']), 'dang_ap_dung' => ! empty($k['dang_ap_dung']),
+        ]];
+    }
+
+    private function chuanHoaTien(Request $request, array $cot): void
+    {
+        foreach ($cot as $c) {
+            if ($request->has($c)) {
+                $request->merge([$c => Tien::so($request->input($c))]);
+            }
+        }
     }
 
     /** @return array dữ liệu sạch để lưu */
     private function kiemTra(Request $request, San $san, ?KhungGio $khung = null): array
     {
+        $this->chuanHoaTien($request, ['gia', 'tien_coc']);
+        foreach (['gio_bat_dau', 'gio_ket_thuc'] as $cot) {
+            if ($request->filled($cot)) {
+                $request->merge([$cot => ThoiGian::chuanHoa($request->input($cot)) ?? $request->input($cot)]);
+            }
+        }
         $d = $request->validate([
             'loai_ngay' => ['required', Rule::in(array_keys(KhungGio::LOAI_NGAY))],
             'gio_bat_dau' => ['required', 'string'],
             'gio_ket_thuc' => ['required', 'string'],
             'gia' => ['required', 'integer', 'min:0', 'max:100000000'],
+            'tien_coc' => ['nullable', 'integer', 'min:0', 'lte:gia'],
             'la_gio_vang' => ['nullable', 'boolean'],
             'dang_ap_dung' => ['nullable', 'boolean'],
-        ]);
+        ], ['tien_coc.lte' => 'Tiền cọc không được lớn hơn giá.']);
 
         foreach (['gio_bat_dau', 'gio_ket_thuc'] as $cot) {
             if (! ThoiGian::hopLe($d[$cot])) {
@@ -130,6 +229,7 @@ class KhungGioController extends Controller
             'gio_bat_dau' => ThoiGian::csdl($bd),
             'gio_ket_thuc' => ThoiGian::csdl($kt),
             'gia' => (int) $d['gia'],
+            'tien_coc' => $d['tien_coc'] ?? null,
             'la_gio_vang' => $request->boolean('la_gio_vang'),
             'dang_ap_dung' => $request->has('dang_ap_dung') ? $request->boolean('dang_ap_dung') : true,
         ];
