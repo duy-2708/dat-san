@@ -50,6 +50,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'sdt_xac_thuc_luc' => 'datetime',
             'khoa_keo_den' => 'datetime',
+            'cam_dat_den' => 'datetime',
             'han_che_luc' => 'datetime',
             'password' => 'hashed',
         ];
@@ -158,9 +159,20 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->han_che_luc !== null;
     }
 
+    /** Đang bị cấm đặt sân & cáp kèo (bùng tiền sân, báo chuyển khoản sai...). */
+    public function lyDoCamDat(): ?string
+    {
+        return $this->cam_dat_den && $this->cam_dat_den->isFuture()
+            ? 'Tài khoản bị cấm đặt sân và cáp kèo tới '.$this->cam_dat_den->format('d/m/Y').' ('.$this->ly_do_cam_dat.').'
+            : null;
+    }
+
     /** Lý do không được vào kèo, hoặc null nếu được. */
     public function lyDoKhongVaoKeo(bool $keoCoCoc): ?string
     {
+        if ($ly = $this->lyDoCamDat()) {
+            return $ly;
+        }
         if ($this->biHanChe()) {
             return 'Tài khoản đang bị hạn chế: '.$this->ly_do_han_che.'. Liên hệ chủ sân để được gỡ.';
         }

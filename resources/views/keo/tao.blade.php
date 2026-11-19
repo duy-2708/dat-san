@@ -20,6 +20,12 @@
         </div>
 
         <div id="oDoi" class="{{ $loai === 'doi_dau' ? '' : 'd-none' }}">
+            @if (! empty($doiCuaToi) && $doiCuaToi->isNotEmpty())
+                <label class="form-label">Đội của bạn</label>
+                <select name="doi_id" class="form-select mb-3">
+                    @foreach ($doiCuaToi as $doi) <option value="{{ $doi->id }}">{{ $doi->ten }}</option> @endforeach
+                </select>
+            @endif
             <label class="form-label">Đội THUA chịu bao nhiêu tiền sân?</label>
             <div class="d-flex flex-wrap gap-2 mb-2">
                 @foreach (\App\Models\Keo::TY_LE as $tl => $nhan)
@@ -47,6 +53,11 @@
         </select>
         <label class="form-label">Lời nhắn</label>
         <textarea name="mo_ta" rows="2" class="form-control mb-3" placeholder="VD: đá vui vẻ, áo xanh">{{ old('mo_ta') }}</textarea>
+        <div class="form-check mb-3">
+            <input type="hidden" name="cong_khai" value="1">
+            <input class="form-check-input" type="checkbox" name="cong_khai" value="0" id="rieng">
+            <label class="form-check-label" for="rieng"><strong>Kèo riêng</strong> — đã hẹn trước với đội khác: không hiện công khai, gửi link mời cho họ</label>
+        </div>
         <button class="btn btn-success w-100">Đăng kèo</button>
     </form>
 </div>

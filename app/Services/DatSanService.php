@@ -40,6 +40,9 @@ class DatSanService
         if ($khach->biHanChe()) {
             $this->loi('Tài khoản đang bị hạn chế đặt sân: '.$khach->ly_do_han_che.'. Liên hệ chủ sân để được gỡ.');
         }
+        if ($ly = $khach->lyDoCamDat()) {
+            $this->loi($ly);
+        }
         $hoSo = $san->chuSan->hoSoChuSan;
         if ($san->trang_thai !== 'hoat_dong' || ! $hoSo?->conHan()) {
             $this->loi('Sân này đang tạm ngưng nhận đặt.');
@@ -200,6 +203,9 @@ class DatSanService
             if ($don->trang_thai !== 'cho_thanh_toan') {
                 $this->loi($don->trang_thai === 'da_dat' ? 'Đơn này đã được xác nhận rồi.' : 'Đơn đã huỷ/hết hạn giữ chỗ. Hãy đặt lại cho khách.');
             }
+            if (\App\Models\Keo::where('dat_san_id', $don->id)->where('trang_thai', 'cho_coc')->exists()) {
+                $this->loi('Đơn của kèo: xác nhận cọc từng đội ở mục "Cọc kèo chờ xác nhận".');
+            }
 
             $don->forceFill(['trang_thai' => 'da_dat', 'xac_nhan_coc_boi_id' => $nguoi->id, 'xac_nhan_coc_luc' => now()])->save();
             GiaoDich::where('dat_san_id', $don->id)->where('trang_thai', 'cho_thanh_toan')
@@ -269,6 +275,109 @@ class DatSanService
 
             return $don;
         });
+    }
+
+    // =============================================================== CHỐNG BÙNG / BÁO CHUYỂN KHOẢN
+
+    public const PHUT_GIU_SAU_BAO_CHUYEN = 120;
+    public const PHAT_BAO_SAI = 5;
+    public const PHAT_KHONG_TRA_DU = 20;
+    public const NGAY_CAM = 30;
+
+    /** Khách bấm "Tôi đã chuyển khoản": mỗi đơn 1 lần, giữ chỗ thêm 2 tiếng, báo email chủ sân + nhân viên. */
+    public function baoDaChuyen(DatSan $don, User $khach): DatSan
+    {
+        $don = DB::transaction(function () use ($don, $khach) {
+            $don = DatSan::lockForUpdate()->findOrFail($don->id);
+            if ((int) $don->khach_id !== $khach->id || $don->trang_thai !== 'cho_thanh_toan') {
+                $this->loi('Đơn này không còn chờ cọc.');
+            }
+            if ($don->bao_da_chuyen_luc) {
+                $this->loi('Bạn đã báo chuyển khoản cho đơn này rồi. Chủ sân đang kiểm tra.');
+            }
+            $den = now()->addMinutes(self::PHUT_GIU_SAU_BAO_CHUYEN);
+            $don->forceFill(['bao_da_chuyen_luc' => now(), 'giu_cho_den' => $don->giu_cho_den?->gt($den) ? $don->giu_cho_den : $den])->save();
+
+            return $don;
+        });
+
+        $san = $don->san;
+        User::where(fn ($q) => $q->where('id', $san->chu_san_id)->orWhere(fn ($q) => $q->where('chu_san_id', $san->chu_san_id)->where('vai_tro', User::NHAN_VIEN)))
+            ->where('trang_thai', 'hoat_dong')->get()
+            ->each(fn (User $u) => $u->notify(new \App\Notifications\KhachBaoDaChuyen($don)));
+
+        return $don;
+    }
+
+    /** Chủ sân / nhân viên kiểm tra app ngân hàng: không thấy tiền → huỷ đơn, phạt khách báo sai. */
+    public function khongThayTien(DatSan $don, User $nguoi): DatSan
+    {
+        if ($don->trang_thai !== 'cho_thanh_toan' || ! $don->bao_da_chuyen_luc || ! $don->khach_id) {
+            $this->loi('Chỉ dùng cho đơn khách đã báo chuyển khoản mà chưa xác nhận.');
+        }
+        $don = $this->huy($don, $nguoi, 'Báo chuyển khoản sai (chủ sân không thấy tiền)');
+
+        DB::transaction(function () use ($don) {
+            $k = User::lockForUpdate()->findOrFail($don->khach_id);
+            $k->forceFill(['diem_uy_tin' => max(0, $k->diem_uy_tin - self::PHAT_BAO_SAI)])->save();
+            $this->ghiUyTin($k, -self::PHAT_BAO_SAI, 'bao_chuyen_sai', 'Đơn '.$don->ma_don);
+            $soLan = DB::table('lich_su_uy_tin')->where('user_id', $k->id)->where('ly_do', 'bao_chuyen_sai')
+                ->where('created_at', '>=', now()->subDays(self::NGAY_CAM))->count();
+            if ($soLan >= 2) {
+                $k->forceFill(['cam_dat_den' => now()->addDays(self::NGAY_CAM), 'ly_do_cam_dat' => 'báo chuyển khoản sai 2 lần trong 30 ngày'])->save();
+            }
+        });
+
+        return $don;
+    }
+
+    /**
+     * Chủ sân: khách đá xong không trả đủ tiền sân.
+     * Lần 1: trừ 20 uy tín + cấm đặt sân & cáp kèo 30 ngày. Lần 2: khoá hẳn tài khoản — email & SĐT
+     * vẫn nằm trong bảng users (UNIQUE) nên không đăng ký lại được bằng chúng.
+     */
+    public function khongThanhToanDu(DatSan $don, User $chuSan): User
+    {
+        if ($don->trang_thai !== 'da_dat' || ! $don->khach_id || $don->khong_tra_du_luc || $don->batDauLuc()->isFuture()) {
+            $this->loi('Chỉ báo với đơn online đã đá (hoặc đang đá) và chưa báo trước đó.');
+        }
+
+        return DB::transaction(function () use ($don, $chuSan) {
+            $don->forceFill(['khong_tra_du_luc' => now()])->save();
+            $k = User::lockForUpdate()->findOrFail($don->khach_id);
+            $lanTruoc = DatSan::where('khach_id', $k->id)->whereNotNull('khong_tra_du_luc')->where('id', '!=', $don->id)->exists();
+
+            $k->forceFill(['diem_uy_tin' => max(0, $k->diem_uy_tin - self::PHAT_KHONG_TRA_DU)]);
+            if ($lanTruoc) {
+                $k->forceFill(['trang_thai' => 'bi_khoa', 'ly_do_khoa' => 'Không thanh toán đủ tiền sân lần 2 (đơn '.$don->ma_don.')']);
+            } else {
+                $k->forceFill(['cam_dat_den' => now()->addDays(self::NGAY_CAM), 'ly_do_cam_dat' => 'không thanh toán đủ tiền sân đơn '.$don->ma_don]);
+            }
+            $k->save();
+            $this->ghiUyTin($k, -self::PHAT_KHONG_TRA_DU, 'khong_tra_du', 'Đơn '.$don->ma_don.' — báo bởi '.$chuSan->name);
+
+            return $k;
+        });
+    }
+
+    /** Scheduler: đơn khách báo đã chuyển còn ≤ 30 phút giữ chỗ mà chưa ai xử lý → nhắc lại chủ sân. */
+    public function nhacBaoChuyen(): int
+    {
+        $so = 0;
+        DatSan::with('san')->where('trang_thai', 'cho_thanh_toan')->whereNotNull('bao_da_chuyen_luc')->where('da_nhac_bao_chuyen', false)
+            ->where('giu_cho_den', '<=', now()->addMinutes(30))->get()
+            ->each(function (DatSan $don) use (&$so) {
+                $don->forceFill(['da_nhac_bao_chuyen' => true])->save();
+                User::find($don->san->chu_san_id)?->notify(new \App\Notifications\KhachBaoDaChuyen($don, true));
+                $so++;
+            });
+
+        return $so;
+    }
+
+    private function ghiUyTin(User $u, int $thayDoi, string $lyDo, string $ghiChu): void
+    {
+        DB::table('lich_su_uy_tin')->insert(['user_id' => $u->id, 'thay_doi' => $thayDoi, 'ly_do' => $lyDo, 'ghi_chu' => $ghiChu, 'created_at' => now()]);
     }
 
     /** Chủ sân đã tự chuyển trả cọc cho khách → bấm xác nhận để lưu vết. */
@@ -344,7 +453,7 @@ class DatSanService
     }
 
     /** Thời lượng đá tính từ giờ bắt đầu khung: bội số 15', 30'–240', không quá giờ đóng cửa. Trùng giờ đã có người do ghiDon chặn. */
-    private function kiemThoiLuong(San $san, KhungGio $khung, ?int $thoiLuong): int
+    public function kiemThoiLuong(San $san, KhungGio $khung, ?int $thoiLuong): int
     {
         $phut = $thoiLuong ?: $khung->soPhut();
         if ($phut % 15 !== 0 || $phut < 30 || $phut > 240) {

@@ -34,6 +34,17 @@
                         <li class="list-group-item d-flex justify-content-between"><span>Nội dung CK</span><strong class="font-monospace">{{ $don->ma_don }}</strong></li>
                         <li class="list-group-item d-flex justify-content-between"><span>Còn lại trả tại sân</span><span>{{ $tien($don->gia_chot - $don->tien_coc) }}</span></li>
                     </ul>
+                    @if ($gd?->phuong_thuc !== 'payos' && $don->khach_id === auth()->id())
+                        @if ($don->bao_da_chuyen_luc)
+                            <div class="alert alert-info py-2 small"><i class="bi bi-envelope-check"></i> Bạn đã báo chuyển lúc {{ $don->bao_da_chuyen_luc->format('H:i') }}. Chủ sân đã nhận email và đang kiểm tra.</div>
+                        @else
+                            <form method="POST" action="{{ route('khach.dat-san.da-chuyen', $don) }}" class="mb-3"
+                                  onsubmit="return confirm('Chỉ bấm khi ĐÃ chuyển xong. Báo sai sẽ bị huỷ đơn và trừ uy tín. Tiếp tục?')">@csrf
+                                <button class="btn btn-primary w-100"><i class="bi bi-send-check"></i> Tôi đã chuyển khoản</button>
+                                <div class="form-text">Bấm 1 lần: chủ sân nhận email, chỗ được giữ thêm 2 tiếng để chủ sân kiểm tra.</div>
+                            </form>
+                        @endif
+                    @endif
                     <div class="small text-muted mb-3"><i class="bi bi-info-circle"></i> Tiền chuyển thẳng vào tài khoản chủ sân. Trang tự cập nhật khi chủ sân xác nhận đã nhận.
                         Đã chuyển mà sắp hết giờ? Gọi sân: <a href="tel:{{ $hoSo->sdt_lien_he }}">{{ $hoSo->sdt_lien_he }}</a></div>
                 </div>

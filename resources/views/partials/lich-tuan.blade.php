@@ -74,6 +74,8 @@
                                         </select>
                                         <button class="btn btn-sm btn-success w-100">Đặt · cọc {{ $tien($k->cocTheoPhut($k->soPhut(), $tyLeCoc)) }}</button>
                                     </form>
+                                    <a href="{{ route('keo.tao-truoc', ['san' => $san->id, 'ngay' => $n['ngay']->toDateString(), 'khung' => $k->id]) }}"
+                                       class="btn btn-sm btn-outline-danger w-100 mt-1" title="Chưa cần đặt sân — đủ đội mới cọc">⚔ Cáp kèo giờ này</a>
                                 @else
                                     <div class="small text-muted mt-1">Trống — chỉ tài khoản <strong>khách</strong> đặt online.
                                         @can('view', $san) <a href="{{ route('quan-ly.san.lich', $san) }}">Đặt tại chỗ</a> @endcan</div>
@@ -90,6 +92,8 @@
                                     data-ngay="{{ $n['ngay']->toDateString() }}" data-khung="{{ $k->id }}"
                                     data-thoi-luong='@json(collect($k->cacThoiLuong($dongPhut))->map(fn ($p) => ['p' => $p, 'nhan' => $nhanPhut($p).' · '.$tien($k->giaTheoPhut($p)).'đ', 'chon' => $p === $k->soPhut()]))'
                                     data-nhan="{{ $n['ngay']->format('d/m') }} {{ $k->nhan() }}">+ Đặt tại chỗ</button>
+                            <a href="{{ route('keo.tao-truoc', ['san' => $san->id, 'ngay' => $n['ngay']->toDateString(), 'khung' => $k->id]) }}"
+                               class="btn btn-sm btn-outline-danger w-100 mt-1">⚔ Mở ô cáp kèo</a>
                         @elseif ($don)
                             <div class="small mt-1">
                                 <span class="badge bg-{{ $mau }}">{{ $nhan }}</span>

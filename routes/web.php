@@ -111,6 +111,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/san/{san}/dat-tai-cho', [QuanLyDatSanController::class, 'datTaiCho'])->name('san.dat-tai-cho');
             Route::patch('/dat-san/{datSan}/xac-nhan-coc', [QuanLyDatSanController::class, 'xacNhanCoc'])->name('dat-san.xac-nhan-coc');
             Route::patch('/dat-san/{datSan}/gia-han', [QuanLyDatSanController::class, 'giaHan'])->name('dat-san.gia-han');
+            Route::patch('/dat-san/{datSan}/khong-thay-tien', [QuanLyDatSanController::class, 'khongThayTien'])->name('dat-san.khong-thay-tien');
+            Route::patch('/dat-san/{datSan}/khong-tra-du', [QuanLyDatSanController::class, 'khongTraDu'])->name('dat-san.khong-tra-du'); // Policy: chỉ chủ sân
             Route::patch('/dat-san/{datSan}/huy', [QuanLyDatSanController::class, 'huy'])->name('dat-san.huy');       // Policy: chỉ chủ sân
             Route::patch('/dat-san/{datSan}/da-hoan', [QuanLyDatSanController::class, 'daHoan'])->name('dat-san.da-hoan'); // Policy: chỉ chủ sân
             Route::patch('/coc-keo/{giaoDich}/xac-nhan', [QuanLyKeoController::class, 'xacNhanCoc'])->name('coc-keo.xac-nhan');
@@ -174,7 +176,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // ---- Kèo: cọc + điểm danh (người tạo kèo hoặc phía sân; kiểm tra trong service) ----
         Route::get('/keo/coc/{giaoDich}', [KeoController::class, 'coc'])->name('keo.coc');
         Route::post('/keo/{keo}/diem-danh', [KeoController::class, 'diemDanh'])->name('keo.diem-danh');
-        Route::post('/keo/{keo}/ket-qua', [KeoController::class, 'baoKetQua'])->name('keo.ket-qua'); // đại diện 2 bên (kể cả chủ sân tạo kèo hộ)
+        Route::post('/keo/{keo}/ket-qua', [KeoController::class, 'baoKetQua'])->name('keo.ket-qua');
+        Route::get('/keo/tao-truoc', [KeoController::class, 'taoTruoc'])->name('keo.tao-truoc');      // khách hoặc phía sân
+        Route::post('/keo/truoc', [KeoController::class, 'luuTruoc'])->name('keo.luu-truoc');
+        Route::patch('/xin-keo/{xinKeo}', [KeoController::class, 'duyetXin'])->name('keo.duyet-xin');     // chủ kèo hoặc phía sân
+        Route::post('/keo/{keo}/them-doi', [KeoController::class, 'themDoi'])->name('keo.them-doi');      // phía sân // đại diện 2 bên (kể cả chủ sân tạo kèo hộ)
 
         // ---- Trang thanh toán của 1 đơn (Policy: khách của đơn hoặc phía sân) ----
         Route::get('/dat-san/{datSan}/thanh-toan', [DatSanController::class, 'thanhToan'])->name('dat-san.thanh-toan');
@@ -187,6 +193,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/keo/tao', [KeoController::class, 'create'])->name('keo.create');
             Route::post('/keo', [KeoController::class, 'store'])->name('keo.store');
             Route::post('/keo/{keo}/nhan', [KeoController::class, 'nhan'])->name('keo.nhan');
+            Route::post('/keo/{keo}/xin', [KeoController::class, 'xin'])->name('keo.xin');
             Route::post('/keo/{keo}/tham-gia', [KeoController::class, 'thamGia'])->name('keo.tham-gia');
             Route::post('/keo/{keo}/thanh-vien', [KeoController::class, 'themThanhVien'])->name('keo.thanh-vien');
             Route::post('/keo/{keo}/huy', [KeoController::class, 'huy'])->name('keo.huy');
@@ -202,6 +209,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/thanh-vien-doi/{thanhVien}', [DoiController::class, 'roi'])->name('doi.roi');
             Route::post('/giai-dau/{giaiDau}/dang-ky', [GiaiDauController::class, 'dangKy'])->name('giai-dau.dang-ky');
             Route::post('/dat-san', [DatSanController::class, 'store'])->name('dat-san.store');
+            Route::post('/dat-san/{datSan}/da-chuyen', [DatSanController::class, 'daChuyen'])->name('dat-san.da-chuyen');
         });
     });
 });

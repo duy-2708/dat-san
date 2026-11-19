@@ -100,7 +100,7 @@ class KeoController extends Controller
     public function huy(Request $request, Keo $keo): RedirectResponse
     {
         $u = $request->user();
-        abort_unless($u->laChuSan() && (int) $keo->datSan->san->chu_san_id === $u->id, 403);
+        abort_unless($u->laChuSan() && (int) $keo->sanThuc()->chu_san_id === $u->id, 403);
         $request->validate(['ly_do' => ['nullable', 'string', 'max:200']]);
         $so = $this->keo->huyKeoBoiSan($keo, $request->input('ly_do') ?: 'Chủ sân huỷ');
 
@@ -117,6 +117,6 @@ class KeoController extends Controller
 
     private function kiemTraSan(User $u, Keo $k): void
     {
-        abort_unless($u->idChuSanQuanLy() !== null && (int) $k->datSan->san->chu_san_id === $u->idChuSanQuanLy(), 403);
+        abort_unless($u->idChuSanQuanLy() !== null && (int) $k->sanThuc()->chu_san_id === $u->idChuSanQuanLy(), 403);
     }
 }

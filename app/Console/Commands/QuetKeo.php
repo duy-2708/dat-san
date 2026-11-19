@@ -14,6 +14,7 @@ class QuetKeo extends Command
     public function handle(KeoService $keo): int
     {
         $this->info('Nhả '.$keo->nhaCocQuaHan().' chỗ kèo quá hạn cọc.');
+        $this->info('Huỷ '.$keo->xuLyKeoTruocQuaHan().' kèo đã chốt nhưng không đủ cọc.');
         $this->info('Hạn chế '.$keo->kiemTraHanXacNhan().' người không xác nhận kết quả.');
 
         return self::SUCCESS;

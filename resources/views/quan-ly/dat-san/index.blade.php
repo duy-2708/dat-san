@@ -21,10 +21,17 @@
                     <div class="small">{{ $d->tenNguoiDat() }} · <a href="tel:{{ $d->sdtNguoiDat() }}">{{ $d->sdtNguoiDat() }}</a></div>
                     <div class="small">Nội dung CK: <strong class="font-monospace">{{ $d->ma_don }}</strong> · Cọc <strong>{{ $tien($d->tien_coc) }}</strong>
                         · giữ tới {{ $d->giu_cho_den?->format('H:i') }}</div>
+                    @if ($d->bao_da_chuyen_luc)
+                        <div class="small text-primary fw-semibold"><i class="bi bi-send-check"></i> Khách báo đã chuyển lúc {{ $d->bao_da_chuyen_luc->format('H:i') }} — kiểm tra app ngân hàng</div>
+                    @endif
                 </div>
                 <div class="d-flex flex-wrap gap-1 align-items-center">
                     <form method="POST" action="{{ route('quan-ly.dat-san.xac-nhan-coc', $d) }}">@csrf @method('PATCH')
                         <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Đã nhận cọc</button></form>
+                    @if ($d->bao_da_chuyen_luc)
+                        <form method="POST" action="{{ route('quan-ly.dat-san.khong-thay-tien', $d) }}" onsubmit="return confirm('Không thấy tiền {{ $d->ma_don }}? Đơn bị huỷ và khách bị trừ uy tín.')">@csrf @method('PATCH')
+                            <button class="btn btn-sm btn-outline-danger">Không thấy tiền</button></form>
+                    @endif
                     <form method="POST" action="{{ route('quan-ly.dat-san.gia-han', $d) }}">@csrf @method('PATCH')
                         <button class="btn btn-sm btn-outline-secondary">+15 phút</button></form>
                     @if ($laChu)
@@ -110,8 +117,18 @@
                 Giá {{ $tien($d->gia_chot) }} · đã cọc {{ $tien($d->xac_nhan_coc_luc ? $d->tien_coc : 0) }} · <strong>thu thêm {{ $tien($d->conLaiPhai()) }}</strong>
             </div>
             @if ($laChu)
-                <form method="POST" action="{{ route('quan-ly.dat-san.huy', $d) }}" onsubmit="return confirm('Huỷ đơn {{ $d->ma_don }}? Nếu khách đã cọc, bạn cần hoàn cọc.')">@csrf @method('PATCH')
-                    <button class="btn btn-sm btn-outline-danger">Huỷ</button></form>
+                @if ($d->khach_id && $d->batDauLuc()->isPast())
+                    @if ($d->khong_tra_du_luc)
+                        <span class="badge bg-danger">Đã báo không trả đủ</span>
+                    @else
+                        <form method="POST" action="{{ route('quan-ly.dat-san.khong-tra-du', $d) }}"
+                              onsubmit="return confirm('Báo {{ $d->tenNguoiDat() }} KHÔNG thanh toán đủ? Lần 1: trừ 20 uy tín + cấm đặt 30 ngày. Lần 2: khoá tài khoản.')">@csrf @method('PATCH')
+                            <button class="btn btn-sm btn-outline-dark">Không thanh toán đủ</button></form>
+                    @endif
+                @else
+                    <form method="POST" action="{{ route('quan-ly.dat-san.huy', $d) }}" onsubmit="return confirm('Huỷ đơn {{ $d->ma_don }}? Nếu khách đã cọc, bạn cần hoàn cọc.')">@csrf @method('PATCH')
+                        <button class="btn btn-sm btn-outline-danger">Huỷ</button></form>
+                @endif
             @endif
         </div>
     @empty

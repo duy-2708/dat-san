@@ -21,21 +21,35 @@
     <div class="card border-0 shadow-sm mb-3"><div class="card-body">
         <h2 class="h6">Lịch & kết quả</h2>
         @foreach ($g->tranDaus->groupBy('vong') as $vong => $ds)
-            <div class="small fw-semibold text-muted mt-2">{{ $vong }}</div>
+            <div class="small fw-semibold text-muted mt-3 mb-1 text-uppercase">{{ $vong }}</div>
             @foreach ($ds as $t)
-                <div class="d-flex align-items-center gap-2 border-bottom py-1 small">
-                    <span class="flex-grow-1 text-end">{{ $t->doiNha->ten }}</span>
-                    @if (! empty($choSua) && $g->trang_thai === 'dang_dien_ra')
-                        <form method="POST" action="{{ route('quan-ly.giai-dau.ket-qua', $t) }}" class="d-flex gap-1">@csrf @method('PATCH')
-                            <input name="ban_thang_nha" type="number" min="0" max="99" value="{{ $t->ban_thang_nha }}" class="form-control form-control-sm text-center" style="width: 52px">
-                            <input name="ban_thang_khach" type="number" min="0" max="99" value="{{ $t->ban_thang_khach }}" class="form-control form-control-sm text-center" style="width: 52px">
-                            <button class="btn btn-sm btn-outline-success py-0"><i class="bi bi-check-lg"></i></button>
+                @php $xong = $t->trang_thai === 'da_xong'; $sua = ! empty($choSua) && $g->trang_thai === 'dang_dien_ra'; @endphp
+                <div class="border rounded p-2 mb-2 {{ $xong ? 'bg-light' : 'bg-white' }}">
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>{{ $t->thoi_gian?->format('d/m H:i') ?? 'Chưa xếp giờ' }}</span>
+                        <span class="badge {{ $xong ? 'bg-success' : 'bg-secondary' }}">{{ $xong ? 'Đã xong' : 'Chưa đá' }}</span>
+                    </div>
+                    @if ($sua && (! $xong || request('sua') == $t->id))
+                        <form method="POST" action="{{ route('quan-ly.giai-dau.ket-qua', $t) }}" class="d-flex align-items-center gap-2 flex-wrap">@csrf @method('PATCH')
+                            <span class="flex-grow-1 text-end fw-semibold" style="min-width: 110px">{{ $t->doiNha->ten }}</span>
+                            <input name="ban_thang_nha" type="number" inputmode="numeric" min="0" max="99" value="{{ $t->ban_thang_nha }}" required
+                                   class="form-control form-control-lg text-center fw-bold" style="width: 70px" aria-label="Bàn {{ $t->doiNha->ten }}">
+                            <span class="fw-bold">–</span>
+                            <input name="ban_thang_khach" type="number" inputmode="numeric" min="0" max="99" value="{{ $t->ban_thang_khach }}" required
+                                   class="form-control form-control-lg text-center fw-bold" style="width: 70px" aria-label="Bàn {{ $t->doiKhach->ten }}">
+                            <span class="flex-grow-1 fw-semibold" style="min-width: 110px">{{ $t->doiKhach->ten }}</span>
+                            <button class="btn btn-success w-100 mt-1">Lưu tỉ số</button>
                         </form>
                     @else
-                        <strong class="px-2">{{ $t->trang_thai === 'da_xong' ? $t->ban_thang_nha.' – '.$t->ban_thang_khach : 'vs' }}</strong>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="flex-grow-1 text-end fw-semibold">{{ $t->doiNha->ten }}</span>
+                            <span class="fs-4 fw-bold px-2">{{ $xong ? $t->ban_thang_nha.' – '.$t->ban_thang_khach : 'vs' }}</span>
+                            <span class="flex-grow-1 fw-semibold">{{ $t->doiKhach->ten }}</span>
+                        </div>
+                        @if ($sua && $xong)
+                            <div class="text-end"><a href="?sua={{ $t->id }}" class="small">Sửa tỉ số</a></div>
+                        @endif
                     @endif
-                    <span class="flex-grow-1">{{ $t->doiKhach->ten }}</span>
-                    @if ($t->thoi_gian) <span class="text-muted">{{ $t->thoi_gian->format('d/m H:i') }}</span> @endif
                 </div>
             @endforeach
         @endforeach

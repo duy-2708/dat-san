@@ -65,6 +65,19 @@
             <div class="text-muted small bg-white rounded p-3 mb-2">Chưa có lịch nào. Tìm sân và đặt ngay!</div>
         @endforelse
 
+        @if ($keoCuaToi->isNotEmpty())
+            <h2 class="h6 mt-3">Kèo của tôi</h2>
+            <div class="list-group shadow-sm mb-2">
+                @foreach ($keoCuaToi as $k)
+                    <a href="{{ route('keo.show', ['keo' => $k, 'ma' => $k->cong_khai ? null : $k->ma_moi]) }}" class="list-group-item list-group-item-action small d-flex justify-content-between">
+                        <span>⚔ {{ $k->batDauLuc()->format('d/m') }} · {{ $k->nhanGio() }} — {{ $k->sanThuc()->ten }}
+                            · {{ $k->doiA?->ten ?? '?' }} vs {{ $k->doiB?->ten ?? '...' }}</span>
+                        <span class="badge bg-secondary">{{ \App\Models\Keo::TRANG_THAI[$k->trang_thai] }}</span>
+                    </a>
+                @endforeach
+            </div>
+        @endif
+
         @if ($daQua->isNotEmpty())
             <h2 class="h6 mt-3">Đã qua / đã huỷ</h2>
             <div class="list-group shadow-sm">

@@ -37,7 +37,12 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.cai-dat.edit') }}">Cài đặt</a></li>
                     @elseif (auth()->user()->coVaiTro('chu_san', 'nhan_vien'))
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.tong-quan') }}">Quản lý</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.dat-san.index') }}">Đơn đặt</a></li>
+                        @php
+                            $soBaoChuyen = \App\Models\DatSan::where('trang_thai', 'cho_thanh_toan')->whereNotNull('bao_da_chuyen_luc')
+                                ->whereHas('san', fn ($q) => $q->where('chu_san_id', auth()->user()->idChuSanQuanLy()))->count();
+                        @endphp
+                        <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.dat-san.index') }}">Đơn đặt
+                            @if ($soBaoChuyen) <span class="badge rounded-pill bg-danger" title="Khách báo đã chuyển, chờ kiểm tra">{{ $soBaoChuyen }}</span> @endif</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.san.index') }}">Sân & lịch</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.giai-dau.index') }}">Tổ chức giải</a></li>
                         @if (auth()->user()->laChuSan())

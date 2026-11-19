@@ -15,6 +15,7 @@ class NhaChoQuaHan extends Command
     {
         $so = $datSan->nhaChoQuaHan();
         $this->info("Đã nhả {$so} đơn quá hạn.");
+        $this->info('Nhắc '.$datSan->nhacBaoChuyen().' đơn khách báo đã chuyển sắp hết giữ chỗ.');
 
         return self::SUCCESS;
     }

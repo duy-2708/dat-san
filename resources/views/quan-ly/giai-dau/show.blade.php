@@ -47,13 +47,14 @@
     @if ($g->trang_thai === 'dang_dien_ra' && $daDuyet->count() >= 2)
         <div class="card border-0 shadow-sm mb-3"><div class="card-body">
             <h2 class="h6">Thêm trận {{ $g->the_thuc === 'loai_truc_tiep' ? '(tứ kết, bán kết, chung kết...)' : '' }}</h2>
-            <form method="POST" action="{{ route('quan-ly.giai-dau.tran', $g) }}" class="row g-2">@csrf
-                <div class="col-6 col-md-3"><select name="doi_nha_id" class="form-select form-select-sm">@foreach ($daDuyet as $dk) <option value="{{ $dk->doi_id }}">{{ $dk->doi->ten }}</option> @endforeach</select></div>
-                <div class="col-6 col-md-3"><select name="doi_khach_id" class="form-select form-select-sm">@foreach ($daDuyet as $dk) <option value="{{ $dk->doi_id }}" @selected($loop->index === 1)>{{ $dk->doi->ten }}</option> @endforeach</select></div>
-                <div class="col-6 col-md-2"><input name="vong" class="form-control form-control-sm" placeholder="Vòng" value="Chung kết"></div>
-                <div class="col-6 col-md-2"><input type="datetime-local" name="thoi_gian" class="form-control form-control-sm"></div>
-                <div class="col-8 col-md-1"><select name="san_id" class="form-select form-select-sm"><option value="">Sân</option>@foreach ($sans as $s) <option value="{{ $s->id }}">{{ $s->ten }}</option> @endforeach</select></div>
-                <div class="col-4 col-md-1"><button class="btn btn-sm btn-success w-100">+</button></div>
+            <form method="POST" action="{{ route('quan-ly.giai-dau.tran', $g) }}" class="row g-2 small">@csrf
+                <div class="col-6"><label class="form-label mb-0">Đội nhà</label><select name="doi_nha_id" class="form-select">@foreach ($daDuyet as $dk) <option value="{{ $dk->doi_id }}">{{ $dk->doi->ten }}</option> @endforeach</select></div>
+                <div class="col-6"><label class="form-label mb-0">Đội khách</label><select name="doi_khach_id" class="form-select">@foreach ($daDuyet as $dk) <option value="{{ $dk->doi_id }}" @selected($loop->index === 1)>{{ $dk->doi->ten }}</option> @endforeach</select></div>
+                <div class="col-6 col-md-4"><label class="form-label mb-0">Vòng</label><input name="vong" class="form-control" list="dsVong" value="Chung kết">
+                    <datalist id="dsVong"><option value="Vòng bảng"><option value="Tứ kết"><option value="Bán kết"><option value="Tranh hạng ba"><option value="Chung kết"></datalist></div>
+                <div class="col-6 col-md-4"><label class="form-label mb-0">Giờ đá</label><input type="datetime-local" name="thoi_gian" class="form-control"></div>
+                <div class="col-8 col-md-3"><label class="form-label mb-0">Sân</label><select name="san_id" class="form-select"><option value="">—</option>@foreach ($sans as $s) <option value="{{ $s->id }}">{{ $s->ten }}</option> @endforeach</select></div>
+                <div class="col-4 col-md-1 d-flex align-items-end"><button class="btn btn-success w-100">Thêm</button></div>
             </form>
         </div></div>
     @endif

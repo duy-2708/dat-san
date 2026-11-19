@@ -31,7 +31,9 @@ class DatSanController extends Controller
 
         return view('quan-ly.dat-san.index', [
             'ngay' => $ngay,
-            'choCoc' => (clone $base)->where('trang_thai', 'cho_thanh_toan')->orderBy('giu_cho_den')->get(),
+            'choCoc' => (clone $base)->where('trang_thai', 'cho_thanh_toan')
+                ->whereNotIn('id', \App\Models\Keo::where('trang_thai', 'cho_coc')->whereNotNull('dat_san_id')->select('dat_san_id'))
+                ->orderByRaw('bao_da_chuyen_luc is null')->orderBy('giu_cho_den')->get(),
             'choHoan' => (clone $base)->where('xu_ly_coc', 'cho_hoan')->orderBy('huy_luc')->get(),
             'trongNgay' => (clone $base)->where('ngay', $ngay->toDateString())->where('trang_thai', 'da_dat')
                 ->orderBy('gio_bat_dau')->get(),
@@ -85,6 +87,24 @@ class DatSanController extends Controller
         $this->datSan->xacNhanCoc($datSan, $request->user());
 
         return back()->with('thanh_cong', "Đã xác nhận cọc {$datSan->ma_don}. Khách nhận email xác nhận.");
+    }
+
+    public function khongThayTien(Request $request, DatSan $datSan): RedirectResponse
+    {
+        Gate::authorize('quanLy', $datSan);
+        $this->datSan->khongThayTien($datSan, $request->user());
+
+        return back()->with('thanh_cong', "Đã huỷ {$datSan->ma_don} và trừ uy tín khách báo sai.");
+    }
+
+    public function khongTraDu(Request $request, DatSan $datSan): RedirectResponse
+    {
+        abort_unless($request->user()->laChuSan() && (int) $datSan->san->chu_san_id === $request->user()->id, 403); // chỉ chủ sân
+        $k = $this->datSan->khongThanhToanDu($datSan, $request->user());
+
+        return back()->with('thanh_cong', $k->trang_thai === 'bi_khoa'
+            ? "{$k->name} không trả đủ lần 2 — tài khoản đã bị khoá."
+            : "Đã trừ uy tín và cấm {$k->name} đặt sân, cáp kèo tới ".$k->cam_dat_den->format('d/m/Y').'.');
     }
 
     public function giaHan(DatSan $datSan): RedirectResponse

@@ -35,6 +35,13 @@ class DatSanController extends Controller
         return redirect()->route('dat-san.thanh-toan', $don);
     }
 
+    public function daChuyen(Request $request, DatSan $datSan): RedirectResponse
+    {
+        $this->datSan->baoDaChuyen($datSan, $request->user());
+
+        return back()->with('thanh_cong', 'Đã báo chủ sân. Chỗ được giữ thêm 2 tiếng trong lúc chủ sân kiểm tra.');
+    }
+
     public function thanhToan(DatSan $datSan): View
     {
         Gate::authorize('view', $datSan);
