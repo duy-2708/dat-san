@@ -18,15 +18,20 @@
 @endif
 
 <div class="row g-3">
-    @foreach ([['bi-grid-3x3-gap', 'Sân & giá', 'Giai đoạn 2'], ['bi-calendar-week', 'Lịch đặt sân', 'Giai đoạn 3'], ['bi-qr-code', 'Cài đặt thanh toán', 'Giai đoạn 3'], ['bi-people', 'Kèo', 'Giai đoạn 6']] as [$icon, $ten, $gd])
+    @foreach ([
+        ['bi-grid-3x3-gap', 'Sân & giá', route('quan-ly.san.index'), 'Sân, ảnh, khung giờ'],
+        ['bi-calendar-week', 'Lịch đặt sân', null, 'Giai đoạn 3'],
+        ['bi-qr-code', 'Cài đặt thanh toán', null, 'Giai đoạn 3'],
+        ['bi-people', 'Kèo', null, 'Giai đoạn 6'],
+    ] as [$icon, $ten, $link, $gd])
         <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm h-100 text-center">
+            <a @if ($link) href="{{ $link }}" @endif class="card border-0 shadow-sm h-100 text-center text-decoration-none text-body {{ $link ? '' : 'opacity-50' }}">
                 <div class="card-body">
                     <i class="bi {{ $icon }} fs-2 text-success"></i>
                     <div class="fw-semibold mt-1">{{ $ten }}</div>
                     <div class="small text-muted">{{ $gd }}</div>
                 </div>
-            </div>
+            </a>
         </div>
     @endforeach
 </div>

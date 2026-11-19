@@ -31,6 +31,7 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.tai-khoan.index') }}">Tài khoản</a></li>
                     @elseif (auth()->user()->coVaiTro('chu_san', 'nhan_vien'))
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.tong-quan') }}">Quản lý</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.san.index') }}">Sân & giá</a></li>
                         @if (auth()->user()->laChuSan())
                             <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.nhan-vien.index') }}">Nhân viên</a></li>
                         @endif

@@ -14,7 +14,8 @@ class DatabaseSeeder extends Seeder
             XaPhuongSeeder::class,
             GoiThueBaoSeeder::class,
             TaiKhoanMauSeeder::class,
-            // Giai đoạn 2 sẽ thêm: SanMauSeeder (sân, ảnh, sân ghép, khung giờ), NgayLeSeeder
+            NgayLeSeeder::class,
+            SanMauSeeder::class,
             // Giai đoạn 3 sẽ thêm: DatSanMauSeeder (đơn đặt nhiều ngày)
         ]);
     }
