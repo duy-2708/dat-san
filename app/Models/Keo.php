@@ -25,7 +25,7 @@ class Keo extends Model
         return [
             'han_xac_nhan_luc' => 'datetime', 'a_bao_luc' => 'datetime', 'b_bao_luc' => 'datetime',
             'hoan_tat_luc' => 'datetime', 'diem_danh_luc' => 'datetime', 'han_coc_luc' => 'datetime', 'ngay' => 'date',
-            'cong_khai' => 'boolean', 'thoi_luong' => 'integer',
+            'cong_khai' => 'boolean', 'mien_coc' => 'boolean', 'thoi_luong' => 'integer',
             'tien_san' => 'integer', 'coc_moi_ben' => 'integer', 'tien_moi_nguoi' => 'integer',
             'tien_coc_ca_nhan' => 'integer', 'ty_le_thua' => 'integer', 'so_nguoi_can' => 'integer',
         ];

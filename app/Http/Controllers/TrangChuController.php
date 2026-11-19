@@ -46,13 +46,14 @@ class TrangChuController extends Controller
         $keoMoi = \App\Models\Keo::with(['san.xaPhuong', 'datSan.san.xaPhuong', 'khungGio', 'doiA', 'daiDienA', 'nguoiTao'])
             ->where('trang_thai', 'dang_tim')->where('cong_khai', true)
             ->where(fn ($q) => $q->where('ngay', '>=', today()->toDateString())->orWhereHas('datSan', fn ($d) => $d->where('ngay', '>=', today()->toDateString())))
-            ->latest('id')->limit(40)->get()
+            ->latest('id')->limit(200)->get()
             ->filter(fn ($k) => $k->batDauLuc()->isFuture()
                 && (! ($loc['tinh'] ?? null) || (int) $k->sanThuc()->xaPhuong->tinh_thanh_id === (int) $loc['tinh']))
-            ->take(6);
+            ->values();
 
         return view('trang-chu', [
-            'keoMoi' => $keoMoi,
+            'soKeoMo' => $keoMoi->count(),
+            'keoMoi' => $keoMoi->take(6),
             'sans' => $sans,
             'homNay' => $homNay,
             'loc' => $loc,

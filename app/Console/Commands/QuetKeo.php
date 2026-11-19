@@ -15,6 +15,7 @@ class QuetKeo extends Command
     {
         $this->info('Nhả '.$keo->nhaCocQuaHan().' chỗ kèo quá hạn cọc.');
         $this->info('Huỷ '.$keo->xuLyKeoTruocQuaHan().' kèo đã chốt nhưng không đủ cọc.');
+        $this->info('Huỷ '.$keo->quetKeoTruocMatSan().' kèo chưa đặt sân bị người khác đặt mất giờ.');
         $this->info('Hạn chế '.$keo->kiemTraHanXacNhan().' người không xác nhận kết quả.');
 
         return self::SUCCESS;

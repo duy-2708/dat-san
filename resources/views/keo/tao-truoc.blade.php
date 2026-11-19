@@ -37,6 +37,11 @@
             <label class="form-label">Đội nhờ làm kèo <span class="text-muted small">(tuỳ chọn — để trống thì mở ô kèo cho đội tự xin)</span></label>
             <input name="doi_nho" list="dsDoiNho" value="{{ old('doi_nho') }}" class="form-control mb-3" placeholder="Gõ tên đội">
             <datalist id="dsDoiNho">@foreach ($tatCaDoi as $d) <option value="{{ $d->ten }}"> @endforeach</datalist>
+            <div class="form-check mb-3 p-2 ps-4 border rounded bg-light">
+                <input class="form-check-input" type="checkbox" name="mien_coc" value="1" id="mienCoc">
+                <label class="form-check-label small" for="mienCoc"><strong>Sân bảo lãnh — miễn cọc</strong>: đủ hai đội là đặt sân luôn, hai đội không phải cọc 15%.
+                    Sân tự chịu nếu đội bùng (vẫn điểm danh & trừ uy tín như thường).</label>
+            </div>
         @endif
 
         <label class="form-label">Đá bao lâu</label>

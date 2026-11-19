@@ -57,7 +57,7 @@ class LocKeoTest extends TestCase
         $this->get('/keo?loai_san=7')->assertDontSee('FC Phú Nhuận');
 
         // Trang chủ và lịch sân đều thấy kèo
-        $this->get('/')->assertSee('Kèo đang tìm đối');
+        $this->get('/')->assertSee('kèo đang tìm đối');
         $this->get('/san/'.$this->a->slug)->assertSee('Có kèo tìm đối');
     }
 

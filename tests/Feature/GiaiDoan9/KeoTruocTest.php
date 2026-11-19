@@ -131,13 +131,37 @@ class KeoTruocTest extends TestCase
         ])->assertSessionHasErrors('keo');
     }
 
-    public function test_san_bi_dat_mat_truoc_khi_chot_thi_khong_chot_duoc(): void
+    public function test_san_bi_dat_mat_thi_keo_chua_dat_tu_huy(): void
     {
         $k = $this->dangKeo();
         $this->datOnline(User::factory()->create(), $this->a, '17:00')->assertSessionHasNoErrors();
+        $this->assertSame('da_huy', $k->fresh()->trang_thai);
+        $this->actingAs($this->truongB)->post("/keo/{$k->id}/xin", ['doi_id' => $this->doiB->id])->assertSessionHasErrors('keo');
+        $this->get("/san/{$this->a->slug}")->assertDontSee('Có kèo tìm đối');
+    }
+
+    public function test_san_bao_lanh_mien_coc_chot_la_da_dat(): void
+    {
+        $this->actingAs($this->chu)->post('/keo/truoc', [
+            'san_id' => $this->a->id, 'ngay' => '2026-11-18', 'khung_gio_id' => $this->khung($this->a, '19:00')->id,
+            'ty_le_thua' => 50, 'trinh_do' => 'kha', 'doi_nho' => 'FC Alpha', 'mien_coc' => 1,
+        ])->assertSessionHasNoErrors();
+        $k = Keo::firstOrFail();
+        $this->assertTrue($k->mien_coc);
         $this->actingAs($this->truongB)->post("/keo/{$k->id}/xin", ['doi_id' => $this->doiB->id]);
-        $x = XinKeo::firstOrFail();
-        $this->actingAs($this->truongA)->patch("/xin-keo/{$x->id}", ['dong_y' => 1])->assertSessionHasErrors('dat_san');
-        $this->assertSame('dang_tim', $k->fresh()->trang_thai);
+        $this->actingAs($this->chu)->patch('/xin-keo/'.XinKeo::where('user_id', $this->truongB->id)->value('id'), ['dong_y' => 1])
+            ->assertSessionHasNoErrors();
+
+        $k->refresh();
+        $this->assertSame('da_chot', $k->trang_thai);
+        $this->assertSame('da_dat', DatSan::findOrFail($k->dat_san_id)->trang_thai);
+        $this->assertSame(0, GiaoDich::count());
+
+        // Khách tự tạo kèo không được miễn cọc
+        $this->actingAs($this->truongA)->post('/keo/truoc', [
+            'san_id' => $this->a->id, 'ngay' => '2026-11-18', 'khung_gio_id' => $this->khung($this->a, '21:00')->id,
+            'doi_id' => $this->doiA->id, 'ty_le_thua' => 70, 'trinh_do' => 'kha', 'mien_coc' => 1,
+        ]);
+        $this->assertFalse(Keo::latest('id')->first()->mien_coc);
     }
 }

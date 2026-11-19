@@ -423,7 +423,7 @@ class DatSanService
     public function ghiDon(San $san, string $ngay, int $bd, int $kt, array $cot): DatSan
     {
         try {
-            return DB::transaction(function () use ($san, $ngay, $bd, $kt, $cot) {
+            $don = DB::transaction(function () use ($san, $ngay, $bd, $kt, $cot) {
                 $don = new DatSan;
                 $don->forceFill($cot + [
                     'ma_don' => 'T'.Str::upper(Str::random(15)), // tạm, đổi ngay sau khi có id
@@ -450,6 +450,12 @@ class DatSanService
         } catch (UniqueConstraintViolationException) {
             $this->loi('Khung giờ này vừa có người đặt (hoặc sân ghép liên quan đang bận). Vui lòng chọn giờ khác.');
         }
+        // Đặt sân thường → kèo "chưa đặt sân" trùng khung giờ tự huỷ. Đơn do kèo tự chốt thì KeoService tự quét (trừ chính kèo đó).
+        if (! str_starts_with((string) ($cot['ghi_chu'] ?? ''), 'Kèo #')) {
+            app(KeoService::class)->quetKeoTruocMatSan();
+        }
+
+        return $don;
     }
 
     /** Thời lượng đá tính từ giờ bắt đầu khung: bội số 15', 30'–240', không quá giờ đóng cửa. Trùng giờ đã có người do ghiDon chặn. */

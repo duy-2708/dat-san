@@ -18,7 +18,7 @@
     // Kèo công khai đang tìm đối trong tuần này của sân → huy hiệu trên khung giờ
     $keoMo = \App\Models\Keo::with(['datSan', 'khungGio'])->where('trang_thai', 'dang_tim')->where('cong_khai', true)
         ->where(fn ($q) => $q->where('san_id', $san->id)->orWhereHas('datSan', fn ($d) => $d->where('san_id', $san->id)))
-        ->get()->keyBy(fn ($k) => $k->batDauLuc()->format('Y-m-d H:i'));
+        ->with('doiA')->get()->groupBy(fn ($k) => $k->batDauLuc()->format('Y-m-d H:i'));
 @endphp
 <div class="d-flex align-items-center justify-content-between mb-2">
     <a href="{{ $url }}?tu={{ $truoc->toDateString() }}" class="btn btn-sm btn-outline-secondary {{ $cheDo === 'khach' && $tu->lte(today()) ? 'disabled' : '' }}"><i class="bi bi-chevron-left"></i></a>
@@ -60,8 +60,12 @@
                         <span class="fw-semibold">{{ $k->nhan() }}</span>
                         @if ($k->la_gio_vang) <i class="bi bi-star-fill text-warning" title="Giờ vàng"></i> @endif
                     </div>
-                    @if ($keoTai = $keoMo->get($n['ngay']->format('Y-m-d').' '.substr($k->gio_bat_dau, 0, 5)))
-                        <a href="{{ route('keo.show', $keoTai) }}" class="badge bg-danger text-decoration-none mb-1">⚔ Có kèo tìm đối{{ $keoTai->doiA ? ' · '.$keoTai->doiA->ten : '' }}</a>
+                    @if ($dsKeo = $keoMo->get($n['ngay']->format('Y-m-d').' '.substr($k->gio_bat_dau, 0, 5)))
+                        @if ($dsKeo->count() === 1)
+                            <a href="{{ route('keo.show', $dsKeo[0]) }}" class="badge bg-danger text-decoration-none mb-1 d-block text-wrap text-start lh-sm">⚔ Có kèo tìm đối{{ $dsKeo[0]->doiA ? ' · '.$dsKeo[0]->doiA->ten : '' }}</a>
+                        @else
+                            <a href="{{ route('keo.index', ['san' => $san->id, 'ngay' => $n['ngay']->toDateString()]) }}" class="badge bg-danger text-decoration-none mb-1 d-block text-wrap text-start lh-sm">⚔ {{ $dsKeo->count() }} kèo tìm đối — xem</a>
+                        @endif
                     @endif
                     <div class="small text-muted">{{ $tien($k->gia) }}đ</div>
 
@@ -69,6 +73,8 @@
                         @if ($tt === 'trong')
                             @auth
                                 @if ($laKhachDangNhap)
+                                    <button type="button" class="btn btn-sm btn-success w-100 mt-1" data-bs-toggle="collapse" data-bs-target="#o{{ $n['ngay']->format('md') }}{{ $k->id }}">Đặt / Cáp kèo <i class="bi bi-chevron-down"></i></button>
+                                    <div class="collapse" id="o{{ $n['ngay']->format('md') }}{{ $k->id }}">
                                     <form method="POST" action="{{ route('khach.dat-san.store') }}" class="mt-1">
                                         @csrf
                                         <input type="hidden" name="san_id" value="{{ $san->id }}">
@@ -83,6 +89,7 @@
                                     </form>
                                     <a href="{{ route('keo.tao-truoc', ['san' => $san->id, 'ngay' => $n['ngay']->toDateString(), 'khung' => $k->id]) }}"
                                        class="btn btn-sm btn-outline-danger w-100 mt-1" title="Chưa cần đặt sân — đủ đội mới cọc">⚔ Cáp kèo giờ này</a>
+                                    </div>
                                 @else
                                     <div class="small text-muted mt-1">Trống — chỉ tài khoản <strong>khách</strong> đặt online.
                                         @can('view', $san) <a href="{{ route('quan-ly.san.lich', $san) }}">Đặt tại chỗ</a> @endcan</div>

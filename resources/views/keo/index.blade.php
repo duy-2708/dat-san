@@ -73,7 +73,7 @@
             @endif
             <div class="flex-grow-1 small" style="min-width: 0">
                 <div class="d-flex justify-content-between gap-2 mb-1">
-                    <span class="fw-bold fs-6 text-truncate">
+                    <span class="fw-bold fs-6 text-break">
                         @if ($k->laDoiDau()) {{ $doi?->ten ?? 'Ô kèo của sân' }} <span class="text-danger">⚔</span> <span class="fw-normal text-muted">chờ đối thủ</span>
                         @else Ghép lẻ · cần {{ $k->so_nguoi_can }} người @endif
                     </span>
@@ -87,10 +87,12 @@
                     @else <i class="bi bi-shop"></i> Sân tạo, chờ đội vào @endif
                 </div>
                 <div><i class="bi bi-calendar-event"></i> <strong>{{ $k->batDauLuc()->format('d/m') }} · {{ $k->nhanGio() }}</strong> · {{ $san->tenHienThi() }} · sân {{ $san->loai_san }}</div>
-                <div class="text-muted text-truncate"><i class="bi bi-geo-alt"></i> {{ $san->diaChiDayDu() }}</div>
+                <div class="text-muted"><i class="bi bi-geo-alt"></i> {{ $san->diaChiDayDu() }}</div>
                 <div class="mt-1">
                     @if ($k->laDoiDau())
-                        Thua chịu <strong>{{ \App\Models\Keo::TY_LE[$k->ty_le_thua] }}</strong> · {{ $k->laKeoTruoc() ? 'mỗi đội cọc' : 'nhận kèo cọc' }} <strong>{{ $tien($k->coc_moi_ben) }}</strong>
+                        Thua chịu <strong>{{ \App\Models\Keo::TY_LE[$k->ty_le_thua] }}</strong> ·
+                        @if ($k->mien_coc) <strong class="text-success">miễn cọc (sân bảo lãnh)</strong>
+                        @else {{ $k->laKeoTruoc() ? 'mỗi đội cọc' : 'nhận kèo cọc' }} <strong>{{ $tien($k->coc_moi_ben) }}</strong> @endif
                     @else
                         {{ $tien($k->tien_moi_nguoi) }}/người @if ($k->tien_coc_ca_nhan) · cọc {{ $tien($k->tien_coc_ca_nhan) }} @endif
                     @endif

@@ -152,6 +152,7 @@ class KeoController extends Controller
             'cong_khai' => ['nullable', 'boolean'],
             'mo_ta' => ['nullable', 'string', 'max:500'],
             'doi_nho' => ['nullable', 'string', 'max:150'],
+            'mien_coc' => ['nullable', 'boolean'],
         ]);
         $doiNho = null;
         if (! empty($d['doi_nho'])) {

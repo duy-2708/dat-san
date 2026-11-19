@@ -31,6 +31,7 @@
                 <span class="badge {{ $keo->laDoiDau() ? 'bg-danger' : 'bg-primary' }}">{{ $keo->laDoiDau() ? 'Đội đấu đội' : 'Ghép lẻ' }}</span>
                 <span class="badge bg-{{ $mauTt[$keo->trang_thai] }}">{{ \App\Models\Keo::TRANG_THAI[$keo->trang_thai] }}</span>
                 @if (! $keo->cong_khai) <span class="badge bg-dark">Kèo riêng</span> @endif
+                @if ($keo->mien_coc) <span class="badge bg-success">Sân bảo lãnh · miễn cọc</span> @endif
                 <h1 class="h5 mt-2 mb-0">{{ $keo->batDauLuc()->format('d/m/Y') }} · {{ $keo->nhanGio() }}</h1>
                 <div class="small"><a href="{{ route('san.show', $sanK) }}">{{ $sanK->tenHienThi() }}</a> · {{ $sanK->diaChiDayDu() }}</div>
             </div>
@@ -38,7 +39,7 @@
                 Trình độ: <strong>{{ \App\Models\Keo::TRINH_DO[$keo->trinh_do] }}</strong><br>
                 @if ($keo->laDoiDau())
                     Thua chịu: <strong>{{ \App\Models\Keo::TY_LE[$keo->ty_le_thua] }}</strong> · tiền sân {{ $tien($keo->tien_san) }}<br>
-                    {{ $keo->laKeoTruoc() ? 'Mỗi đội cọc' : 'Bên B cọc' }} {{ $tien($keo->coc_moi_ben) }}
+                    {{ $keo->mien_coc ? 'Miễn cọc (sân bảo lãnh)' : ($keo->laKeoTruoc() ? 'Mỗi đội cọc ' : 'Bên B cọc ').$tien($keo->coc_moi_ben) }}
                 @else
                     Cần {{ $keo->so_nguoi_can }} người · {{ $tien($keo->tien_moi_nguoi) }}/người
                     @if ($keo->tien_coc_ca_nhan) <br>Cọc {{ $tien($keo->tien_coc_ca_nhan) }} @endif

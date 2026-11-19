@@ -39,23 +39,29 @@
 </form>
 
 @if ($keoMoi->isNotEmpty())
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h2 class="h6 mb-0">⚔ Kèo đang tìm đối {{ ($loc['tinh'] ?? null) ? 'gần bạn' : '' }}</h2>
-        <a href="{{ route('keo.index', array_filter(['tinh' => $loc['tinh'] ?? null])) }}" class="small">Xem tất cả kèo →</a>
-    </div>
-    <div class="row g-2 mb-4">
-        @foreach ($keoMoi as $k)
-            @php $sk = $k->sanThuc(); @endphp
-            <div class="col-12 col-md-6 col-lg-4">
-                <a href="{{ route('keo.show', $k) }}" class="d-flex gap-2 align-items-center bg-white rounded shadow-sm p-2 text-decoration-none text-body h-100 border-start border-4 {{ $k->laKeoTruoc() ? 'border-info' : 'border-success' }}">
-                    <img src="{{ $k->doiA?->logoUrl() ?? 'https://ui-avatars.com/api/?background=dc3545&color=fff&name='.urlencode($sk->ten) }}" width="40" height="40" class="rounded-circle object-fit-cover" alt="">
-                    <span class="small" style="min-width: 0">
-                        <strong>{{ $k->laDoiDau() ? ($k->doiA?->ten ?? 'Ô kèo của sân').' ⚔ ?' : 'Ghép lẻ · cần '.$k->so_nguoi_can }}</strong><br>
-                        {{ $k->batDauLuc()->format('d/m') }} {{ $k->nhanGio() }} · <span class="text-muted">{{ $sk->ten }}</span>
-                    </span>
-                </a>
+    @php $moSan = (bool) ($loc['tinh'] ?? null); @endphp
+    <div class="bg-white rounded shadow-sm p-2 mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#keoMoi" aria-expanded="{{ $moSan ? 'true' : 'false' }}">
+                ⚔ {{ $soKeoMo }} kèo đang tìm đối{{ $moSan ? ' trong tỉnh đã chọn' : '' }} <i class="bi bi-chevron-down"></i></button>
+            <a href="{{ route('keo.index', array_filter(['tinh' => $loc['tinh'] ?? null])) }}" class="small">Xem tất cả & lọc kèo →</a>
+        </div>
+        <div class="collapse {{ $moSan ? 'show' : '' }}" id="keoMoi">
+            <div class="row g-2 mt-1">
+                @foreach ($keoMoi as $k)
+                    @php $sk = $k->sanThuc(); @endphp
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <a href="{{ route('keo.show', $k) }}" class="d-flex gap-2 align-items-center border rounded p-2 text-decoration-none text-body h-100 border-start border-4 {{ $k->laKeoTruoc() ? 'border-info' : 'border-success' }}">
+                            <img src="{{ $k->doiA?->logoUrl() ?? 'https://ui-avatars.com/api/?background=dc3545&color=fff&name='.urlencode($sk->ten) }}" width="40" height="40" class="rounded-circle object-fit-cover flex-shrink-0" alt="">
+                            <span class="small text-break">
+                                <strong>{{ $k->laDoiDau() ? ($k->doiA?->ten ?? 'Ô kèo của sân').' ⚔ chờ đối thủ' : 'Ghép lẻ · cần '.$k->so_nguoi_can.' người' }}</strong><br>
+                                {{ $k->batDauLuc()->format('d/m') }} {{ $k->nhanGio() }} · <span class="text-muted">{{ $sk->ten }}</span>
+                            </span>
+                        </a>
+                    </div>
+                @endforeach
             </div>
-        @endforeach
+        </div>
     </div>
 @endif
 

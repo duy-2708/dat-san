@@ -284,6 +284,7 @@ class KeoService
             'coc_moi_ben' => (int) (ceil($gia * self::TY_LE_COC_BEN_B / 100 / 1000) * 1000),
             'han_xac_nhan_luc' => $ngayC->copy()->addMinutes($bd + $phut + self::PHUT_XAC_NHAN),
             'cong_khai' => ! isset($d['cong_khai']) || (bool) $d['cong_khai'], 'ma_moi' => Str::lower(Str::random(10)),
+            'mien_coc' => $laSan && ! empty($d['mien_coc']),
             'trang_thai' => 'dang_tim',
         ]);
         DB::transaction(function () use ($k, $u, $laSan) {
@@ -421,12 +422,49 @@ class KeoService
         return $so;
     }
 
+    /**
+     * Kèo trước còn đang tìm mà khung giờ đã bị người khác đặt mất → tự huỷ (không ai mất tiền vì chưa cọc).
+     * Gọi ngay sau mỗi lần đặt sân, và trong lịch quét định kỳ.
+     */
+    public function quetKeoTruocMatSan(?int $truKeoId = null): int
+    {
+        $so = 0;
+        Keo::with(['san', 'khungGio'])->whereNotNull('san_id')->whereNull('dat_san_id')->where('trang_thai', 'dang_tim')
+            ->where('ngay', '>=', today()->toDateString())
+            ->when($truKeoId, fn ($q) => $q->where('id', '!=', $truKeoId))
+            ->get()
+            ->each(function (Keo $k) use (&$so) {
+                $bd = $k->khungGio?->phutBatDau();
+                if ($bd === null || $this->conTrong($k->san, $k->ngay->toDateString(), $bd, $bd + $k->thoi_luong)) {
+                    return;
+                }
+                $k->forceFill(['trang_thai' => 'da_huy', 'mo_ta' => trim(($k->mo_ta ? $k->mo_ta."\n" : '').'[Huỷ: khung giờ đã có người đặt sân]')])->save();
+                XinKeo::where('keo_id', $k->id)->where('trang_thai', 'cho_duyet')->update(['trang_thai' => 'tu_choi']);
+                $so++;
+            });
+
+        return $so;
+    }
+
     private function chotKeoTruoc(Keo $k): Keo
     {
         $san = $k->san;
         $hoSo = $san->chuSan->hoSoChuSan;
         $den = now()->addMinutes($hoSo->phut_giu_cho);
         $bd = $k->khungGio->phutBatDau();
+
+        if ($k->mien_coc) {
+            // Sân bảo lãnh: đặt luôn, không ai phải cọc
+            $don = app(DatSanService::class)->ghiDon($san, $k->ngay->toDateString(), $bd, $bd + $k->thoi_luong, [
+                'khach_id' => $k->dai_dien_a_id, 'khung_gio_id' => $k->khung_gio_id, 'gia_chot' => $k->tien_san,
+                'tien_coc' => 0, 'nguon' => 'online', 'trang_thai' => 'da_dat', 'xac_nhan_coc_luc' => now(),
+                'ghi_chu' => 'Kèo #'.$k->id.' — sân bảo lãnh, miễn cọc',
+            ]);
+            $k->forceFill(['dat_san_id' => $don->id, 'trang_thai' => 'da_chot', 'han_coc_luc' => null])->save();
+            $this->quetKeoTruocMatSan($k->id);
+
+            return $k;
+        }
 
         $don = app(DatSanService::class)->ghiDon($san, $k->ngay->toDateString(), $bd, $bd + $k->thoi_luong, [
             'khach_id' => $k->dai_dien_a_id, 'khung_gio_id' => $k->khung_gio_id, 'gia_chot' => $k->tien_san,
@@ -435,6 +473,7 @@ class KeoService
         ]);
         $k->forceFill(['dat_san_id' => $don->id, 'trang_thai' => 'cho_coc', 'han_coc_luc' => $den])->save();
         $k->setRelation('datSan', $don);
+        $this->quetKeoTruocMatSan($k->id);
 
         foreach (['a', 'b'] as $ben) {
             $tg = $k->thamGias()->where('ben', $ben)->where('vai_tro', 'dai_dien')->firstOrFail();
