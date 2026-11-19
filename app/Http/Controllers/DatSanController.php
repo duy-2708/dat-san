@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DatSan;
+use App\Models\GiaoDich;
 use App\Models\San;
 use App\Services\DatSanService;
 use App\Support\VietQr;
@@ -38,12 +39,17 @@ class DatSanController extends Controller
 
         $datSan->load('san.chuSan.hoSoChuSan', 'san.xaPhuong.tinhThanh');
         $hoSo = $datSan->san->chuSan->hoSoChuSan;
+        $gd = GiaoDich::where('dat_san_id', $datSan->id)->latest('id')->first();
         $qr = null;
-        if ($datSan->trang_thai === 'cho_thanh_toan' && $hoSo?->ngan_hang_bin && $hoSo->so_tai_khoan) {
-            $qr = VietQr::svg(VietQr::chuoi($hoSo->ngan_hang_bin, $hoSo->so_tai_khoan, $datSan->tien_coc, $datSan->ma_don));
+        if ($datSan->trang_thai === 'cho_thanh_toan') {
+            if ($gd?->phuong_thuc === 'payos' && ! empty($gd->du_lieu_cong['qr'])) {
+                $qr = VietQr::svg($gd->du_lieu_cong['qr']);                     // QR do PayOS cấp (tự xác nhận)
+            } elseif ($hoSo?->ngan_hang_bin && $hoSo->so_tai_khoan) {
+                $qr = VietQr::svg(VietQr::chuoi($hoSo->ngan_hang_bin, $hoSo->so_tai_khoan, $datSan->tien_coc, $datSan->ma_don));
+            }
         }
 
-        return view('dat-san.thanh-toan', ['don' => $datSan, 'hoSo' => $hoSo, 'qr' => $qr]);
+        return view('dat-san.thanh-toan', ['don' => $datSan, 'hoSo' => $hoSo, 'qr' => $qr, 'gd' => $gd]);
     }
 
     /** Trang thanh toán gọi mỗi 5 giây để tự chuyển sang "Đã đặt" khi chủ sân xác nhận. */

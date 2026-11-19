@@ -18,10 +18,18 @@
                     <div class="d-inline-block p-2 bg-white border rounded mb-2" style="max-width: 280px">{!! $qr !!}</div>
                     <p class="small text-muted mb-3">Mở app ngân hàng hoặc ví (MoMo, ZaloPay...) → Quét QR. Số tiền và nội dung đã điền sẵn.</p>
 
+                    @if ($gd?->phuong_thuc === 'payos')
+                        <div class="alert alert-success py-2 small"><i class="bi bi-lightning-charge-fill"></i> Sân dùng cổng tự động: chuyển xong là <strong>tự xác nhận</strong>, không cần chờ chủ sân.</div>
+                        @if (! empty($gd->du_lieu_cong['checkout_url']))
+                            <a href="{{ $gd->du_lieu_cong['checkout_url'] }}" class="btn btn-outline-success btn-sm mb-3" rel="noopener">Mở trang thanh toán PayOS</a>
+                        @endif
+                    @endif
                     <ul class="list-group list-group-flush text-start small mb-3">
+                        @if ($gd?->phuong_thuc !== 'payos')
                         <li class="list-group-item d-flex justify-content-between"><span>Ngân hàng</span><strong>{{ \App\Support\VietQr::tenNganHang($hoSo->ngan_hang_bin) }}</strong></li>
                         <li class="list-group-item d-flex justify-content-between"><span>Số tài khoản</span><strong>{{ $hoSo->so_tai_khoan }}</strong></li>
                         <li class="list-group-item d-flex justify-content-between"><span>Chủ tài khoản</span><strong>{{ $hoSo->ten_chu_tai_khoan }}</strong></li>
+                        @endif
                         <li class="list-group-item d-flex justify-content-between"><span>Số tiền cọc</span><strong class="text-success">{{ $tien($don->tien_coc) }}</strong></li>
                         <li class="list-group-item d-flex justify-content-between"><span>Nội dung CK</span><strong class="font-monospace">{{ $don->ma_don }}</strong></li>
                         <li class="list-group-item d-flex justify-content-between"><span>Còn lại trả tại sân</span><span>{{ $tien($don->gia_chot - $don->tien_coc) }}</span></li>

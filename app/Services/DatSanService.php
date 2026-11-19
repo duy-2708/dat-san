@@ -8,6 +8,7 @@ use App\Models\KhungGio;
 use App\Models\San;
 use App\Models\User;
 use App\Notifications\DatSanThanhCong;
+use App\Payments\QuanLyCong;
 use App\Support\ThoiGian;
 use Carbon\Carbon;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -28,7 +29,7 @@ class DatSanService
     public const SO_NGAY_DAT_TRUOC = 30;
     public const SO_DON_CHO_TOI_DA = 2;   // một khách giữ tối đa 2 ô chưa cọc cùng lúc
 
-    public function __construct(private BangGia $bangGia)
+    public function __construct(private BangGia $bangGia, private QuanLyCong $quanLyCong)
     {
     }
 
@@ -40,7 +41,8 @@ class DatSanService
         if ($san->trang_thai !== 'hoat_dong' || ! $hoSo?->conHan()) {
             $this->loi('Sân này đang tạm ngưng nhận đặt.');
         }
-        if (! $hoSo->ngan_hang_bin || ! $hoSo->so_tai_khoan) {
+        $dungCong = $hoSo->phuong_thuc_tt === 'payos' && $hoSo->payos_client_id && $hoSo->payos_api_key && $hoSo->payos_checksum_key;
+        if (! $dungCong && (! $hoSo->ngan_hang_bin || ! $hoSo->so_tai_khoan)) {
             $this->loi('Chủ sân chưa cài đặt tài khoản nhận cọc. Vui lòng gọi '.$hoSo->sdt_lien_he.' để đặt.');
         }
 
@@ -76,13 +78,69 @@ class DatSanService
             'dat_san_id' => $don->id,
             'chu_san_id' => $san->chu_san_id,
             'nguoi_tra_id' => $khach->id,
-            'phuong_thuc' => 'vietqr',
+            'phuong_thuc' => $dungCong ? 'payos' : 'vietqr',
             'noi_dung_ck' => $don->ma_don,
             'so_tien' => $don->tien_coc,
             'trang_thai' => 'cho_thanh_toan',
         ])->save();
 
+        if ($dungCong) {
+            // Cách B: tạo yêu cầu thanh toán trên cổng của CHÍNH chủ sân. Lỗi → huỷ giữ chỗ, trả ô.
+            try {
+                $kq = $this->quanLyCong->cong('payos')->taoThanhToan($gd, $don->ma_don, $don->giu_cho_den->getTimestamp(), $hoSo);
+                $gd->forceFill(['ma_cong' => $kq['ma_cong'], 'du_lieu_cong' => $kq])->save();
+            } catch (\Throwable $e) {
+                report($e);
+                $this->huy($don, $khach, 'Lỗi tạo thanh toán qua cổng');
+                $this->loi('Cổng thanh toán của sân đang lỗi, vui lòng thử lại sau ít phút hoặc gọi '.$hoSo->sdt_lien_he.'.');
+            }
+        }
+
         return $don;
+    }
+
+    /**
+     * Cổng báo tiền đã về (webhook đã kiểm chữ ký). Trả về mã kết quả để ghi nhật ký.
+     *  - Sai số tiền → KHÔNG xác nhận (chủ sân xem lại).
+     *  - Đơn còn chờ cọc → tự chuyển "Đã đặt".
+     *  - Đơn đã bị nhả vì quá hạn mà tiền mới về → đánh dấu chờ hoàn cọc cho khách.
+     */
+    public function nhanTienTuCong(GiaoDich $gd, int $soTien, string $thamChieu, array $duLieu): string
+    {
+        [$ketQua, $don] = DB::transaction(function () use ($gd, $soTien, $thamChieu, $duLieu) {
+            $gd = GiaoDich::lockForUpdate()->findOrFail($gd->id);
+            if ($gd->trang_thai === 'thanh_cong') {
+                return ['da_xu_ly_truoc', null];
+            }
+            if ($soTien !== (int) $gd->so_tien) {
+                $gd->forceFill(['du_lieu_cong' => array_merge((array) $gd->du_lieu_cong, ['webhook_sai_tien' => $duLieu])])->save();
+
+                return ['sai_so_tien', null];
+            }
+
+            $gd->forceFill([
+                'trang_thai' => 'thanh_cong', 'thanh_toan_luc' => now(), 'ma_tham_chieu' => $thamChieu,
+                'du_lieu_cong' => array_merge((array) $gd->du_lieu_cong, ['webhook' => $duLieu]),
+            ])->save();
+
+            $don = DatSan::lockForUpdate()->findOrFail($gd->dat_san_id);
+            if ($don->trang_thai === 'cho_thanh_toan') {
+                $don->forceFill(['trang_thai' => 'da_dat', 'xac_nhan_coc_luc' => now(), 'xac_nhan_coc_boi_id' => null])->save();
+
+                return ['da_xac_nhan', $don];
+            }
+            if ($don->trang_thai === 'da_huy' && $don->xu_ly_coc === 'khong_ap_dung') {
+                $don->forceFill(['xac_nhan_coc_luc' => now(), 'xu_ly_coc' => 'cho_hoan'])->save();
+
+                return ['tien_ve_sau_khi_huy', null];
+            }
+
+            return ['da_xu_ly_truoc', null];
+        });
+
+        $don?->khach?->notify(new DatSanThanhCong($don));
+
+        return $ketQua;
     }
 
     // =============================================================== CHỦ SÂN / NHÂN VIÊN

@@ -12,6 +12,7 @@ use App\Http\Controllers\QuanLy\DatSanController as QuanLyDatSanController;
 use App\Http\Controllers\QuanLy\ThanhToanController;
 use App\Http\Controllers\SanCongKhaiController;
 use App\Http\Controllers\TrangChuController;
+use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\QuanLy\AnhSanController;
 use App\Http\Controllers\QuanLy\KhungGioController;
 use App\Http\Controllers\QuanLy\NgayLeController;
@@ -27,6 +28,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [TrangChuController::class, 'index'])->name('trang-chu');
+
+// Cổng thanh toán gọi về (không CSRF, không đăng nhập; kiểm chữ ký bên trong)
+Route::post('/webhook/{cong}/{token}', [WebhookController::class, 'nhan'])->middleware('throttle:120,1')->name('webhook.nhan');
 Route::get('/dia-chi/xa-phuong', [DiaChiController::class, 'xaPhuong'])->name('dia-chi.xa-phuong');
 Route::get('/san/{san:slug}', [SanCongKhaiController::class, 'show'])->name('san.show'); // ai cũng xem được lịch trống/đã đặt
 
