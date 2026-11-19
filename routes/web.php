@@ -5,7 +5,11 @@ use App\Http\Controllers\Admin\TaiKhoanController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\BangDieuKhienController;
 use App\Http\Controllers\HoSo\SoDienThoaiController;
+use App\Http\Controllers\CauThuController;
 use App\Http\Controllers\DatSanController;
+use App\Http\Controllers\DoiController;
+use App\Http\Controllers\GiaiDauController;
+use App\Http\Controllers\QuanLy\GiaiDauController as QuanLyGiaiDauController;
 use App\Http\Controllers\DiaChiController;
 use App\Http\Controllers\KeoController;
 use App\Http\Controllers\KhachController;
@@ -37,6 +41,10 @@ Route::get('/dia-chi/xa-phuong', [DiaChiController::class, 'xaPhuong'])->name('d
 Route::get('/san/{san:slug}', [SanCongKhaiController::class, 'show'])->name('san.show'); // ai cũng xem được lịch trống/đã đặt
 Route::get('/keo', [KeoController::class, 'index'])->name('keo.index');
 Route::get('/keo/{keo}', [KeoController::class, 'show'])->whereNumber('keo')->name('keo.show');
+Route::get('/doi/{doi}', [DoiController::class, 'show'])->name('doi.show');
+Route::get('/cau-thu/{user}', [CauThuController::class, 'show'])->whereNumber('user')->name('cau-thu.show');
+Route::get('/giai-dau', [GiaiDauController::class, 'index'])->name('giai-dau.index');
+Route::get('/giai-dau/{giaiDau}', [GiaiDauController::class, 'show'])->name('giai-dau.show');
 
 // ---- Đăng nhập Google ----
 Route::middleware('guest')->group(function () {
@@ -107,6 +115,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::put('/khung-gio/{khungGio}', [KhungGioController::class, 'update'])->name('khung-gio.update');
                 Route::delete('/khung-gio/{khungGio}', [KhungGioController::class, 'destroy'])->name('khung-gio.destroy');
 
+                Route::get('/giai-dau', [QuanLyGiaiDauController::class, 'index'])->name('giai-dau.index');
+                Route::get('/giai-dau/tao', [QuanLyGiaiDauController::class, 'create'])->name('giai-dau.create');
+                Route::post('/giai-dau', [QuanLyGiaiDauController::class, 'store'])->name('giai-dau.store');
+                Route::get('/giai-dau/{giaiDau}', [QuanLyGiaiDauController::class, 'show'])->name('giai-dau.show');
+                Route::patch('/giai-dau/{giaiDau}/dong-dang-ky', [QuanLyGiaiDauController::class, 'dongDangKy'])->name('giai-dau.dong-dang-ky');
+                Route::post('/giai-dau/{giaiDau}/tran', [QuanLyGiaiDauController::class, 'themTran'])->name('giai-dau.tran');
+                Route::patch('/giai-dau/{giaiDau}/ket-thuc', [QuanLyGiaiDauController::class, 'ketThuc'])->name('giai-dau.ket-thuc');
+                Route::patch('/dang-ky-giai/{dangKy}', [QuanLyGiaiDauController::class, 'duyet'])->name('giai-dau.duyet');
+                Route::patch('/tran-dau/{tranDau}', [QuanLyGiaiDauController::class, 'ketQua'])->name('giai-dau.ket-qua');
+
                 Route::get('/thanh-toan', [ThanhToanController::class, 'edit'])->name('thanh-toan.edit');
                 Route::put('/thanh-toan', [ThanhToanController::class, 'update'])->name('thanh-toan.update');
 
@@ -120,6 +138,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::patch('/nhan-vien/{nhanVien}/khoa', [NhanVienController::class, 'khoa'])->name('nhan-vien.khoa');
             });
         });
+
+        // ---- Hồ sơ cá nhân ----
+        Route::get('/ho-so', [CauThuController::class, 'edit'])->name('ho-so.edit');
+        Route::put('/ho-so', [CauThuController::class, 'update'])->name('ho-so.update');
 
         // ---- Kèo: cọc + điểm danh (người tạo kèo hoặc phía sân; kiểm tra trong service) ----
         Route::get('/keo/coc/{giaoDich}', [KeoController::class, 'coc'])->name('keo.coc');
@@ -140,6 +162,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/keo/{keo}/tham-gia', [KeoController::class, 'thamGia'])->name('keo.tham-gia');
             Route::post('/keo/{keo}/thanh-vien', [KeoController::class, 'themThanhVien'])->name('keo.thanh-vien');
             Route::post('/keo/{keo}/huy', [KeoController::class, 'huy'])->name('keo.huy');
+
+            // Đội (đội trưởng / thành viên; kiểm tra trong DoiService)
+            Route::get('/doi-moi', [DoiController::class, 'create'])->name('doi.create');
+            Route::post('/doi', [DoiController::class, 'store'])->name('doi.store');
+            Route::put('/doi/{doi}', [DoiController::class, 'update'])->name('doi.update');
+            Route::post('/doi/{doi}/xin-vao', [DoiController::class, 'xinVao'])->name('doi.xin-vao');
+            Route::post('/doi/{doi}/thanh-vien', [DoiController::class, 'themThanhVien'])->name('doi.thanh-vien');
+            Route::post('/doi/{doi}/doi-truong', [DoiController::class, 'chuyenDoiTruong'])->name('doi.doi-truong');
+            Route::patch('/thanh-vien-doi/{thanhVien}/duyet', [DoiController::class, 'duyet'])->name('doi.duyet');
+            Route::delete('/thanh-vien-doi/{thanhVien}', [DoiController::class, 'roi'])->name('doi.roi');
+            Route::post('/giai-dau/{giaiDau}/dang-ky', [GiaiDauController::class, 'dangKy'])->name('giai-dau.dang-ky');
             Route::post('/dat-san', [DatSanController::class, 'store'])->name('dat-san.store');
         });
     });

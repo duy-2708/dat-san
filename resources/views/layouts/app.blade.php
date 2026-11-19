@@ -26,6 +26,7 @@
         <div class="collapse navbar-collapse" id="menuChinh">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ route('keo.index') }}">Cáp kèo</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('giai-dau.index') }}">Giải đấu</a></li>
                 @auth
                     @if (auth()->user()->laAdmin())
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.chu-san.index') }}">Chủ sân</a></li>
@@ -35,6 +36,7 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.dat-san.index') }}">Đơn đặt</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.san.index') }}">Sân & lịch</a></li>
                         @if (auth()->user()->laChuSan())
+                            <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.giai-dau.index') }}">Tổ chức giải</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.thanh-toan.edit') }}">Thanh toán</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.nhan-vien.index') }}">Nhân viên</a></li>
                         @endif
@@ -50,6 +52,10 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{{ route('bang-dieu-khien') }}">Bảng điều khiển</a></li>
+                            @if (auth()->user()->laKhach())
+                                <li><a class="dropdown-item" href="{{ route('cau-thu.show', auth()->user()) }}">Hồ sơ cầu thủ</a></li>
+                                <li><a class="dropdown-item" href="{{ route('khach.doi.create') }}">Tạo đội</a></li>
+                            @endif
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">

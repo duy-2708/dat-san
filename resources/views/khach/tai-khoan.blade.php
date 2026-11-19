@@ -11,7 +11,7 @@
     <div class="col-md-4">
         <div class="card border-0 shadow-sm text-center">
             <div class="card-body">
-                <img src="{{ $u->anh_dai_dien ?: 'https://ui-avatars.com/api/?background=198754&color=fff&name='.urlencode($u->name) }}"
+                <img src="{{ $u->anhDaiDienUrl() }}"
                      class="rounded-circle mb-2" width="96" height="96" alt="Ảnh đại diện" style="object-fit:cover">
                 <h1 class="h5 mb-0">{{ $u->name }}</h1>
                 <div class="text-muted small">{{ $u->email }} · {{ $u->so_dien_thoai }}</div>
@@ -21,6 +21,13 @@
                     <div><div class="fw-bold fs-5">{{ $u->diem_uy_tin }}</div><div class="small text-muted">Uy tín</div></div>
                 </div>
                 <div class="small text-muted mt-1">{{ $u->uyTinNhan() }}</div>
+                <div class="d-flex gap-1 justify-content-center mt-2">
+                    <a href="{{ route('cau-thu.show', $u) }}" class="btn btn-sm btn-outline-success">Hồ sơ cầu thủ</a>
+                    <a href="{{ route('khach.doi.create') }}" class="btn btn-sm btn-outline-primary">Tạo đội</a>
+                </div>
+                @foreach ($u->doiDangChoi as $doi)
+                    <a href="{{ route('doi.show', $doi) }}" class="d-inline-flex align-items-center gap-1 small mt-2 me-2"><img src="{{ $doi->logoUrl() }}" width="22" height="22" class="rounded-circle" alt="">{{ $doi->ten }}</a>
+                @endforeach
                 @if ($u->biHanChe()) <div class="alert alert-danger small py-1 mt-2 mb-0">Bị hạn chế: {{ $u->ly_do_han_che }}</div> @endif
                 @if ($u->khoa_keo_den?->isFuture()) <div class="alert alert-warning small py-1 mt-2 mb-0">Khoá vào kèo tới {{ $u->khoa_keo_den->format('d/m/Y') }}</div> @endif
             </div>

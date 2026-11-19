@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * Một bảng users cho mọi vai trò. Cột vai_tro quyết định quyền;
@@ -77,6 +79,22 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sans(): HasMany
     {
         return $this->hasMany(San::class, 'chu_san_id');
+    }
+
+    /** Các đội đang chơi. */
+    public function doiDangChoi(): BelongsToMany
+    {
+        return $this->belongsToMany(Doi::class, 'thanh_vien_doi')->wherePivot('trang_thai', 'dang_choi')->withPivot('vai_tro', 'so_ao');
+    }
+
+    /** Ảnh đại diện: file đã tải lên, ảnh Google, hoặc ảnh chữ cái. */
+    public function anhDaiDienUrl(): string
+    {
+        if (! $this->anh_dai_dien) {
+            return 'https://ui-avatars.com/api/?background=198754&color=fff&name='.urlencode($this->name);
+        }
+
+        return str_starts_with($this->anh_dai_dien, 'http') ? $this->anh_dai_dien : Storage::disk('public')->url($this->anh_dai_dien);
     }
 
     public function hoSoChuSan(): HasOne
