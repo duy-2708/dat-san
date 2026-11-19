@@ -84,6 +84,10 @@
                                     <div class="text-truncate fw-semibold">{{ $don->tenNguoiDat() }}</div>
                                     <div><a href="tel:{{ $don->sdtNguoiDat() }}">{{ $don->sdtNguoiDat() }}</a></div>
                                     <div class="text-muted">{{ $don->ma_don }} · {{ $don->nguon === 'tai_cho' ? 'Tại chỗ' : 'Online' }}</div>
+                                    @if ($don->nguon === 'tai_cho' && $don->trang_thai === 'da_dat' && $don->batDauLuc()->isFuture())
+                                        @php $keoO = \App\Models\Keo::where('dat_san_id', $don->id)->first(); @endphp
+                                        <a href="{{ $keoO ? route('keo.show', $keoO) : route('quan-ly.keo.create', $don) }}" class="btn btn-sm btn-outline-danger py-0 mt-1">{{ $keoO ? 'Xem kèo' : 'Tạo kèo hộ' }}</a>
+                                    @endif
                                 @endif
                             </div>
                         @else

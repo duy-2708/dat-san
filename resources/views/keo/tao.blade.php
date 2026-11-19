@@ -8,7 +8,7 @@
     <p class="small text-muted">{{ $don->san->tenHienThi() }} · {{ \Carbon\Carbon::parse($don->ngay)->format('d/m/Y') }} {{ $don->khungGioNhan() }} · tiền sân {{ $tien($don->gia_chot) }}</p>
     @error('keo') <div class="alert alert-danger py-2">{{ $message }}</div> @enderror
 
-    <form method="POST" action="{{ route('khach.keo.store') }}" class="card card-body border-0 shadow-sm" novalidate>
+    <form method="POST" action="{{ $action ?? route('khach.keo.store') }}" class="card card-body border-0 shadow-sm" novalidate>
         @csrf
         <input type="hidden" name="ma_don" value="{{ $don->ma_don }}">
         @php $loai = old('loai', 'doi_dau'); @endphp

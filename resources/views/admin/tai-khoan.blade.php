@@ -30,7 +30,13 @@
                     @if ($u->trang_thai === 'bi_khoa') <span class="badge bg-danger" title="{{ $u->ly_do_khoa }}">Bị khoá</span>
                     @else <span class="badge bg-success">Hoạt động</span> @endif
                 </td>
-                <td class="text-end">@include('admin.nut-khoa', ['u' => $u])</td>
+                <td class="text-end">
+                    @if ($u->biHanChe())
+                        <form method="POST" action="{{ route('admin.tai-khoan.go-han-che', $u) }}" class="d-inline">@csrf @method('PATCH')
+                            <button class="btn btn-sm btn-outline-primary" title="{{ $u->ly_do_han_che }}">Gỡ hạn chế</button></form>
+                    @endif
+                    @include('admin.nut-khoa', ['u' => $u])
+                </td>
             </tr>
         @endforeach
         </tbody>

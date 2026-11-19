@@ -42,6 +42,13 @@ class TaiKhoanController extends Controller
         return back()->with('thanh_cong', "Đã khoá tài khoản {$user->email}.");
     }
 
+    public function goHanChe(User $user, \App\Services\KeoService $keo): RedirectResponse
+    {
+        $keo->goHanChe($user);
+
+        return back()->with('thanh_cong', "Đã gỡ hạn chế cho {$user->email}.");
+    }
+
     public function moKhoa(User $user): RedirectResponse
     {
         Gate::authorize('khoaTaiKhoan', $user);

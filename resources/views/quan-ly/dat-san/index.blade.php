@@ -51,6 +51,18 @@
     @endforeach
 @endif
 
+{{-- CỌC KÈO CẦN HOÀN --}}
+@if ($laChu && $cocKeoHoan->isNotEmpty())
+    <h2 class="h6 mt-4"><i class="bi bi-arrow-counterclockwise text-danger"></i> Cọc kèo cần hoàn</h2>
+    @foreach ($cocKeoHoan as $g)
+        <div class="card border-0 shadow-sm mb-2 border-start border-danger border-4"><div class="card-body py-2 d-flex flex-wrap justify-content-between gap-2 align-items-center">
+            <div class="small">Hoàn <strong>{{ $tien($g->so_tien) }}</strong> cho {{ $g->nguoiTra?->name }} ({{ $g->nguoiTra?->so_dien_thoai }}) · khoản {{ $g->noi_dung_ck }}</div>
+            <form method="POST" action="{{ route('quan-ly.coc-keo.da-hoan', $g) }}">@csrf @method('PATCH')
+                <button class="btn btn-sm btn-outline-success">Đã hoàn</button></form>
+        </div></div>
+    @endforeach
+@endif
+
 {{-- KÈO CẦN XỬ LÝ --}}
 @if ($keoXuLy->isNotEmpty())
     <h2 class="h6 mt-4"><i class="bi bi-flag text-danger"></i> Kèo cần điểm danh / chốt kết quả</h2>

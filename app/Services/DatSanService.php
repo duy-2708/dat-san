@@ -260,6 +260,11 @@ class DatSanService
             DB::table('o_lich')->where('dat_san_id', $don->id)->delete(); // nhả ô → người khác đặt được ngay
             GiaoDich::where('dat_san_id', $don->id)->where('trang_thai', 'cho_thanh_toan')->update(['trang_thai' => 'da_huy']);
 
+            // Lịch có kèo → huỷ kèo, ai đã cọc kèo thì chờ chủ sân hoàn
+            if ($keo = \App\Models\Keo::where('dat_san_id', $don->id)->first()) {
+                app(KeoService::class)->huyKeoBoiSan($keo, 'Lịch sân bị huỷ');
+            }
+
             return $don;
         });
     }

@@ -39,12 +39,22 @@ class KeoService
 
     // ================================================================ TẠO / THAM GIA
 
+    /**
+     * Khách tạo kèo cho lịch của mình; HOẶC chủ sân / nhân viên tạo kèo hộ cho lịch đặt TẠI CHỖ
+     * (khách gọi điện, không có tài khoản). Kèo do sân tạo: bên A không có thành viên trên web,
+     * chủ sân thay mặt bên A báo kết quả.
+     */
     public function taoKeo(User $u, DatSan $don, array $d): Keo
     {
-        if ((int) $don->khach_id !== $u->id || $don->trang_thai !== 'da_dat' || $don->batDauLuc()->lte(now())) {
-            $this->loi('Chỉ tạo kèo cho lịch đã đặt (đã cọc) của bạn và chưa tới giờ đá.');
+        $laSan = $this->laPhiaSan($u, $don);
+        $hopLe = $don->trang_thai === 'da_dat' && $don->batDauLuc()->isFuture()
+            && ($laSan ? $don->khach_id === null : (int) $don->khach_id === $u->id);
+        if (! $hopLe) {
+            $this->loi($laSan
+                ? 'Sân chỉ tạo kèo hộ cho lịch đặt tại chỗ, chưa tới giờ đá.'
+                : 'Chỉ tạo kèo cho lịch đã đặt (đã cọc) của bạn và chưa tới giờ đá.');
         }
-        if ($lyDo = $u->lyDoKhongVaoKeo(true)) {
+        if (! $laSan && ($lyDo = $u->lyDoKhongVaoKeo(true))) {
             $this->loi($lyDo);
         }
 
@@ -70,9 +80,11 @@ class KeoService
         }
 
         try {
-            DB::transaction(function () use ($k, $u) {
+            DB::transaction(function () use ($k, $u, $laSan) {
                 $k->save();
-                $this->ghiThamGia($k, $u, 'a', 'dai_dien', 'da_xac_nhan');
+                if (! $laSan) {
+                    $this->ghiThamGia($k, $u, 'a', 'dai_dien', 'da_xac_nhan');
+                }
             });
         } catch (UniqueConstraintViolationException) {
             $this->loi('Lịch này đã có kèo.');
@@ -161,6 +173,37 @@ class KeoService
         });
     }
 
+    /**
+     * Huỷ kèo từ phía sân (chủ sân bấm) hoặc tự động khi lịch sân bị huỷ.
+     * Ai đã cọc → đánh dấu chờ hoàn; chủ sân chuyển trả rồi bấm "Đã hoàn".
+     */
+    public function huyKeoBoiSan(Keo $k, string $lyDo): int
+    {
+        if (in_array($k->trang_thai, ['hoan_tat', 'da_huy'], true)) {
+            return 0;
+        }
+
+        return DB::transaction(function () use ($k, $lyDo) {
+            $k = Keo::lockForUpdate()->findOrFail($k->id);
+            $ids = $k->thamGias()->pluck('id');
+            GiaoDich::whereIn('tham_gia_keo_id', $ids)->where('trang_thai', 'cho_thanh_toan')->update(['trang_thai' => 'da_huy']);
+            $soHoan = GiaoDich::whereIn('tham_gia_keo_id', $ids)->where('trang_thai', 'thanh_cong')->where('xu_ly_hoan', 'khong')
+                ->update(['xu_ly_hoan' => 'cho_hoan']);
+            ThamGiaKeo::whereIn('id', $ids)->update(['trang_thai' => 'bi_huy']);
+            $k->forceFill(['trang_thai' => 'da_huy', 'mo_ta' => trim(($k->mo_ta ? $k->mo_ta."\n" : '').'[Huỷ: '.$lyDo.']')])->save();
+
+            return $soHoan;
+        });
+    }
+
+    public function xacNhanDaHoanCoc(GiaoDich $gd): void
+    {
+        if ($gd->xu_ly_hoan !== 'cho_hoan') {
+            $this->loi('Khoản này không ở trạng thái chờ hoàn.');
+        }
+        $gd->forceFill(['xu_ly_hoan' => 'da_hoan', 'da_hoan_luc' => now()])->save();
+    }
+
     // ================================================================ CỌC KÈO
 
     /** Chủ sân / nhân viên bấm "Đã nhận cọc" (cách A) — hoặc cổng gọi qua nhanTienCocKeo (cách B). */
@@ -189,7 +232,8 @@ class KeoService
             $choCoc = $gd->trang_thai === 'cho_thanh_toan';
             $gd->forceFill([
                 'trang_thai' => 'thanh_cong', 'thanh_toan_luc' => now(), 'ma_tham_chieu' => $thamChieu,
-                'du_lieu_cong' => array_merge((array) $gd->du_lieu_cong, ['webhook' => $duLieu], $choCoc ? [] : ['can_hoan' => true]),
+                'du_lieu_cong' => array_merge((array) $gd->du_lieu_cong, ['webhook' => $duLieu]),
+                'xu_ly_hoan' => $choCoc ? 'khong' : 'cho_hoan',
             ])->save();
 
             if (! $choCoc) {
@@ -425,9 +469,14 @@ class KeoService
         }
     }
 
+    private function laPhiaSan(User $u, DatSan $don): bool
+    {
+        return $u->idChuSanQuanLy() !== null && (int) $don->san->chu_san_id === $u->idChuSanQuanLy();
+    }
+
     private function kiemTraDiemDanh(Keo $k, User $nguoi): void
     {
-        $laSan = $nguoi->idChuSanQuanLy() !== null && (int) $k->datSan->san->chu_san_id === $nguoi->idChuSanQuanLy();
+        $laSan = $this->laPhiaSan($nguoi, $k->datSan);
         if (! $laSan && ! $k->laDaiDien($nguoi, 'a')) {
             $this->loi('Chỉ chủ sân / nhân viên hoặc người tạo kèo điểm danh.');
         }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\QuanLy;
 
 use App\Http\Controllers\Controller;
+use App\Models\DatSan;
 use App\Models\GiaoDich;
 use App\Models\Keo;
 use App\Models\ThamGiaKeo;
@@ -12,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 /** Phía sân với kèo: xác nhận cọc kèo, chốt kết quả, miễn phạt, gỡ hạn chế. */
 class KeoController extends Controller
@@ -63,6 +65,54 @@ class KeoController extends Controller
         $this->keo->goHanChe($user);
 
         return back()->with('thanh_cong', "Đã gỡ hạn chế cho {$user->name}.");
+    }
+
+    /** Tạo kèo hộ cho lịch đặt tại chỗ (khách gọi điện, không có tài khoản). */
+    public function create(Request $request, DatSan $datSan): View
+    {
+        abort_unless((int) $datSan->san->chu_san_id === $request->user()->idChuSanQuanLy(), 403);
+
+        return view('keo.tao', [
+            'don' => $datSan->load('san'),
+            'cocB' => (int) (ceil($datSan->gia_chot * KeoService::TY_LE_COC_BEN_B / 100 / 1000) * 1000),
+            'action' => route('quan-ly.keo.store', $datSan),
+        ]);
+    }
+
+    public function store(Request $request, DatSan $datSan): RedirectResponse
+    {
+        abort_unless((int) $datSan->san->chu_san_id === $request->user()->idChuSanQuanLy(), 403);
+        $d = $request->validate([
+            'loai' => ['required', Rule::in(['doi_dau', 'ghep_le'])],
+            'ty_le_thua' => ['required_if:loai,doi_dau', 'nullable', Rule::in(array_keys(Keo::TY_LE))],
+            'so_nguoi_can' => ['required_if:loai,ghep_le', 'nullable', 'integer', 'min:1', 'max:20'],
+            'tien_moi_nguoi' => ['nullable', 'integer', 'min:0', 'max:5000000'],
+            'tien_coc_ca_nhan' => ['nullable', 'integer', 'min:0', 'max:5000000'],
+            'trinh_do' => ['required', Rule::in(array_keys(Keo::TRINH_DO))],
+            'mo_ta' => ['nullable', 'string', 'max:500'],
+        ]);
+        $k = $this->keo->taoKeo($request->user(), $datSan, $d);
+
+        return redirect()->route('keo.show', $k)->with('thanh_cong', 'Đã đăng kèo hộ khách. Bạn thay mặt bên A báo kết quả sau trận.');
+    }
+
+    /** Chủ sân huỷ kèo (VD sân hỏng đèn). Ai đã cọc kèo → chờ hoàn. */
+    public function huy(Request $request, Keo $keo): RedirectResponse
+    {
+        $u = $request->user();
+        abort_unless($u->laChuSan() && (int) $keo->datSan->san->chu_san_id === $u->id, 403);
+        $request->validate(['ly_do' => ['nullable', 'string', 'max:200']]);
+        $so = $this->keo->huyKeoBoiSan($keo, $request->input('ly_do') ?: 'Chủ sân huỷ');
+
+        return back()->with('thanh_cong', 'Đã huỷ kèo.'.($so ? " Có {$so} khoản cọc cần hoàn — xem ở trang Đơn đặt." : ''));
+    }
+
+    public function daHoanCoc(Request $request, GiaoDich $giaoDich): RedirectResponse
+    {
+        abort_unless($request->user()->laChuSan() && (int) $giaoDich->chu_san_id === $request->user()->id, 403);
+        $this->keo->xacNhanDaHoanCoc($giaoDich);
+
+        return back()->with('thanh_cong', "Đã ghi nhận hoàn {$giaoDich->noi_dung_ck}.");
     }
 
     private function kiemTraSan(User $u, Keo $k): void

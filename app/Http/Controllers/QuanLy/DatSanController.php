@@ -35,6 +35,7 @@ class DatSanController extends Controller
             'choHoan' => (clone $base)->where('xu_ly_coc', 'cho_hoan')->orderBy('huy_luc')->get(),
             'trongNgay' => (clone $base)->where('ngay', $ngay->toDateString())->where('trang_thai', 'da_dat')
                 ->orderBy('gio_bat_dau')->get(),
+            'cocKeoHoan' => \App\Models\GiaoDich::where('chu_san_id', $chuSanId)->where('xu_ly_hoan', 'cho_hoan')->with('nguoiTra')->get(),
             'cocKeo' => \App\Models\GiaoDich::where('chu_san_id', $chuSanId)->whereIn('loai', ['coc_keo_doi', 'coc_keo_le'])
                 ->where('trang_thai', 'cho_thanh_toan')->with('nguoiTra')->latest('id')->get(),
             'keoXuLy' => \App\Models\Keo::with('datSan.san')->whereIn('trang_thai', ['tranh_chap', 'cho_xac_nhan', 'da_chot'])

@@ -104,7 +104,7 @@
                             </span>
                         </div>
                     @empty
-                        <div class="small text-muted">{{ $ben === 'b' ? 'Đang chờ đội nhận kèo...' : 'Chưa có ai.' }}</div>
+                        <div class="small text-muted">{{ $ben === 'b' ? 'Đang chờ đội nhận kèo...' : ($keo->nguoiTao->laKhach() ? 'Chưa có ai.' : 'Khách đặt tại sân — chủ sân đại diện.') }}</div>
                     @endforelse
 
                     @if ($keo->laDoiDau() && $u && $keo->laDaiDien($u, $ben) && in_array($keo->trang_thai, ['dang_tim', 'da_chot'], true) && ! $daToiGio)
@@ -134,7 +134,7 @@
             <h2 class="h6">Kết quả trận</h2>
             <p class="small text-muted mb-2">Hạn xác nhận: <strong>{{ $keo->han_xac_nhan_luc->format('H:i d/m') }}</strong>. Hai bên báo khớp nhau thì kèo hoàn tất; bấm nhầm thì báo lại.</p>
             @if ($laDaiDien)
-                <form method="POST" action="{{ route('khach.keo.ket-qua', $keo) }}" class="d-flex flex-wrap gap-2">@csrf
+                <form method="POST" action="{{ route('keo.ket-qua', $keo) }}" class="d-flex flex-wrap gap-2">@csrf
                     @foreach (\App\Models\Keo::KET_QUA as $ma => $nhan)
                         <button name="ket_qua" value="{{ $ma }}" class="btn btn-outline-dark btn-sm">{{ $nhan }}</button>
                     @endforeach
@@ -168,6 +168,13 @@
         </div></div>
     @endif
 
+    @if ($laChuSan && ! in_array($keo->trang_thai, ['hoan_tat', 'da_huy'], true))
+        <form method="POST" action="{{ route('quan-ly.keo.huy', $keo) }}" class="d-flex gap-2 justify-content-end mb-2"
+              onsubmit="return confirm('Huỷ kèo? Ai đã cọc kèo sẽ được đánh dấu chờ bạn hoàn tiền.')">@csrf @method('PATCH')
+            <input name="ly_do" class="form-control form-control-sm" style="max-width: 260px" placeholder="Lý do huỷ (VD: sân hỏng đèn)">
+            <button class="btn btn-sm btn-outline-danger text-nowrap">Chủ sân huỷ kèo</button>
+        </form>
+    @endif
     @if ($u && $keo->laDaiDien($u, 'a') && $keo->trang_thai === 'dang_tim')
         <form method="POST" action="{{ route('khach.keo.huy', $keo) }}" class="text-end" onsubmit="return confirm('Huỷ kèo này?')">@csrf
             <button class="btn btn-link text-danger">Huỷ kèo</button></form>
