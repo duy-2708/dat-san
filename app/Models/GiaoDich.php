@@ -16,6 +16,7 @@ class GiaoDich extends Model
     {
         return [
             'thanh_toan_luc' => 'datetime',
+            'bao_da_chuyen_luc' => 'datetime',
             'du_lieu_cong' => 'array',
             'so_tien' => 'integer',
         ];

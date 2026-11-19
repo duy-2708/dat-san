@@ -116,6 +116,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/dat-san/{datSan}/huy', [QuanLyDatSanController::class, 'huy'])->name('dat-san.huy');       // Policy: chỉ chủ sân
             Route::patch('/dat-san/{datSan}/da-hoan', [QuanLyDatSanController::class, 'daHoan'])->name('dat-san.da-hoan'); // Policy: chỉ chủ sân
             Route::patch('/coc-keo/{giaoDich}/xac-nhan', [QuanLyKeoController::class, 'xacNhanCoc'])->name('coc-keo.xac-nhan');
+            Route::patch('/coc-keo/{giaoDich}/khong-thay-tien', [QuanLyKeoController::class, 'khongThayTienCoc'])->name('coc-keo.khong-thay-tien');
             Route::patch('/keo/{keo}/chot', [QuanLyKeoController::class, 'chot'])->name('keo.chot');
             Route::patch('/tham-gia-keo/{thamGia}/mien-phat', [QuanLyKeoController::class, 'mienPhat'])->name('keo.mien-phat');   // chỉ chủ sân
             Route::patch('/han-che/{user}/go', [QuanLyKeoController::class, 'goHanChe'])->name('han-che.go');                      // chỉ chủ sân
@@ -175,6 +176,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // ---- Kèo: cọc + điểm danh (người tạo kèo hoặc phía sân; kiểm tra trong service) ----
         Route::get('/keo/coc/{giaoDich}', [KeoController::class, 'coc'])->name('keo.coc');
+        Route::post('/keo/coc/{giaoDich}/da-chuyen', [KeoController::class, 'daChuyenCoc'])->name('keo.coc.da-chuyen');
         Route::post('/keo/{keo}/diem-danh', [KeoController::class, 'diemDanh'])->name('keo.diem-danh');
         Route::post('/keo/{keo}/ket-qua', [KeoController::class, 'baoKetQua'])->name('keo.ket-qua');
         Route::get('/keo/tao-truoc', [KeoController::class, 'taoTruoc'])->name('keo.tao-truoc');      // khách hoặc phía sân

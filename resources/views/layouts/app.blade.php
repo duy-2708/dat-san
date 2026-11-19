@@ -39,7 +39,9 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.tong-quan') }}">Quản lý</a></li>
                         @php
                             $soBaoChuyen = \App\Models\DatSan::where('trang_thai', 'cho_thanh_toan')->whereNotNull('bao_da_chuyen_luc')
-                                ->whereHas('san', fn ($q) => $q->where('chu_san_id', auth()->user()->idChuSanQuanLy()))->count();
+                                ->whereHas('san', fn ($q) => $q->where('chu_san_id', auth()->user()->idChuSanQuanLy()))->count()
+                                + \App\Models\GiaoDich::where('chu_san_id', auth()->user()->idChuSanQuanLy())->where('trang_thai', 'cho_thanh_toan')
+                                    ->whereNotNull('bao_da_chuyen_luc')->count();
                         @endphp
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.dat-san.index') }}">Đơn đặt
                             @if ($soBaoChuyen) <span class="badge rounded-pill bg-danger" title="Khách báo đã chuyển, chờ kiểm tra">{{ $soBaoChuyen }}</span> @endif</a></li>

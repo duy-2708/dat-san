@@ -51,9 +51,16 @@
     <h2 class="h6 mt-4"><i class="bi bi-people text-warning"></i> Cọc kèo chờ xác nhận</h2>
     @foreach ($cocKeo as $g)
         <div class="card border-0 shadow-sm mb-2 border-start border-warning border-4"><div class="card-body py-2 d-flex flex-wrap justify-content-between gap-2 align-items-center">
-            <div class="small">Nội dung CK <strong class="font-monospace">{{ $g->noi_dung_ck }}</strong> · <strong>{{ $tien($g->so_tien) }}</strong> · {{ $g->nguoiTra?->name }} ({{ $g->nguoiTra?->so_dien_thoai }})</div>
-            <form method="POST" action="{{ route('quan-ly.coc-keo.xac-nhan', $g) }}">@csrf @method('PATCH')
-                <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Đã nhận cọc</button></form>
+            <div class="small">Nội dung CK <strong class="font-monospace">{{ $g->noi_dung_ck }}</strong> · <strong>{{ $tien($g->so_tien) }}</strong> · {{ $g->nguoiTra?->name }} ({{ $g->nguoiTra?->so_dien_thoai }})
+                @if ($g->bao_da_chuyen_luc) <div class="text-primary fw-semibold"><i class="bi bi-send-check"></i> Báo đã chuyển lúc {{ $g->bao_da_chuyen_luc->format('H:i') }} — kiểm tra app ngân hàng</div> @endif</div>
+            <span class="d-flex gap-1">
+                @if ($g->bao_da_chuyen_luc)
+                    <form method="POST" action="{{ route('quan-ly.coc-keo.khong-thay-tien', $g) }}" onsubmit="return confirm('Không thấy tiền {{ $g->noi_dung_ck }}? Người này mất chỗ trong kèo và bị trừ uy tín.')">@csrf @method('PATCH')
+                        <button class="btn btn-sm btn-outline-danger">Không thấy tiền</button></form>
+                @endif
+                <form method="POST" action="{{ route('quan-ly.coc-keo.xac-nhan', $g) }}">@csrf @method('PATCH')
+                    <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Đã nhận cọc</button></form>
+            </span>
         </div></div>
     @endforeach
 @endif

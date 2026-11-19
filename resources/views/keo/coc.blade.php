@@ -6,7 +6,7 @@
 <div class="mx-auto text-center" style="max-width: 440px">
     <div class="card border-0 shadow-sm"><div class="card-body">
         <h1 class="h5">Cọc vào kèo #{{ $k->id }}</h1>
-        <div class="small text-muted mb-3">{{ $k->datSan->san->ten }} · {{ \Carbon\Carbon::parse($k->datSan->ngay)->format('d/m') }} {{ $k->datSan->khungGioNhan() }}</div>
+        <div class="small text-muted mb-3">{{ $k->sanThuc()->ten }} · {{ $k->batDauLuc()->format('d/m') }} {{ $k->nhanGio() }}</div>
 
         @if ($gd->trang_thai === 'cho_thanh_toan' && $qr)
             <div class="alert alert-warning py-2 small">Giữ chỗ tới <strong>{{ $tg->giu_cho_den?->format('H:i') }}</strong></div>
@@ -20,6 +20,17 @@
                 @endif
             </ul>
             <p class="small text-muted">Tiền vào tài khoản chủ sân. {{ $gd->phuong_thuc === 'payos' ? 'Chuyển xong tự xác nhận.' : 'Chủ sân xác nhận khi thấy tiền về.' }}</p>
+            @if ($gd->phuong_thuc !== 'payos' && (int) $gd->nguoi_tra_id === auth()->id())
+                @if ($gd->bao_da_chuyen_luc)
+                    <div class="alert alert-info py-2 small">Bạn đã báo chuyển lúc {{ $gd->bao_da_chuyen_luc->format('H:i') }}. Chủ sân đã nhận email và đang kiểm tra.</div>
+                @else
+                    <form method="POST" action="{{ route('keo.coc.da-chuyen', $gd) }}" class="mb-3"
+                          onsubmit="return confirm('Chỉ bấm khi ĐÃ chuyển xong. Báo sai sẽ mất chỗ trong kèo và bị trừ uy tín. Tiếp tục?')">@csrf
+                        <button class="btn btn-primary w-100"><i class="bi bi-send-check"></i> Tôi đã chuyển khoản</button>
+                        <div class="form-text">Bấm 1 lần: chủ sân nhận email, chỗ được giữ thêm 2 tiếng để kiểm tra.</div>
+                    </form>
+                @endif
+            @endif
         @elseif ($gd->trang_thai === 'thanh_cong')
             <div class="alert alert-success">Đã cọc. Bạn đã ở trong kèo!</div>
         @else

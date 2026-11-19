@@ -227,6 +227,13 @@ class KeoController extends Controller
         return redirect()->route('khach.tai-khoan')->with('thanh_cong', 'Đã huỷ kèo.');
     }
 
+    public function daChuyenCoc(Request $request, GiaoDich $giaoDich): RedirectResponse
+    {
+        $this->keo->baoDaChuyenCoc($giaoDich, $request->user());
+
+        return back()->with('thanh_cong', 'Đã báo chủ sân. Chỗ được giữ thêm 2 tiếng trong lúc chủ sân kiểm tra.');
+    }
+
     /** Trang quét QR cọc kèo. */
     public function coc(Request $request, GiaoDich $giaoDich): View
     {

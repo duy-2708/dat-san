@@ -107,6 +107,14 @@ class KeoController extends Controller
         return back()->with('thanh_cong', 'Đã huỷ kèo.'.($so ? " Có {$so} khoản cọc cần hoàn — xem ở trang Đơn đặt." : ''));
     }
 
+    public function khongThayTienCoc(Request $request, GiaoDich $giaoDich): RedirectResponse
+    {
+        abort_unless((int) $giaoDich->chu_san_id === $request->user()->idChuSanQuanLy(), 403);
+        $this->keo->khongThayTienCoc($giaoDich, $request->user());
+
+        return back()->with('thanh_cong', "Đã huỷ khoản cọc {$giaoDich->noi_dung_ck} và trừ uy tín người báo sai.");
+    }
+
     public function daHoanCoc(Request $request, GiaoDich $giaoDich): RedirectResponse
     {
         abort_unless($request->user()->laChuSan() && (int) $giaoDich->chu_san_id === $request->user()->id, 403);

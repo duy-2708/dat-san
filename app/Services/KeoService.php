@@ -507,6 +507,76 @@ class KeoService
         });
     }
 
+    public const PHUT_GIU_SAU_BAO_CHUYEN = 120;
+    public const PHAT_BAO_SAI = 5;
+
+    /** Người cọc kèo bấm "Tôi đã chuyển khoản": 1 lần, giữ thêm 2 tiếng, email chủ sân + nhân viên. */
+    public function baoDaChuyenCoc(GiaoDich $gd, User $u): GiaoDich
+    {
+        $gd = DB::transaction(function () use ($gd, $u) {
+            $gd = GiaoDich::lockForUpdate()->findOrFail($gd->id);
+            if ((int) $gd->nguoi_tra_id !== $u->id || $gd->trang_thai !== 'cho_thanh_toan' || ! $gd->tham_gia_keo_id) {
+                $this->loi('Khoản cọc này không còn chờ chuyển.');
+            }
+            if ($gd->bao_da_chuyen_luc) {
+                $this->loi('Bạn đã báo chuyển khoản rồi. Chủ sân đang kiểm tra.');
+            }
+            $den = now()->addMinutes(self::PHUT_GIU_SAU_BAO_CHUYEN);
+            $gd->forceFill(['bao_da_chuyen_luc' => now()])->save();
+
+            $tg = ThamGiaKeo::lockForUpdate()->findOrFail($gd->tham_gia_keo_id);
+            if (! $tg->giu_cho_den || $tg->giu_cho_den->lt($den)) {
+                $tg->forceFill(['giu_cho_den' => $den])->save();
+            }
+            // Kèo trước đang chờ cọc: kéo dài hạn cọc của kèo và giữ sân của đơn theo
+            $k = Keo::lockForUpdate()->findOrFail($tg->keo_id);
+            if ($k->trang_thai === 'cho_coc' && $k->han_coc_luc?->lt($den)) {
+                $k->forceFill(['han_coc_luc' => $den])->save();
+                DatSan::whereKey($k->dat_san_id)->where('trang_thai', 'cho_thanh_toan')->update(['giu_cho_den' => $den]);
+            }
+
+            return $gd;
+        });
+
+        $chuId = (int) $gd->chu_san_id;
+        User::where(fn ($q) => $q->where('id', $chuId)->orWhere(fn ($q) => $q->where('chu_san_id', $chuId)->where('vai_tro', User::NHAN_VIEN)))
+            ->where('trang_thai', 'hoat_dong')->get()
+            ->each(fn (User $x) => $x->notify(new \App\Notifications\KhachBaoDaChuyenCoc($gd)));
+
+        return $gd;
+    }
+
+    /** Phía sân không thấy tiền cọc kèo đã được báo chuyển → người đó mất chỗ trong kèo + trừ uy tín. */
+    public function khongThayTienCoc(GiaoDich $gd, User $nguoi): void
+    {
+        if ($gd->trang_thai !== 'cho_thanh_toan' || ! $gd->bao_da_chuyen_luc || ! $gd->tham_gia_keo_id) {
+            $this->loi('Chỉ dùng cho khoản cọc đã được báo chuyển mà chưa xác nhận.');
+        }
+        DB::transaction(function () use ($gd) {
+            $tg = ThamGiaKeo::lockForUpdate()->findOrFail($gd->tham_gia_keo_id);
+            $k = Keo::lockForUpdate()->findOrFail($tg->keo_id);
+            $u = User::lockForUpdate()->findOrFail($gd->nguoi_tra_id);
+
+            $u->forceFill(['diem_uy_tin' => max(0, $u->diem_uy_tin - self::PHAT_BAO_SAI)])->save();
+            $this->ghiLichSu($u, -self::PHAT_BAO_SAI, 'bao_chuyen_sai', $k, $tg, 'Cọc '.$gd->noi_dung_ck);
+            $soLan = DB::table('lich_su_uy_tin')->where('user_id', $u->id)->where('ly_do', 'bao_chuyen_sai')
+                ->where('created_at', '>=', now()->subDays(DatSanService::NGAY_CAM))->count();
+            if ($soLan >= 2) {
+                $u->forceFill(['cam_dat_den' => now()->addDays(DatSanService::NGAY_CAM), 'ly_do_cam_dat' => 'báo chuyển khoản sai 2 lần trong 30 ngày'])->save();
+            }
+
+            if ($k->trang_thai === 'cho_coc') {
+                // Kèo trước: bên này bị loại (đã phạt báo sai, không phạt thêm bùng kèo) → huỷ kèo, nhả sân, bên kia được hoàn
+                $tg->forceFill(['trang_thai' => 'bi_huy'])->save();
+                $k->forceFill(['han_coc_luc' => now()->subSecond()])->save();
+            } else {
+                $tg->forceFill(['giu_cho_den' => now()->subSecond()])->save();
+            }
+        });
+        $this->nhaCocQuaHan();
+        $this->xuLyKeoTruocQuaHan();
+    }
+
     /** Scheduler: nhả người chưa cọc quá hạn; kèo đối đầu quay lại "đang tìm". */
     public function nhaCocQuaHan(): int
     {
