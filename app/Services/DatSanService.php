@@ -37,6 +37,9 @@ class DatSanService
 
     public function giuCho(User $khach, San $san, string $ngay, int $khungGioId): DatSan
     {
+        if ($khach->biHanChe()) {
+            $this->loi('Tài khoản đang bị hạn chế đặt sân: '.$khach->ly_do_han_che.'. Liên hệ chủ sân để được gỡ.');
+        }
         $hoSo = $san->chuSan->hoSoChuSan;
         if ($san->trang_thai !== 'hoat_dong' || ! $hoSo?->conHan()) {
             $this->loi('Sân này đang tạm ngưng nhận đặt.');
@@ -87,7 +90,7 @@ class DatSanService
         if ($dungCong) {
             // Cách B: tạo yêu cầu thanh toán trên cổng của CHÍNH chủ sân. Lỗi → huỷ giữ chỗ, trả ô.
             try {
-                $kq = $this->quanLyCong->cong('payos')->taoThanhToan($gd, $don->ma_don, $don->giu_cho_den->getTimestamp(), $hoSo);
+                $kq = $this->quanLyCong->cong('payos')->taoThanhToan($gd, $don->ma_don, $don->giu_cho_den->getTimestamp(), $hoSo, route('dat-san.thanh-toan', $don));
                 $gd->forceFill(['ma_cong' => $kq['ma_cong'], 'du_lieu_cong' => $kq])->save();
             } catch (\Throwable $e) {
                 report($e);
@@ -107,6 +110,10 @@ class DatSanService
      */
     public function nhanTienTuCong(GiaoDich $gd, int $soTien, string $thamChieu, array $duLieu): string
     {
+        if ($gd->loai !== 'coc_dat_san') {
+            return app(KeoService::class)->nhanTienCocKeo($gd, $soTien, $thamChieu, $duLieu);
+        }
+
         [$ketQua, $don] = DB::transaction(function () use ($gd, $soTien, $thamChieu, $duLieu) {
             $gd = GiaoDich::lockForUpdate()->findOrFail($gd->id);
             if ($gd->trang_thai === 'thanh_cong') {

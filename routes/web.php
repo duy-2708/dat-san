@@ -7,7 +7,9 @@ use App\Http\Controllers\BangDieuKhienController;
 use App\Http\Controllers\HoSo\SoDienThoaiController;
 use App\Http\Controllers\DatSanController;
 use App\Http\Controllers\DiaChiController;
+use App\Http\Controllers\KeoController;
 use App\Http\Controllers\KhachController;
+use App\Http\Controllers\QuanLy\KeoController as QuanLyKeoController;
 use App\Http\Controllers\QuanLy\DatSanController as QuanLyDatSanController;
 use App\Http\Controllers\QuanLy\ThanhToanController;
 use App\Http\Controllers\SanCongKhaiController;
@@ -33,6 +35,8 @@ Route::get('/', [TrangChuController::class, 'index'])->name('trang-chu');
 Route::post('/webhook/{cong}/{token}', [WebhookController::class, 'nhan'])->middleware('throttle:120,1')->name('webhook.nhan');
 Route::get('/dia-chi/xa-phuong', [DiaChiController::class, 'xaPhuong'])->name('dia-chi.xa-phuong');
 Route::get('/san/{san:slug}', [SanCongKhaiController::class, 'show'])->name('san.show'); // ai cũng xem được lịch trống/đã đặt
+Route::get('/keo', [KeoController::class, 'index'])->name('keo.index');
+Route::get('/keo/{keo}', [KeoController::class, 'show'])->whereNumber('keo')->name('keo.show');
 
 // ---- Đăng nhập Google ----
 Route::middleware('guest')->group(function () {
@@ -75,6 +79,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/dat-san/{datSan}/gia-han', [QuanLyDatSanController::class, 'giaHan'])->name('dat-san.gia-han');
             Route::patch('/dat-san/{datSan}/huy', [QuanLyDatSanController::class, 'huy'])->name('dat-san.huy');       // Policy: chỉ chủ sân
             Route::patch('/dat-san/{datSan}/da-hoan', [QuanLyDatSanController::class, 'daHoan'])->name('dat-san.da-hoan'); // Policy: chỉ chủ sân
+            Route::patch('/coc-keo/{giaoDich}/xac-nhan', [QuanLyKeoController::class, 'xacNhanCoc'])->name('coc-keo.xac-nhan');
+            Route::patch('/keo/{keo}/chot', [QuanLyKeoController::class, 'chot'])->name('keo.chot');
+            Route::patch('/tham-gia-keo/{thamGia}/mien-phat', [QuanLyKeoController::class, 'mienPhat'])->name('keo.mien-phat');   // chỉ chủ sân
+            Route::patch('/han-che/{user}/go', [QuanLyKeoController::class, 'goHanChe'])->name('han-che.go');                      // chỉ chủ sân
 
             // Chỉ chủ sân
             Route::middleware('vai_tro:chu_san')->group(function () {
@@ -108,6 +116,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             });
         });
 
+        // ---- Kèo: cọc + điểm danh (người tạo kèo hoặc phía sân; kiểm tra trong service) ----
+        Route::get('/keo/coc/{giaoDich}', [KeoController::class, 'coc'])->name('keo.coc');
+        Route::post('/keo/{keo}/diem-danh', [KeoController::class, 'diemDanh'])->name('keo.diem-danh');
+
         // ---- Trang thanh toán của 1 đơn (Policy: khách của đơn hoặc phía sân) ----
         Route::get('/dat-san/{datSan}/thanh-toan', [DatSanController::class, 'thanhToan'])->name('dat-san.thanh-toan');
         Route::get('/dat-san/{datSan}/trang-thai', [DatSanController::class, 'trangThai'])->name('dat-san.trang-thai');
@@ -116,6 +128,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // ---- KHÁCH ----
         Route::middleware('vai_tro:khach')->name('khach.')->group(function () {
             Route::get('/tai-khoan', [KhachController::class, 'taiKhoan'])->name('tai-khoan');
+            Route::get('/keo/tao', [KeoController::class, 'create'])->name('keo.create');
+            Route::post('/keo', [KeoController::class, 'store'])->name('keo.store');
+            Route::post('/keo/{keo}/nhan', [KeoController::class, 'nhan'])->name('keo.nhan');
+            Route::post('/keo/{keo}/tham-gia', [KeoController::class, 'thamGia'])->name('keo.tham-gia');
+            Route::post('/keo/{keo}/thanh-vien', [KeoController::class, 'themThanhVien'])->name('keo.thanh-vien');
+            Route::post('/keo/{keo}/ket-qua', [KeoController::class, 'baoKetQua'])->name('keo.ket-qua');
+            Route::post('/keo/{keo}/huy', [KeoController::class, 'huy'])->name('keo.huy');
             Route::post('/dat-san', [DatSanController::class, 'store'])->name('dat-san.store');
         });
     });

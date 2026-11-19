@@ -39,6 +39,31 @@
     <div class="text-muted small bg-white rounded p-3 mb-3">Không có đơn chờ cọc.</div>
 @endforelse
 
+{{-- CỌC KÈO --}}
+@if ($cocKeo->isNotEmpty())
+    <h2 class="h6 mt-4"><i class="bi bi-people text-warning"></i> Cọc kèo chờ xác nhận</h2>
+    @foreach ($cocKeo as $g)
+        <div class="card border-0 shadow-sm mb-2 border-start border-warning border-4"><div class="card-body py-2 d-flex flex-wrap justify-content-between gap-2 align-items-center">
+            <div class="small">Nội dung CK <strong class="font-monospace">{{ $g->noi_dung_ck }}</strong> · <strong>{{ $tien($g->so_tien) }}</strong> · {{ $g->nguoiTra?->name }} ({{ $g->nguoiTra?->so_dien_thoai }})</div>
+            <form method="POST" action="{{ route('quan-ly.coc-keo.xac-nhan', $g) }}">@csrf @method('PATCH')
+                <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Đã nhận cọc</button></form>
+        </div></div>
+    @endforeach
+@endif
+
+{{-- KÈO CẦN XỬ LÝ --}}
+@if ($keoXuLy->isNotEmpty())
+    <h2 class="h6 mt-4"><i class="bi bi-flag text-danger"></i> Kèo cần điểm danh / chốt kết quả</h2>
+    <div class="list-group shadow-sm mb-3">
+        @foreach ($keoXuLy as $k)
+            <a href="{{ route('keo.show', $k) }}" class="list-group-item list-group-item-action small d-flex justify-content-between">
+                <span>Kèo #{{ $k->id }} · {{ \Carbon\Carbon::parse($k->datSan->ngay)->format('d/m') }} {{ $k->datSan->khungGioNhan() }} — {{ $k->datSan->san->ten }}</span>
+                <span class="badge bg-{{ $k->trang_thai === 'tranh_chap' ? 'danger' : 'warning text-dark' }}">{{ \App\Models\Keo::TRANG_THAI[$k->trang_thai] }}</span>
+            </a>
+        @endforeach
+    </div>
+@endif
+
 {{-- CHỜ HOÀN CỌC --}}
 @if ($laChu && $choHoan->isNotEmpty())
     <h2 class="h6 mt-4"><i class="bi bi-arrow-counterclockwise text-danger"></i> Cần hoàn cọc cho khách</h2>

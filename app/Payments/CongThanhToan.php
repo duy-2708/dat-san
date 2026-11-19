@@ -19,7 +19,7 @@ interface CongThanhToan
      *
      * @return array{ma_cong: string, checkout_url: ?string, qr: ?string} qr = chuỗi VietQR để tự vẽ mã
      */
-    public function taoThanhToan(GiaoDich $gd, string $noiDung, int $hetHanUnix, HoSoChuSan $hoSo): array;
+    public function taoThanhToan(GiaoDich $gd, string $noiDung, int $hetHanUnix, HoSoChuSan $hoSo, string $urlQuayLai): array;
 
     /** Kiểm tra chữ ký webhook. Trả null nếu chữ ký sai. */
     public function docWebhook(array $payload, HoSoChuSan $hoSo): ?KetQuaWebhook;

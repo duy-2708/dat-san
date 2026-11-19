@@ -48,6 +48,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'sdt_xac_thuc_luc' => 'datetime',
             'khoa_keo_den' => 'datetime',
+            'han_che_luc' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -131,6 +132,37 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return $this->laNhanVien() && $this->chuSan?->trang_thai === 'bi_khoa';
+    }
+
+    /** Bị hạn chế (không xác nhận kết quả kèo…) → không đặt sân, không vào kèo, nhưng vẫn đăng nhập. */
+    public function biHanChe(): bool
+    {
+        return $this->han_che_luc !== null;
+    }
+
+    /** Lý do không được vào kèo, hoặc null nếu được. */
+    public function lyDoKhongVaoKeo(bool $keoCoCoc): ?string
+    {
+        if ($this->biHanChe()) {
+            return 'Tài khoản đang bị hạn chế: '.$this->ly_do_han_che.'. Liên hệ chủ sân để được gỡ.';
+        }
+        if ($this->khoa_keo_den && $this->khoa_keo_den->isFuture()) {
+            return 'Bạn vắng 3 lần trong 30 ngày, bị khoá vào kèo tới '.$this->khoa_keo_den->format('d/m/Y').'.';
+        }
+        // Chống né phạt bằng tài khoản mới: tài khoản < 7 ngày hoặc chưa đá trận nào chỉ vào kèo CÓ cọc
+        if (! $keoCoCoc && ($this->created_at->gt(now()->subDays(7)) || $this->so_tran_tham_gia < 1)) {
+            return 'Tài khoản mới (dưới 7 ngày hoặc chưa đá trận nào) chỉ được vào kèo có cọc.';
+        }
+
+        return null;
+    }
+
+    /** "đi đủ 12/12 trận" */
+    public function uyTinNhan(): string
+    {
+        $tong = $this->so_tran_tham_gia + $this->so_tran_vang;
+
+        return $tong ? "đi đủ {$this->so_tran_tham_gia}/{$tong} trận" : 'chưa có trận';
     }
 
     public function tenVaiTro(): string

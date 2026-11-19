@@ -25,6 +25,7 @@
         </button>
         <div class="collapse navbar-collapse" id="menuChinh">
             <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="{{ route('keo.index') }}">Cáp kèo</a></li>
                 @auth
                     @if (auth()->user()->laAdmin())
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.chu-san.index') }}">Chủ sân</a></li>

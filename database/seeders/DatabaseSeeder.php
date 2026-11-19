@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             NgayLeSeeder::class,
             SanMauSeeder::class,
             DatSanMauSeeder::class,
+            KeoMauSeeder::class,
         ]);
     }
 }

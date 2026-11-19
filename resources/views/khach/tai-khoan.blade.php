@@ -20,6 +20,9 @@
                     <div><div class="fw-bold fs-5">{{ $u->so_tran_tham_gia }}</div><div class="small text-muted">Trận</div></div>
                     <div><div class="fw-bold fs-5">{{ $u->diem_uy_tin }}</div><div class="small text-muted">Uy tín</div></div>
                 </div>
+                <div class="small text-muted mt-1">{{ $u->uyTinNhan() }}</div>
+                @if ($u->biHanChe()) <div class="alert alert-danger small py-1 mt-2 mb-0">Bị hạn chế: {{ $u->ly_do_han_che }}</div> @endif
+                @if ($u->khoa_keo_den?->isFuture()) <div class="alert alert-warning small py-1 mt-2 mb-0">Khoá vào kèo tới {{ $u->khoa_keo_den->format('d/m/Y') }}</div> @endif
             </div>
         </div>
     </div>
@@ -36,9 +39,19 @@
                             Cọc {{ $tien($d->tien_coc) }} · còn {{ $tien($d->gia_chot - ($d->xac_nhan_coc_luc ? $d->tien_coc : 0)) }}
                         </div>
                     </div>
-                    <a href="{{ route('dat-san.thanh-toan', $d) }}" class="btn btn-sm {{ $d->trang_thai === 'cho_thanh_toan' ? 'btn-warning' : 'btn-outline-secondary' }} text-nowrap">
-                        {{ $d->trang_thai === 'cho_thanh_toan' ? 'Quét QR cọc' : 'Chi tiết' }}
-                    </a>
+                    <div class="d-flex flex-column gap-1">
+                        <a href="{{ route('dat-san.thanh-toan', $d) }}" class="btn btn-sm {{ $d->trang_thai === 'cho_thanh_toan' ? 'btn-warning' : 'btn-outline-secondary' }} text-nowrap">
+                            {{ $d->trang_thai === 'cho_thanh_toan' ? 'Quét QR cọc' : 'Chi tiết' }}
+                        </a>
+                        @if ($d->trang_thai === 'da_dat' && $d->batDauLuc()->isFuture())
+                            @php $keoCua = \App\Models\Keo::where('dat_san_id', $d->id)->first(); @endphp
+                            @if ($keoCua)
+                                <a href="{{ route('keo.show', $keoCua) }}" class="btn btn-sm btn-outline-danger text-nowrap">Xem kèo</a>
+                            @else
+                                <a href="{{ route('khach.keo.create', ['don' => $d->ma_don]) }}" class="btn btn-sm btn-outline-danger text-nowrap">Tạo kèo</a>
+                            @endif
+                        @endif
+                    </div>
                 </div>
             </div>
         @empty

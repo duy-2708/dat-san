@@ -9,3 +9,4 @@ use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('dat-san:nha-cho')->everyMinute()->withoutOverlapping();
 Schedule::command('dat-san:nhac-lich')->everyTenMinutes()->withoutOverlapping();
+Schedule::command('keo:quet')->everyMinute()->withoutOverlapping();

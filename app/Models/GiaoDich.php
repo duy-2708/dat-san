@@ -21,6 +21,11 @@ class GiaoDich extends Model
         ];
     }
 
+    public function nguoiTra(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'nguoi_tra_id');
+    }
+
     public function datSan(): BelongsTo
     {
         return $this->belongsTo(DatSan::class);

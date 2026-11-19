@@ -20,14 +20,14 @@ class PayOsCong implements CongThanhToan
         return 'payos';
     }
 
-    public function taoThanhToan(GiaoDich $gd, string $noiDung, int $hetHanUnix, HoSoChuSan $hoSo): array
+    public function taoThanhToan(GiaoDich $gd, string $noiDung, int $hetHanUnix, HoSoChuSan $hoSo, string $urlQuayLai): array
     {
         $body = [
             'orderCode' => $gd->id,
             'amount' => (int) $gd->so_tien,
             'description' => substr($noiDung, 0, 25),
-            'returnUrl' => route('dat-san.thanh-toan', $gd->datSan),
-            'cancelUrl' => route('dat-san.thanh-toan', $gd->datSan),
+            'returnUrl' => $urlQuayLai,
+            'cancelUrl' => $urlQuayLai,
             'expiredAt' => $hetHanUnix,
         ];
         // Chữ ký tạo link: 5 trường, sắp theo tên, nối "key=value&..."
