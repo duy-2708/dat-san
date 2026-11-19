@@ -180,6 +180,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/keo/{keo}/diem-danh', [KeoController::class, 'diemDanh'])->name('keo.diem-danh');
         Route::post('/keo/{keo}/ket-qua', [KeoController::class, 'baoKetQua'])->name('keo.ket-qua');
         Route::get('/keo/tao-truoc', [KeoController::class, 'taoTruoc'])->name('keo.tao-truoc');      // khách hoặc phía sân
+        Route::get('/keo/san-tao', [KeoController::class, 'sanTaoKeo'])->name('keo.san-tao');        // phía sân: chọn sân/ngày/khung
         Route::post('/keo/truoc', [KeoController::class, 'luuTruoc'])->name('keo.luu-truoc');
         Route::patch('/xin-keo/{xinKeo}', [KeoController::class, 'duyetXin'])->name('keo.duyet-xin');     // chủ kèo hoặc phía sân
         Route::post('/keo/{keo}/them-doi', [KeoController::class, 'themDoi'])->name('keo.them-doi');      // phía sân // đại diện 2 bên (kể cả chủ sân tạo kèo hộ)

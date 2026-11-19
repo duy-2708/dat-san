@@ -26,11 +26,18 @@
             @if ($doiCuaToi->isEmpty())
                 <div class="alert alert-warning py-2 small">Bạn chưa có đội. <a href="{{ route('khach.doi.create') }}">Tạo đội</a> trước để đối thủ xem được đội bạn.</div>
             @else
+                <div class="form-text mt-0 mb-1">Đối thủ sẽ xem được đội này (thành tích, uy tín) trước khi nhận.</div>
                 <select name="doi_id" class="form-select mb-3">
                     @foreach ($doiCuaToi as $doi) <option value="{{ $doi->id }}" @selected((int) old('doi_id') === $doi->id)>{{ $doi->ten }}</option> @endforeach
                 </select>
             @endif
         @endunless
+
+        @if ($laSan)
+            <label class="form-label">Đội nhờ làm kèo <span class="text-muted small">(tuỳ chọn — để trống thì mở ô kèo cho đội tự xin)</span></label>
+            <input name="doi_nho" list="dsDoiNho" value="{{ old('doi_nho') }}" class="form-control mb-3" placeholder="Gõ tên đội">
+            <datalist id="dsDoiNho">@foreach ($tatCaDoi as $d) <option value="{{ $d->ten }}"> @endforeach</datalist>
+        @endif
 
         <label class="form-label">Đá bao lâu</label>
         <select name="thoi_luong" class="form-select mb-3">

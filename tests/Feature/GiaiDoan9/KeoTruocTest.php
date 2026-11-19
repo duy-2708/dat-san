@@ -57,7 +57,7 @@ class KeoTruocTest extends TestCase
         $k = $this->dangKeo();
         $this->assertNull($k->dat_san_id);
         $this->assertSame(0, DB::table('o_lich')->count());                      // sân chưa bị giữ
-        $this->get('/keo')->assertSee('FC Alpha')->assertSee('chưa đặt sân');
+        $this->get('/keo')->assertSee('FC Alpha')->assertSee('Chưa đặt sân');
 
         $this->chotVoiB($k);
         $k->refresh();

@@ -26,21 +26,78 @@ class KeoController extends Controller
     {
     }
 
-    /** Danh sách kèo đang tìm người (ai cũng xem được). */
+    /** Danh sách kèo đang tìm người (ai cũng xem được) + bộ lọc theo nơi / ngày / loại sân. */
     public function index(Request $request): View
     {
-        $loai = $request->query('loai');
+        $loc = $request->validate([
+            'loai' => ['nullable', Rule::in(['doi_dau', 'ghep_le'])],
+            'kieu' => ['nullable', Rule::in(['da_dat', 'chua_dat'])],
+            'tinh' => ['nullable', 'integer'], 'xa' => ['nullable', 'integer'], 'san' => ['nullable', 'integer'],
+            'loai_san' => ['nullable', Rule::in([5, 7, 11])],
+            'ngay' => ['nullable', 'string', 'max:20'],
+        ]);
+        [$tuNgay, $denNgay] = match ($loc['ngay'] ?? null) {
+            'hom_nay' => [today(), today()],
+            'ngay_mai' => [today()->addDay(), today()->addDay()],
+            'cuoi_tuan' => [today()->next(Carbon::SATURDAY)->subDay()->max(today()), today()->next(Carbon::SUNDAY)],
+            null, '' => [today(), null],
+            default => rescue(fn () => [Carbon::parse($loc['ngay'])->startOfDay(), Carbon::parse($loc['ngay'])->startOfDay()], [today(), null], false),
+        };
+        if (($loc['ngay'] ?? null) === 'cuoi_tuan') {
+            $tuNgay = today()->isWeekend() ? today() : today()->next(Carbon::SATURDAY);
+            $denNgay = $tuNgay->isSunday() ? $tuNgay->copy() : $tuNgay->copy()->next(Carbon::SUNDAY);
+        }
+
+        // Lọc theo sân: kèo trước dùng san_id, kèo đã đặt dùng sân của đơn
+        $locSan = function ($q) use ($loc) {
+            $q->where('trang_thai', 'hoat_dong')
+                ->when($loc['san'] ?? null, fn ($q, $v) => $q->whereKey($v))
+                ->when($loc['loai_san'] ?? null, fn ($q, $v) => $q->where('loai_san', $v))
+                ->when($loc['xa'] ?? null, fn ($q, $v) => $q->where('xa_phuong_id', $v))
+                ->when($loc['tinh'] ?? null, fn ($q, $v) => $q->whereHas('xaPhuong', fn ($x) => $x->where('tinh_thanh_id', $v)));
+        };
+        $locNgay = function ($q) use ($tuNgay, $denNgay) {
+            $q->where('ngay', '>=', $tuNgay->toDateString())->when($denNgay, fn ($q) => $q->where('ngay', '<=', $denNgay->toDateString()));
+        };
+
         $keos = Keo::with(['datSan.san.xaPhuong.tinhThanh', 'san.xaPhuong.tinhThanh', 'khungGio', 'nguoiTao', 'daiDienA', 'doiA'])
             ->where('trang_thai', 'dang_tim')->where('cong_khai', true)
-            ->when(in_array($loai, ['doi_dau', 'ghep_le'], true), fn ($q) => $q->where('loai', $loai))
-            ->where(fn ($q) => $q->whereHas('datSan', fn ($q) => $q->where('ngay', '>=', today()->toDateString()))
-                ->orWhere('ngay', '>=', today()->toDateString()))
+            ->when($loc['loai'] ?? null, fn ($q, $v) => $q->where('loai', $v))
+            ->when(($loc['kieu'] ?? null) === 'chua_dat', fn ($q) => $q->whereNotNull('san_id'))
+            ->when(($loc['kieu'] ?? null) === 'da_dat', fn ($q) => $q->whereNull('san_id'))
+            ->where(fn ($q) => $q
+                ->where(fn ($q) => $q->whereNotNull('san_id')->where($locNgay)->whereHas('san', $locSan))
+                ->orWhere(fn ($q) => $q->whereNull('san_id')->whereHas('datSan', fn ($d) => $d->where($locNgay)->whereHas('san', $locSan))))
             ->get()
             ->filter(fn (Keo $k) => $k->batDauLuc()->isFuture())
             ->sortBy(fn (Keo $k) => $k->batDauLuc())
             ->values();
 
-        return view('keo.index', compact('keos', 'loai'));
+        $u = $request->user();
+
+        return view('keo.index', [
+            'keos' => $keos, 'loc' => $loc, 'loai' => $loc['loai'] ?? null,
+            'tinhThanhs' => \App\Models\TinhThanh::orderBy('thu_tu')->get(),
+            'xaPhuongs' => ($loc['tinh'] ?? null) ? \App\Models\XaPhuong::where('tinh_thanh_id', $loc['tinh'])->orderBy('ten')->get() : collect(),
+            'sans' => ($loc['tinh'] ?? null) ? San::where('trang_thai', 'hoat_dong')->whereHas('xaPhuong', fn ($x) => $x->where('tinh_thanh_id', $loc['tinh']))
+                ->when($loc['xa'] ?? null, fn ($q, $v) => $q->where('xa_phuong_id', $v))->orderBy('ten')->get() : collect(),
+            'laPhiaSan' => $u && $u->idChuSanQuanLy() !== null,
+        ]);
+    }
+
+    /** Chủ sân / nhân viên tạo kèo hộ: chọn sân + ngày → chọn khung trống → form tạo kèo. */
+    public function sanTaoKeo(Request $request, \App\Services\LichSan $lich): View
+    {
+        $chuId = $request->user()->idChuSanQuanLy();
+        abort_unless($chuId !== null, 403);
+        $sans = San::where('chu_san_id', $chuId)->orderBy('ten')->get();
+        $san = $sans->firstWhere('id', $request->integer('san')) ?? $sans->first();
+        $ngay = rescue(fn () => Carbon::parse((string) $request->query('ngay', today()->toDateString()))->startOfDay(), today(), false);
+
+        return view('keo.san-tao', [
+            'sans' => $sans, 'san' => $san, 'ngay' => $ngay,
+            'khungs' => $san ? $lich->tuan($san, $ngay, 1)[0]['khungs'] : [],
+        ]);
     }
 
     public function show(Request $request, Keo $keo): View
@@ -78,6 +135,7 @@ class KeoController extends Controller
             'thoiLuongs' => $khung->cacThoiLuong(\App\Support\ThoiGian::phut($san->gio_dong_cua)),
             'doiCuaToi' => $request->user()->laKhach() ? $request->user()->doiDangChoi()->get() : collect(),
             'laSan' => $request->user()->idChuSanQuanLy() === (int) $san->chu_san_id,
+            'tatCaDoi' => $request->user()->idChuSanQuanLy() === (int) $san->chu_san_id ? Doi::orderBy('ten')->get(['id', 'ten']) : collect(),
         ]);
     }
 
@@ -93,9 +151,20 @@ class KeoController extends Controller
             'trinh_do' => ['required', Rule::in(array_keys(Keo::TRINH_DO))],
             'cong_khai' => ['nullable', 'boolean'],
             'mo_ta' => ['nullable', 'string', 'max:500'],
+            'doi_nho' => ['nullable', 'string', 'max:150'],
         ]);
+        $doiNho = null;
+        if (! empty($d['doi_nho'])) {
+            $doiNho = Doi::where('ten', trim($d['doi_nho']))->first();
+            if (! $doiNho) {
+                return back()->withInput()->withErrors(['keo' => 'Không tìm thấy đội "'.$d['doi_nho'].'". Chọn đúng tên trong gợi ý.']);
+            }
+        }
         $k = $this->keo->taoKeoTruoc($request->user(), San::findOrFail($d['san_id']), $d['ngay'], (int) $d['khung_gio_id'],
             isset($d['thoi_luong']) ? (int) $d['thoi_luong'] : null, $d + ['cong_khai' => $request->boolean('cong_khai')]);
+        if ($doiNho) {
+            $this->keo->themDoiVaoKeo($request->user(), $k, $doiNho); // sân làm kèo giùm đội nhờ
+        }
 
         return redirect()->route('keo.show', ['keo' => $k, 'ma' => $k->cong_khai ? null : $k->ma_moi])
             ->with('thanh_cong', 'Đã đăng kèo. Sân CHƯA bị giữ — khi duyệt đủ hai đội, web tự đặt sân và mỗi đội cọc 15%.');

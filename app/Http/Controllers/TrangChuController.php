@@ -43,7 +43,16 @@ class TrangChuController extends Controller
             $homNay[$s->id] = $lich->tuan($s, today(), 1)[0]['khungs']; // KHÔNG lộ người đặt
         }
 
+        $keoMoi = \App\Models\Keo::with(['san.xaPhuong', 'datSan.san.xaPhuong', 'khungGio', 'doiA', 'daiDienA', 'nguoiTao'])
+            ->where('trang_thai', 'dang_tim')->where('cong_khai', true)
+            ->where(fn ($q) => $q->where('ngay', '>=', today()->toDateString())->orWhereHas('datSan', fn ($d) => $d->where('ngay', '>=', today()->toDateString())))
+            ->latest('id')->limit(40)->get()
+            ->filter(fn ($k) => $k->batDauLuc()->isFuture()
+                && (! ($loc['tinh'] ?? null) || (int) $k->sanThuc()->xaPhuong->tinh_thanh_id === (int) $loc['tinh']))
+            ->take(6);
+
         return view('trang-chu', [
+            'keoMoi' => $keoMoi,
             'sans' => $sans,
             'homNay' => $homNay,
             'loc' => $loc,

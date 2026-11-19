@@ -38,6 +38,27 @@
     </div>
 </form>
 
+@if ($keoMoi->isNotEmpty())
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h6 mb-0">⚔ Kèo đang tìm đối {{ ($loc['tinh'] ?? null) ? 'gần bạn' : '' }}</h2>
+        <a href="{{ route('keo.index', array_filter(['tinh' => $loc['tinh'] ?? null])) }}" class="small">Xem tất cả kèo →</a>
+    </div>
+    <div class="row g-2 mb-4">
+        @foreach ($keoMoi as $k)
+            @php $sk = $k->sanThuc(); @endphp
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="{{ route('keo.show', $k) }}" class="d-flex gap-2 align-items-center bg-white rounded shadow-sm p-2 text-decoration-none text-body h-100 border-start border-4 {{ $k->laKeoTruoc() ? 'border-info' : 'border-success' }}">
+                    <img src="{{ $k->doiA?->logoUrl() ?? 'https://ui-avatars.com/api/?background=dc3545&color=fff&name='.urlencode($sk->ten) }}" width="40" height="40" class="rounded-circle object-fit-cover" alt="">
+                    <span class="small" style="min-width: 0">
+                        <strong>{{ $k->laDoiDau() ? ($k->doiA?->ten ?? 'Ô kèo của sân').' ⚔ ?' : 'Ghép lẻ · cần '.$k->so_nguoi_can }}</strong><br>
+                        {{ $k->batDauLuc()->format('d/m') }} {{ $k->nhanGio() }} · <span class="text-muted">{{ $sk->ten }}</span>
+                    </span>
+                </a>
+            </div>
+        @endforeach
+    </div>
+@endif
+
 <div class="small text-muted mb-2">{{ $sans->total() }} sân · Lịch hôm nay {{ today()->format('d/m') }}:
     <span class="badge bg-success">trống</span> <span class="badge bg-danger">đã đặt</span> <span class="badge bg-warning text-dark">đang giữ</span></div>
 

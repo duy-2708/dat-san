@@ -65,6 +65,9 @@ class KeoService
         }
 
         $doiA = ! $laSan && $d['loai'] === 'doi_dau' ? $this->doiCuaNguoi($u, $d['doi_id'] ?? null) : null;
+        if ($doiA) {
+            $this->kiemTraDoiRanh($doiA, $don->batDauLuc(), $don->ketThucLuc());
+        }
 
         $k = new Keo;
         $k->forceFill([
@@ -110,6 +113,7 @@ class KeoService
         }
         $this->kiemTraVao($u, $k, 'doi_dau', true);
         $doiB = $this->doiCuaNguoi($u, $doiId);
+        $this->kiemTraDoiRanh($doiB, $k->batDauLuc(), $k->ketThucLuc(), $k->id);
 
         return DB::transaction(function () use ($u, $k, $doiB) {
             $k = Keo::lockForUpdate()->findOrFail($k->id);
@@ -265,7 +269,10 @@ class KeoService
         if (! $this->conTrong($san, $ngayC->toDateString(), $bd, $bd + $phut)) {
             $this->loi('Giờ này sân đã có người đặt. Chọn giờ khác.');
         }
-        $doiA = $laSan ? null : $this->doiCuaNguoi($u, $d['doi_id'] ?? null, true);
+        $doiA = $laSan ? null : $this->doiCuaNguoi($u, $d['doi_id'] ?? null);
+        if ($doiA) {
+            $this->kiemTraDoiRanh($doiA, $ngayC->copy()->addMinutes($bd), $ngayC->copy()->addMinutes($bd + $phut));
+        }
 
         $gia = $khung->giaTheoPhut($phut);
         $k = new Keo;
@@ -304,10 +311,11 @@ class KeoService
         if ($ly = $u->lyDoKhongVaoKeo(true)) {
             $this->loi($ly);
         }
-        $doi = $this->doiCuaNguoi($u, $doiId, true);
+        $doi = $this->doiCuaNguoi($u, $doiId);
         if ((int) $doi->id === (int) $k->doi_a_id) {
             $this->loi('Đội này đang là chủ kèo.');
         }
+        $this->kiemTraDoiRanh($doi, $k->batDauLuc(), $k->ketThucLuc(), $k->id);
 
         $x = XinKeo::where('keo_id', $k->id)->where('user_id', $u->id)->first() ?? new XinKeo;
         $x->forceFill(['keo_id' => $k->id, 'user_id' => $u->id, 'doi_id' => $doi->id, 'trang_thai' => 'cho_duyet', 'loi_nhan' => $loiNhan])->save();
@@ -321,6 +329,7 @@ class KeoService
         if (! $k->laKeoTruoc() || ! $this->laPhiaSanCua($nguoi, $k->san)) {
             $this->loi('Chỉ chủ sân / nhân viên thêm đội vào kèo của sân.');
         }
+        $this->kiemTraDoiRanh($doi, $k->batDauLuc(), $k->ketThucLuc(), $k->id);
         $dt = $doi->doiTruong;
         if ($ly = $dt->lyDoKhongVaoKeo(true)) {
             $this->loi($doi->ten.': '.$ly);
@@ -442,16 +451,20 @@ class KeoService
             ->whereBetween('o', [intdiv($bd, ThoiGian::BUOC_PHUT), intdiv($kt, ThoiGian::BUOC_PHUT) - 1])->doesntExist();
     }
 
-    /** Đội của người dùng cho kèo đội đấu đội. Có đội mà không chọn / chọn đội không phải của mình → lỗi. */
-    private function doiCuaNguoi(User $u, $doiId, bool $batBuoc = false): ?Doi
+    /**
+     * Đội của người dùng cho kèo đội đấu đội — BẮT BUỘC có đội (để đối thủ xem trước thành tích, uy tín).
+     * Có đúng 1 đội mà không chọn → tự lấy đội đó; nhiều đội → phải chọn.
+     */
+    private function doiCuaNguoi(User $u, $doiId, bool $batBuoc = true): ?Doi
     {
-        $coDoi = $u->doiDangChoi()->exists();
         if (! $doiId) {
-            if ($batBuoc || $coDoi) {
-                $this->loi($coDoi ? 'Chọn đội của bạn cho kèo đội đấu đội.' : 'Bạn cần tạo hoặc vào một đội trước khi cáp kèo đội đấu đội.');
+            $ds = $u->doiDangChoi()->get();
+            if ($ds->count() === 1) {
+                return $ds->first();
             }
-
-            return null;
+            $this->loi($ds->isEmpty()
+                ? 'Bạn cần tạo hoặc vào một đội trước khi cáp kèo đội đấu đội (để đối thủ xem được đội bạn).'
+                : 'Bạn có nhiều đội — chọn đội sẽ đá kèo này.');
         }
         $doi = Doi::find($doiId);
         if (! $doi || ! $doi->laThanhVien($u)) {
@@ -459,6 +472,20 @@ class KeoService
         }
 
         return $doi;
+    }
+
+    /** Một đội không được ở 2 kèo trùng giờ (kể cả ở 2 sân khác nhau). */
+    private function kiemTraDoiRanh(Doi $doi, Carbon $bd, Carbon $kt, ?int $truKeoId = null): void
+    {
+        $trung = Keo::with(['datSan', 'khungGio'])
+            ->where(fn ($q) => $q->where('doi_a_id', $doi->id)->orWhere('doi_b_id', $doi->id))
+            ->whereNotIn('trang_thai', ['hoan_tat', 'da_huy'])
+            ->when($truKeoId, fn ($q) => $q->where('id', '!=', $truKeoId))
+            ->get()
+            ->first(fn (Keo $k) => $k->batDauLuc()->lt($kt) && $bd->lt($k->ketThucLuc()));
+        if ($trung) {
+            $this->loi($doi->ten.' đã có kèo #'.$trung->id.' lúc '.$trung->batDauLuc()->format('H:i d/m').' trùng giờ này.');
+        }
     }
 
     private function laPhiaSanCua(User $u, San $san): bool

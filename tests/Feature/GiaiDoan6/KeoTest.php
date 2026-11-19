@@ -38,6 +38,7 @@ class KeoTest extends TestCase
     {
         $u = User::factory()->create(['name' => $ten]);
         $u->forceFill(['created_at' => now()->subMonths(3), 'so_tran_tham_gia' => 5])->save();
+        app(\App\Services\DoiService::class)->taoDoi($u, ['ten' => 'Đội của '.$ten.' '.$u->id], null); // kèo đội đấu đội bắt buộc có đội
 
         return $u;
     }

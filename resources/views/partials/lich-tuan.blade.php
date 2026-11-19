@@ -15,6 +15,10 @@
     $tyLeCoc = (int) ($san->chuSan->hoSoChuSan?->ty_le_coc ?? 30);
     $nhanPhut = fn ($p) => intdiv($p, 60).'h'.($p % 60 ? sprintf('%02d', $p % 60) : '');
     $laKhachDangNhap = auth()->check() && auth()->user()->laKhach();
+    // Kèo công khai đang tìm đối trong tuần này của sân → huy hiệu trên khung giờ
+    $keoMo = \App\Models\Keo::with(['datSan', 'khungGio'])->where('trang_thai', 'dang_tim')->where('cong_khai', true)
+        ->where(fn ($q) => $q->where('san_id', $san->id)->orWhereHas('datSan', fn ($d) => $d->where('san_id', $san->id)))
+        ->get()->keyBy(fn ($k) => $k->batDauLuc()->format('Y-m-d H:i'));
 @endphp
 <div class="d-flex align-items-center justify-content-between mb-2">
     <a href="{{ $url }}?tu={{ $truoc->toDateString() }}" class="btn btn-sm btn-outline-secondary {{ $cheDo === 'khach' && $tu->lte(today()) ? 'disabled' : '' }}"><i class="bi bi-chevron-left"></i></a>
@@ -56,6 +60,9 @@
                         <span class="fw-semibold">{{ $k->nhan() }}</span>
                         @if ($k->la_gio_vang) <i class="bi bi-star-fill text-warning" title="Giờ vàng"></i> @endif
                     </div>
+                    @if ($keoTai = $keoMo->get($n['ngay']->format('Y-m-d').' '.substr($k->gio_bat_dau, 0, 5)))
+                        <a href="{{ route('keo.show', $keoTai) }}" class="badge bg-danger text-decoration-none mb-1">⚔ Có kèo tìm đối{{ $keoTai->doiA ? ' · '.$keoTai->doiA->ten : '' }}</a>
+                    @endif
                     <div class="small text-muted">{{ $tien($k->gia) }}đ</div>
 
                     @if ($cheDo === 'khach')
