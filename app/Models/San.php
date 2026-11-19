@@ -112,6 +112,18 @@ class San extends Model
         )));
     }
 
+    /**
+     * ID các sân con, cháu (bắc cầu). Đặt sân này → chiếm ô của nó + toàn bộ sân con.
+     * Không chiếm ô sân cha: nếu không, hai sân con (5A, 5B) đặt cùng giờ sẽ "đụng" nhau ở sân cha.
+     * Sân cha vẫn bị chặn vì khi đặt sân cha sẽ đụng ô của sân con đã có người đặt.
+     *
+     * @return int[]
+     */
+    public function idsSanCon(): array
+    {
+        return self::duyetGhep([$this->id], 'san_cha_id', 'san_con_id');
+    }
+
     /** Duyệt bảng san_ghep theo một chiều (BFS), không gồm các id xuất phát. */
     public static function duyetGhep(array $batDau, string $cotTu, string $cotDen): array
     {

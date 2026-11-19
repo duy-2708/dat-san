@@ -5,7 +5,12 @@ use App\Http\Controllers\Admin\TaiKhoanController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\BangDieuKhienController;
 use App\Http\Controllers\HoSo\SoDienThoaiController;
+use App\Http\Controllers\DatSanController;
 use App\Http\Controllers\DiaChiController;
+use App\Http\Controllers\KhachController;
+use App\Http\Controllers\QuanLy\DatSanController as QuanLyDatSanController;
+use App\Http\Controllers\QuanLy\ThanhToanController;
+use App\Http\Controllers\SanCongKhaiController;
 use App\Http\Controllers\QuanLy\AnhSanController;
 use App\Http\Controllers\QuanLy\KhungGioController;
 use App\Http\Controllers\QuanLy\NgayLeController;
@@ -20,8 +25,13 @@ use Illuminate\Support\Facades\Route;
 | Gõ `php artisan route:list` để xem đầy đủ.
 */
 
-Route::view('/', 'trang-chu')->name('trang-chu'); // giai đoạn 4 thay bằng trang chủ thật
+// Tạm thời: liệt kê sân đang mở. Giai đoạn 4 thay bằng trang chủ có bộ lọc + lịch hôm nay.
+Route::get('/', fn () => view('trang-chu', [
+    'sans' => \App\Models\San::with('anhSans', 'xaPhuong.tinhThanh')->where('trang_thai', 'hoat_dong')
+        ->whereHas('chuSan.hoSoChuSan', fn ($q) => $q->where('het_han_luc', '>', now()))->orderBy('ten')->get(),
+]))->name('trang-chu');
 Route::get('/dia-chi/xa-phuong', [DiaChiController::class, 'xaPhuong'])->name('dia-chi.xa-phuong');
+Route::get('/san/{san:slug}', [SanCongKhaiController::class, 'show'])->name('san.show'); // ai cũng xem được lịch trống/đã đặt
 
 // ---- Đăng nhập Google ----
 Route::middleware('guest')->group(function () {
@@ -56,6 +66,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/san', [SanController::class, 'index'])->name('san.index');
             Route::get('/san/{san}/khung-gio', [KhungGioController::class, 'index'])->name('san.khung-gio.index');
 
+            // Đặt sân phía sân (chủ + nhân viên): xem đơn, lịch, xác nhận cọc, gia hạn, đặt tại chỗ
+            Route::get('/dat-san', [QuanLyDatSanController::class, 'index'])->name('dat-san.index');
+            Route::get('/san/{san}/lich', [QuanLyDatSanController::class, 'lich'])->name('san.lich');
+            Route::post('/san/{san}/dat-tai-cho', [QuanLyDatSanController::class, 'datTaiCho'])->name('san.dat-tai-cho');
+            Route::patch('/dat-san/{datSan}/xac-nhan-coc', [QuanLyDatSanController::class, 'xacNhanCoc'])->name('dat-san.xac-nhan-coc');
+            Route::patch('/dat-san/{datSan}/gia-han', [QuanLyDatSanController::class, 'giaHan'])->name('dat-san.gia-han');
+            Route::patch('/dat-san/{datSan}/huy', [QuanLyDatSanController::class, 'huy'])->name('dat-san.huy');       // Policy: chỉ chủ sân
+            Route::patch('/dat-san/{datSan}/da-hoan', [QuanLyDatSanController::class, 'daHoan'])->name('dat-san.da-hoan'); // Policy: chỉ chủ sân
+
             // Chỉ chủ sân
             Route::middleware('vai_tro:chu_san')->group(function () {
                 Route::get('/san/tao', [SanController::class, 'create'])->name('san.create');
@@ -74,6 +93,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::put('/khung-gio/{khungGio}', [KhungGioController::class, 'update'])->name('khung-gio.update');
                 Route::delete('/khung-gio/{khungGio}', [KhungGioController::class, 'destroy'])->name('khung-gio.destroy');
 
+                Route::get('/thanh-toan', [ThanhToanController::class, 'edit'])->name('thanh-toan.edit');
+                Route::put('/thanh-toan', [ThanhToanController::class, 'update'])->name('thanh-toan.update');
+
                 Route::get('/ngay-le', [NgayLeController::class, 'index'])->name('ngay-le.index');
                 Route::post('/ngay-le', [NgayLeController::class, 'store'])->name('ngay-le.store');
                 Route::delete('/ngay-le/{ngayLe}', [NgayLeController::class, 'destroy'])->name('ngay-le.destroy');
@@ -85,9 +107,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             });
         });
 
+        // ---- Trang thanh toán của 1 đơn (Policy: khách của đơn hoặc phía sân) ----
+        Route::get('/dat-san/{datSan}/thanh-toan', [DatSanController::class, 'thanhToan'])->name('dat-san.thanh-toan');
+        Route::get('/dat-san/{datSan}/trang-thai', [DatSanController::class, 'trangThai'])->name('dat-san.trang-thai');
+        Route::post('/dat-san/{datSan}/huy', [DatSanController::class, 'huy'])->name('dat-san.huy');
+
         // ---- KHÁCH ----
         Route::middleware('vai_tro:khach')->name('khach.')->group(function () {
-            Route::view('/tai-khoan', 'khach.tai-khoan')->name('tai-khoan');
+            Route::get('/tai-khoan', [KhachController::class, 'taiKhoan'])->name('tai-khoan');
+            Route::post('/dat-san', [DatSanController::class, 'store'])->name('dat-san.store');
         });
     });
 });

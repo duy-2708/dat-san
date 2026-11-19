@@ -2,7 +2,11 @@
 @section('title', 'Tài khoản của tôi')
 
 @section('content')
-@php($u = auth()->user())
+@php
+    $u = auth()->user();
+    $tien = fn ($so) => number_format((int) $so, 0, ',', '.').'đ';
+    $mauTt = ['cho_thanh_toan' => 'warning', 'da_dat' => 'success', 'da_huy' => 'secondary'];
+@endphp
 <div class="row g-3">
     <div class="col-md-4">
         <div class="card border-0 shadow-sm text-center">
@@ -20,12 +24,41 @@
         </div>
     </div>
     <div class="col-md-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <h2 class="h6">Lịch đặt sân của tôi</h2>
-                <p class="text-muted mb-0">Sẽ có ở giai đoạn 3.</p>
+        <h2 class="h6">Lịch sắp tới</h2>
+        @forelse ($sapToi as $d)
+            <div class="card border-0 shadow-sm mb-2">
+                <div class="card-body py-2 d-flex justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="fw-semibold">{{ \Carbon\Carbon::parse($d->ngay)->format('d/m') }} · {{ $d->khungGioNhan() }} — {{ $d->san->ten }}</div>
+                        <div class="small text-muted">{{ $d->ma_don }} · {{ $d->san->diaChiDayDu() }}</div>
+                        <div class="small">
+                            <span class="badge bg-{{ $mauTt[$d->trang_thai] }}">{{ \App\Models\DatSan::TRANG_THAI[$d->trang_thai] }}</span>
+                            Cọc {{ $tien($d->tien_coc) }} · còn {{ $tien($d->gia_chot - ($d->xac_nhan_coc_luc ? $d->tien_coc : 0)) }}
+                        </div>
+                    </div>
+                    <a href="{{ route('dat-san.thanh-toan', $d) }}" class="btn btn-sm {{ $d->trang_thai === 'cho_thanh_toan' ? 'btn-warning' : 'btn-outline-secondary' }} text-nowrap">
+                        {{ $d->trang_thai === 'cho_thanh_toan' ? 'Quét QR cọc' : 'Chi tiết' }}
+                    </a>
+                </div>
             </div>
-        </div>
+        @empty
+            <div class="text-muted small bg-white rounded p-3 mb-2">Chưa có lịch nào. Tìm sân và đặt ngay!</div>
+        @endforelse
+
+        @if ($daQua->isNotEmpty())
+            <h2 class="h6 mt-3">Đã qua / đã huỷ</h2>
+            <div class="list-group shadow-sm">
+                @foreach ($daQua as $d)
+                    <a href="{{ route('dat-san.thanh-toan', $d) }}" class="list-group-item list-group-item-action small d-flex justify-content-between">
+                        <span>{{ \Carbon\Carbon::parse($d->ngay)->format('d/m/Y') }} · {{ $d->khungGioNhan() }} — {{ $d->san->ten }}</span>
+                        <span>
+                            <span class="badge bg-{{ $mauTt[$d->trang_thai] }}">{{ \App\Models\DatSan::TRANG_THAI[$d->trang_thai] }}</span>
+                            @if (\App\Models\DatSan::XU_LY_COC[$d->xu_ly_coc]) <span class="badge bg-light text-dark border">{{ \App\Models\DatSan::XU_LY_COC[$d->xu_ly_coc] }}</span> @endif
+                        </span>
+                    </a>
+                @endforeach
+            </div>
+        @endif
     </div>
 </div>
 @endsection

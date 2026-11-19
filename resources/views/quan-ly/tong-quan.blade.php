@@ -20,8 +20,8 @@
 <div class="row g-3">
     @foreach ([
         ['bi-grid-3x3-gap', 'Sân & giá', route('quan-ly.san.index'), 'Sân, ảnh, khung giờ'],
-        ['bi-calendar-week', 'Lịch đặt sân', null, 'Giai đoạn 3'],
-        ['bi-qr-code', 'Cài đặt thanh toán', null, 'Giai đoạn 3'],
+        ['bi-calendar-week', 'Đơn đặt sân', route('quan-ly.dat-san.index'), 'Xác nhận cọc, lịch hôm nay'],
+        ['bi-qr-code', 'Cài đặt thanh toán', auth()->user()->laChuSan() ? route('quan-ly.thanh-toan.edit') : null, 'Tài khoản nhận cọc'],
         ['bi-people', 'Kèo', null, 'Giai đoạn 6'],
     ] as [$icon, $ten, $link, $gd])
         <div class="col-6 col-md-3">

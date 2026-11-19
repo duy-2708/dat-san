@@ -39,7 +39,8 @@
                 </div>
             </div>
             <div class="card-footer bg-white border-0 d-flex flex-wrap gap-2">
-                <a href="{{ route('quan-ly.san.khung-gio.index', $s) }}" class="btn btn-sm btn-success flex-grow-1"><i class="bi bi-clock"></i> Khung giờ & giá</a>
+                <a href="{{ route('quan-ly.san.lich', $s) }}" class="btn btn-sm btn-success flex-grow-1"><i class="bi bi-calendar-week"></i> Lịch</a>
+                <a href="{{ route('quan-ly.san.khung-gio.index', $s) }}" class="btn btn-sm btn-outline-success"><i class="bi bi-clock"></i> Giá</a>
                 @if ($laChu)
                     <a href="{{ route('quan-ly.san.edit', $s) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Sửa</a>
                     <form method="POST" action="{{ route('quan-ly.san.trang-thai', $s) }}">
