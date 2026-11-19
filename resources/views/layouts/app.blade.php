@@ -31,6 +31,9 @@
                     @if (auth()->user()->laAdmin())
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.chu-san.index') }}">Chủ sân</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.tai-khoan.index') }}">Tài khoản</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.thue-bao.index') }}">Thuê bao</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.goi.index') }}">Gói</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.cai-dat.edit') }}">Cài đặt</a></li>
                     @elseif (auth()->user()->coVaiTro('chu_san', 'nhan_vien'))
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.tong-quan') }}">Quản lý</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.dat-san.index') }}">Đơn đặt</a></li>
@@ -39,6 +42,7 @@
                             <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.giai-dau.index') }}">Tổ chức giải</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.thanh-toan.edit') }}">Thanh toán</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.nhan-vien.index') }}">Nhân viên</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.goi.index') }}">Gói dịch vụ</a></li>
                         @endif
                     @endif
                 @endauth

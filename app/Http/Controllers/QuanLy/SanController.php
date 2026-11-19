@@ -188,9 +188,9 @@ class SanController extends Controller
 
     private function vuotGioiHanGoi(Request $request): ?string
     {
-        $goi = $request->user()->hoSoChuSan?->goiThueBao;
+        $goi = $request->user()->hoSoChuSan?->goiApDung();
         if ($goi && $request->user()->sans()->count() >= $goi->so_san_toi_da) {
-            return "Gói {$goi->ten} chỉ cho tối đa {$goi->so_san_toi_da} sân. Liên hệ quản trị để nâng gói.";
+            return "Gói {$goi->ten} chỉ cho tối đa {$goi->so_san_toi_da} sân. Vào mục Gói dịch vụ để nâng gói.";
         }
 
         return null;

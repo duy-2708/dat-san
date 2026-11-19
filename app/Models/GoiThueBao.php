@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GoiThueBao extends Model
 {
@@ -19,5 +20,10 @@ class GoiThueBao extends Model
             'cho_phep_cong_tu_dong' => 'boolean',
             'dang_ban' => 'boolean',
         ];
+    }
+
+    public function hoSoChuSans(): HasMany
+    {
+        return $this->hasMany(HoSoChuSan::class);
     }
 }

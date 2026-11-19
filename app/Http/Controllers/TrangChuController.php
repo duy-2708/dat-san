@@ -27,7 +27,7 @@ class TrangChuController extends Controller
             ->where('trang_thai', 'hoat_dong')
             // chủ sân còn hạn gói & không bị khoá
             ->whereHas('chuSan', fn ($q) => $q->where('trang_thai', 'hoat_dong')
-                ->whereHas('hoSoChuSan', fn ($h) => $h->where('het_han_luc', '>', now())))
+                ->whereHas('hoSoChuSan', fn ($h) => \App\Models\HoSoChuSan::locConHan($h)))
             ->when($loc['tinh'] ?? null, fn ($q, $t) => $q->whereHas('xaPhuong', fn ($x) => $x->where('tinh_thanh_id', $t)))
             ->when($loc['xa'] ?? null, fn ($q, $x) => $q->where('xa_phuong_id', $x))
             ->when($loc['loai'] ?? null, fn ($q, $l) => $q->where('loai_san', $l))

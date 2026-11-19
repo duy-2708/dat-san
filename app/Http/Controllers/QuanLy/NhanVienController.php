@@ -30,6 +30,12 @@ class NhanVienController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $goi = $request->user()->hoSoChuSan?->goiApDung();
+        if ($goi && $request->user()->nhanViens()->count() >= $goi->so_nhan_vien_toi_da) {
+            return redirect()->route('quan-ly.nhan-vien.index')
+                ->withErrors(['goi' => "Gói {$goi->ten} chỉ cho tối đa {$goi->so_nhan_vien_toi_da} nhân viên. Vào mục Gói dịch vụ để nâng gói."]);
+        }
+
         $request->merge([
             'email' => mb_strtolower(trim((string) $request->input('email'))),
             'so_dien_thoai' => ChuanHoa::soDienThoai($request->input('so_dien_thoai')),

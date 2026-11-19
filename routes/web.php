@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\CaiDatController;
 use App\Http\Controllers\Admin\ChuSanController;
+use App\Http\Controllers\Admin\GoiThueBaoController;
+use App\Http\Controllers\Admin\ThueBaoController;
+use App\Http\Controllers\QuanLy\GoiController;
 use App\Http\Controllers\Admin\TaiKhoanController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\BangDieuKhienController;
@@ -70,11 +74,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/tai-khoan/{user}/khoa', [TaiKhoanController::class, 'khoa'])->name('tai-khoan.khoa');
             Route::patch('/tai-khoan/{user}/mo-khoa', [TaiKhoanController::class, 'moKhoa'])->name('tai-khoan.mo-khoa');
             Route::patch('/tai-khoan/{user}/go-han-che', [TaiKhoanController::class, 'goHanChe'])->name('tai-khoan.go-han-che');
+            Route::patch('/chu-san/{user}/gia-han', [ChuSanController::class, 'giaHan'])->name('chu-san.gia-han');
+
+            Route::get('/goi', [GoiThueBaoController::class, 'index'])->name('goi.index');
+            Route::post('/goi', [GoiThueBaoController::class, 'store'])->name('goi.store');
+            Route::put('/goi/{goi}', [GoiThueBaoController::class, 'update'])->name('goi.update');
+
+            Route::get('/thue-bao', [ThueBaoController::class, 'index'])->name('thue-bao.index');
+            Route::patch('/thue-bao/{thueBao}/xac-nhan', [ThueBaoController::class, 'xacNhan'])->name('thue-bao.xac-nhan');
+            Route::patch('/thue-bao/{thueBao}/huy', [ThueBaoController::class, 'huy'])->name('thue-bao.huy');
+
+            Route::get('/cai-dat', [CaiDatController::class, 'edit'])->name('cai-dat.edit');
+            Route::put('/cai-dat', [CaiDatController::class, 'update'])->name('cai-dat.update');
         });
 
         // ---- CHỦ SÂN + NHÂN VIÊN ----
-        Route::middleware('vai_tro:chu_san,nhan_vien')->prefix('quan-ly')->name('quan-ly.')->group(function () {
+        Route::middleware(['vai_tro:chu_san,nhan_vien', 'con_han_goi'])->prefix('quan-ly')->name('quan-ly.')->group(function () {
             Route::view('/', 'quan-ly.tong-quan')->name('tong-quan');
+
+            // Gói dịch vụ: vẫn vào được khi đã hết hạn (middleware con_han_goi cho qua)
+            Route::middleware('vai_tro:chu_san')->group(function () {
+                Route::get('/goi', [GoiController::class, 'index'])->name('goi.index');
+                Route::post('/goi', [GoiController::class, 'store'])->name('goi.store');
+                Route::get('/goi/don/{thueBao}', [GoiController::class, 'show'])->name('goi.show');
+                Route::patch('/goi/don/{thueBao}/huy', [GoiController::class, 'huy'])->name('goi.huy');
+            });
 
             // Sân: nhân viên xem được danh sách & bảng giá; sửa thì Policy chỉ cho chủ sân
             Route::get('/san', [SanController::class, 'index'])->name('san.index');

@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ChanTaiKhoanBiKhoa;
 use App\Http\Middleware\KiemTraVaiTro;
+use App\Http\Middleware\YeuCauConHanGoi;
 use App\Http\Middleware\YeuCauSoDienThoai;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'vai_tro' => KiemTraVaiTro::class,
             'co_sdt' => YeuCauSoDienThoai::class,
+            'con_han_goi' => YeuCauConHanGoi::class,
         ]);
 
         // Chạy cho mọi request thuộc nhóm "web"

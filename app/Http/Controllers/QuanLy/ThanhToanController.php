@@ -99,7 +99,7 @@ class ThanhToanController extends Controller
 
     private function choPhepCong(HoSoChuSan $hoSo): bool
     {
-        $goi = $hoSo->goiThueBao;
+        $goi = $hoSo->goiApDung();
 
         return ! $goi || $goi->cho_phep_cong_tu_dong; // đang miễn phí (chưa gán gói) → cho dùng
     }

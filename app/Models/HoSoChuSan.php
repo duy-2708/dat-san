@@ -40,8 +40,26 @@ class HoSoChuSan extends Model
         return $this->belongsTo(GoiThueBao::class);
     }
 
+    /** Được hoạt động: đang trong thời gian miễn phí của hệ thống, hoặc gói còn hạn. */
     public function conHan(): bool
     {
-        return $this->het_han_luc !== null && $this->het_han_luc->isFuture();
+        return CaiDat::dangMienPhi() || ($this->het_han_luc !== null && $this->het_han_luc->isFuture());
+    }
+
+    /** Giới hạn của gói chỉ áp dụng khi hết thời gian miễn phí. */
+    public function goiApDung(): ?GoiThueBao
+    {
+        return CaiDat::dangMienPhi() ? null : $this->goiThueBao;
+    }
+
+    /** Thêm điều kiện "còn hạn" vào truy vấn ho_so_chu_san. */
+    public static function locConHan($q)
+    {
+        return CaiDat::dangMienPhi() ? $q : $q->where('het_han_luc', '>', now());
+    }
+
+    public function soNgayConLai(): ?int
+    {
+        return $this->het_han_luc?->isFuture() ? (int) ceil(now()->diffInHours($this->het_han_luc) / 24) : null;
     }
 }

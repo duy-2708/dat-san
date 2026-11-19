@@ -13,12 +13,14 @@ class DatabaseSeeder extends Seeder
             TinhThanhSeeder::class,
             XaPhuongSeeder::class,
             GoiThueBaoSeeder::class,
+            CaiDatSeeder::class,
             TaiKhoanMauSeeder::class,
             NgayLeSeeder::class,
             SanMauSeeder::class,
             DatSanMauSeeder::class,
             KeoMauSeeder::class,
             DoiGiaiDauMauSeeder::class,
+            ThueBaoMauSeeder::class,
         ]);
     }
 }
