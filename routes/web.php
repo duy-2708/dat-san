@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\GoiThueBaoController;
 use App\Http\Controllers\Admin\ThueBaoController;
 use App\Http\Controllers\QuanLy\GoiController;
 use App\Http\Controllers\Admin\TaiKhoanController;
+use App\Http\Controllers\Admin\NhatKyController;
+use App\Http\Controllers\HoSo\BaoMatController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\BangDieuKhienController;
 use App\Http\Controllers\HoSo\SoDienThoaiController;
@@ -61,12 +63,14 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/ho-so/so-dien-thoai', [SoDienThoaiController::class, 'create'])->name('ho-so.so-dien-thoai');
     Route::post('/ho-so/so-dien-thoai', [SoDienThoaiController::class, 'store'])->name('ho-so.so-dien-thoai.store');
+    Route::get('/tai-khoan/bao-mat', [BaoMatController::class, 'show'])->name('bao-mat');
 
     Route::middleware('co_sdt')->group(function () {
         Route::get('/bang-dieu-khien', BangDieuKhienController::class)->name('bang-dieu-khien');
 
         // ---- ADMIN ----
-        Route::middleware('vai_tro:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::middleware(['vai_tro:admin', 'admin_2fa'])->prefix('admin')->name('admin.')->group(function () {
+            Route::get('/nhat-ky', [NhatKyController::class, 'index'])->name('nhat-ky');
             Route::get('/chu-san', [ChuSanController::class, 'index'])->name('chu-san.index');
             Route::get('/chu-san/tao', [ChuSanController::class, 'create'])->name('chu-san.create');
             Route::post('/chu-san', [ChuSanController::class, 'store'])->name('chu-san.store');

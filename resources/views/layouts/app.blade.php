@@ -37,6 +37,7 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.thue-bao.index') }}">Thuê bao</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.goi.index') }}">Gói</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.cai-dat.edit') }}">Cài đặt</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.nhat-ky') }}">Nhật ký</a></li>
                     @elseif (auth()->user()->coVaiTro('chu_san', 'nhan_vien'))
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.tong-quan') }}">Quản lý</a></li>
                         @php
@@ -70,6 +71,8 @@
                                 <li><a class="dropdown-item" href="{{ route('cau-thu.show', auth()->user()) }}">Hồ sơ cầu thủ</a></li>
                                 <li><a class="dropdown-item" href="{{ route('khach.doi.create') }}">Tạo đội</a></li>
                             @endif
+                            <li><a class="dropdown-item" href="{{ route('bao-mat') }}"><i class="bi bi-shield-lock"></i> Bảo mật tài khoản
+                                @if (! auth()->user()->two_factor_confirmed_at) <span class="badge bg-warning text-dark">nên bật</span> @endif</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">

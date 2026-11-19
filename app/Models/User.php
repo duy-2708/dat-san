@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     public const ADMIN = 'admin';
     public const CHU_SAN = 'chu_san';
@@ -42,7 +43,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'anh_dai_dien', 'vi_tri_so_truong',
     ];
 
-    protected $hidden = ['password', 'remember_token', 'google_id'];
+    protected $hidden = ['password', 'remember_token', 'google_id', 'two_factor_secret', 'two_factor_recovery_codes'];
 
     protected function casts(): array
     {
@@ -53,6 +54,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'cam_dat_den' => 'datetime',
             'han_che_luc' => 'datetime',
             'password' => 'hashed',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 

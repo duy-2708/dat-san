@@ -1,2 +1,7 @@
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /quan-ly
+Disallow: /user
+Disallow: /tai-khoan
+Disallow: /bang-dieu-khien
+Disallow: /webhook

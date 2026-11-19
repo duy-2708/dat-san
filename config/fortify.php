@@ -30,5 +30,7 @@ return [
         Features::emailVerification(),
         Features::updateProfileInformation(),
         Features::updatePasswords(),
+        // Xác minh 2 bước bằng app (Google Authenticator / Microsoft Authenticator). Bắt buộc với admin khi BAT_BUOC_2FA_ADMIN=true
+        Features::twoFactorAuthentication(['confirm' => true, 'confirmPassword' => true]),
     ],
 ];

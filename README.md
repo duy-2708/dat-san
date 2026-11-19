@@ -77,3 +77,7 @@ Ba điểm bảo mật nên đọc kỹ:
 - 4 vai trò; admin tạo chủ sân (kèm hồ sơ, hạn dùng), khoá/mở tài khoản; chủ sân tạo/khoá nhân viên của mình.
 - Tài khoản bị khoá bị đăng xuất ngay ở request kế tiếp; khoá chủ sân thì nhân viên cũng bị chặn.
 - 32 test (30 Feature + 2 Unit) — chạy bằng `php artisan test`.
+
+## Bảo mật & triển khai
+- [docs/01-bao-mat.md](docs/01-bao-mat.md) — đã cài gì, bật xác minh 2 bước, nhật ký, sao lưu & phục hồi.
+- [docs/02-trien-khai-may-chu.md](docs/02-trien-khai-may-chu.md) — đưa lên VPS bằng 1 lệnh (`trien-khai/cai-may-chu.sh`), Cloudflare, HTTPS, UptimeRobot, sao lưu Google Drive.

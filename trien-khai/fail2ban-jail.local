@@ -1,0 +1,8 @@
+# /etc/fail2ban/jail.local — khoá IP dò mật khẩu SSH: sai 5 lần trong 10 phút → cấm 1 ngày
+[DEFAULT]
+bantime = 1d
+findtime = 10m
+maxretry = 5
+
+[sshd]
+enabled = true
