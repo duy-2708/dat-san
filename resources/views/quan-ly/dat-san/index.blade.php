@@ -28,6 +28,9 @@
                 <div class="d-flex flex-wrap gap-1 align-items-center">
                     <form method="POST" action="{{ route('quan-ly.dat-san.xac-nhan-coc', $d) }}">@csrf @method('PATCH')
                         <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Đã nhận cọc</button></form>
+                    <form method="POST" action="{{ route('quan-ly.dat-san.xac-nhan-coc', $d) }}" onsubmit="return confirm(@js('Đã nhận cọc '.$tien($d->tien_coc).' NGOÀI (tiền mặt / chuyển riêng) cho '.$d->ma_don.'? Sân sẽ đặt chắc luôn.'))">@csrf @method('PATCH')
+                        <input type="hidden" name="ngoai" value="1">
+                        <button class="btn btn-sm btn-outline-success" title="Khách đưa tiền mặt hoặc chuyển khoản riêng"><i class="bi bi-cash"></i> Nhận cọc ngoài</button></form>
                     @if ($d->bao_da_chuyen_luc)
                         <form method="POST" action="{{ route('quan-ly.dat-san.khong-thay-tien', $d) }}" onsubmit="return confirm('Không thấy tiền {{ $d->ma_don }}? Đơn bị huỷ và khách bị trừ uy tín.')">@csrf @method('PATCH')
                             <button class="btn btn-sm btn-outline-danger">Không thấy tiền</button></form>
@@ -121,8 +124,17 @@
                 <strong>{{ $d->khungGioNhan() }}</strong> — {{ $d->san->ten }} ·
                 {{ $d->tenNguoiDat() }} (<a href="tel:{{ $d->sdtNguoiDat() }}">{{ $d->sdtNguoiDat() }}</a>)
                 <span class="badge bg-light text-dark border">{{ $d->nguon === 'tai_cho' ? 'Tại chỗ' : 'Online' }}</span><br>
-                Giá {{ $tien($d->gia_chot) }} · đã cọc {{ $tien($d->xac_nhan_coc_luc ? $d->tien_coc : 0) }} · <strong>thu thêm {{ $tien($d->conLaiPhai()) }}</strong>
+                Giá {{ $tien($d->gia_chot) }} · đã cọc {{ $tien($d->xac_nhan_coc_luc ? $d->tien_coc : 0) }}
+                @if ($d->da_thu_tien_luc)
+                    · <span class="badge bg-success">Đã thu đủ {{ $tien($d->tien_thu_tai_san) }} lúc {{ $d->da_thu_tien_luc->format('H:i d/m') }}</span>
+                @else
+                    · <strong>thu thêm {{ $tien($d->conLaiPhai()) }}</strong>
+                @endif
             </div>
+            @if ($d->trang_thai === 'da_dat' && ! $d->da_thu_tien_luc)
+                <form method="POST" action="{{ route('quan-ly.dat-san.da-thu', $d) }}" onsubmit="return confirm(@js('Đã nhận đủ '.$tien($d->conLaiPhai()).' tiền sân đơn '.$d->ma_don.'?'))">@csrf @method('PATCH')
+                    <button class="btn btn-sm btn-success"><i class="bi bi-cash-coin"></i> Đã nhận {{ $tien($d->conLaiPhai()) }}</button></form>
+            @endif
             @if ($laChu)
                 @if ($d->khach_id && $d->batDauLuc()->isPast())
                     @if ($d->khong_tra_du_luc)

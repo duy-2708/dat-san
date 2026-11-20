@@ -2,13 +2,13 @@
 @section('title', 'Quản lý sân')
 
 @section('content')
-@php($u = auth()->user())
-@php($hoSo = $u->laChuSan() ? $u->hoSoChuSan : $u->chuSan?->hoSoChuSan)
+@php $u = auth()->user(); @endphp
+@php $hoSo = $u->laChuSan() ? $u->hoSoChuSan : $u->chuSan?->hoSoChuSan; @endphp
 <h1 class="h4 mb-3">{{ $hoSo?->ten_co_so ?? 'Quản lý sân' }}</h1>
 
 @error('thue_bao') <div class="alert alert-danger">{{ $message }}</div> @enderror
 @if ($hoSo)
-    @php($ngay = $hoSo->soNgayConLai())
+    @php $ngay = $hoSo->soNgayConLai(); @endphp
     <div class="alert {{ ! $hoSo->conHan() ? 'alert-danger' : ($ngay !== null && $ngay <= 7 && ! \App\Models\CaiDat::dangMienPhi() ? 'alert-warning' : 'alert-light border') }}">
         Gói: <strong>{{ $hoSo->goiThueBao?->ten ?? 'Chưa có' }}</strong> —
         @if (\App\Models\CaiDat::dangMienPhi())
@@ -20,6 +20,47 @@
         @endif
         @if ($u->laChuSan()) <a href="{{ route('quan-ly.goi.index') }}" class="alert-link ms-1">Gia hạn / đổi gói</a> @else Báo chủ sân gia hạn. @endif
     </div>
+@endif
+
+@if ($tk)
+    @php $tien = fn ($so) => number_format((int) $so, 0, ',', '.').'đ'; @endphp
+    <div class="card border-0 shadow-sm mb-3"><div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <h2 class="h6 mb-0"><i class="bi bi-graph-up-arrow text-success"></i> Doanh thu tháng {{ $thang->format('m/Y') }}</h2>
+            <div class="btn-group btn-group-sm">
+                <a href="?thang={{ $thang->copy()->subMonth()->format('Y-m') }}" class="btn btn-outline-secondary"><i class="bi bi-chevron-left"></i></a>
+                <a href="?thang={{ now()->format('Y-m') }}" class="btn btn-outline-secondary">Tháng này</a>
+                <a href="?thang={{ $thang->copy()->addMonth()->format('Y-m') }}" class="btn btn-outline-secondary"><i class="bi bi-chevron-right"></i></a>
+            </div>
+        </div>
+        <div class="row g-2 text-center">
+            @foreach ([
+                ['Cọc online', $tk['coc_online'], 'qr-code', 'success', 'Khách chuyển qua mã QR / PayOS'],
+                ['Cọc nhận ngoài', $tk['coc_ngoai'], 'cash', 'success', 'Tiền mặt / chuyển riêng'],
+                ['Tiền sân thu tại sân', $tk['tien_san'], 'cash-coin', 'success', 'Đã bấm "Đã nhận" ở Đơn đặt'],
+                ['Đã hoàn cọc', -$tk['hoan'], 'arrow-counterclockwise', 'danger', 'Trả lại khách'],
+            ] as [$nhan, $so, $icon, $mau, $ghiChu])
+                <div class="col-6 col-md-3">
+                    <div class="border rounded p-2 h-100">
+                        <div class="small text-muted"><i class="bi bi-{{ $icon }}"></i> {{ $nhan }}</div>
+                        <div class="fs-5 fw-bold text-{{ $so < 0 ? 'danger' : 'body' }}">{{ $so < 0 ? '−'.$tien(-$so) : $tien($so) }}</div>
+                        <div class="text-muted" style="font-size:.7rem">{{ $ghiChu }}</div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 p-2 rounded bg-success-subtle">
+            <span>Tổng thực thu · {{ $tk['so_don'] }} lượt đặt trong tháng</span>
+            <strong class="fs-4 text-success">{{ $tien($tk['tong']) }}</strong>
+        </div>
+        @if ($tk['chua_thu']->isNotEmpty())
+            <div class="alert alert-warning small py-2 mt-2 mb-0">
+                <i class="bi bi-exclamation-triangle"></i> {{ $tk['chua_thu']->count() }} lượt đã đá nhưng chưa bấm "Đã nhận tiền sân"
+                ({{ $tien($tk['chua_thu']->sum(fn ($d) => $d->conLaiPhai())) }} chưa vào thống kê).
+                <a href="{{ route('quan-ly.dat-san.index') }}" class="alert-link">Vào Đơn đặt để xác nhận</a>
+            </div>
+        @endif
+    </div></div>
 @endif
 
 <div class="row g-3">

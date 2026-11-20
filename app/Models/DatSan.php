@@ -41,6 +41,8 @@ class DatSan extends Model
             'da_nhac_lich_luc' => 'datetime',
             'gia_chot' => 'integer',
             'tien_coc' => 'integer',
+            'tien_thu_tai_san' => 'integer',
+            'da_thu_tien_luc' => 'datetime',
         ];
     }
 
@@ -99,7 +101,7 @@ class DatSan extends Model
 
     public function conLaiPhai(): int
     {
-        return max(0, $this->gia_chot - ($this->xac_nhan_coc_luc ? $this->tien_coc : 0));
+        return max(0, $this->gia_chot - ($this->xac_nhan_coc_luc ? $this->tien_coc : 0) - (int) $this->tien_thu_tai_san);
     }
 
     public function dangGiuCho(): bool

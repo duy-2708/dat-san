@@ -84,9 +84,18 @@ class DatSanController extends Controller
     public function xacNhanCoc(Request $request, DatSan $datSan): RedirectResponse
     {
         Gate::authorize('quanLy', $datSan);
-        $this->datSan->xacNhanCoc($datSan, $request->user());
+        $ngoai = $request->boolean('ngoai');
+        $this->datSan->xacNhanCoc($datSan, $request->user(), $ngoai);
 
-        return back()->with('thanh_cong', "Đã xác nhận cọc {$datSan->ma_don}. Khách nhận email xác nhận.");
+        return back()->with('thanh_cong', "Đã xác nhận cọc {$datSan->ma_don}".($ngoai ? ' (nhận ngoài: tiền mặt / chuyển riêng)' : '').'. Sân đã đặt chắc, khách nhận thông báo.');
+    }
+
+    public function daThu(Request $request, DatSan $datSan): RedirectResponse
+    {
+        Gate::authorize('quanLy', $datSan);
+        $don = $this->datSan->daThuTienSan($datSan, $request->user());
+
+        return back()->with('thanh_cong', "Đã ghi nhận thu {$don->tien_thu_tai_san}đ tiền sân đơn {$don->ma_don} — tính vào doanh thu tháng.");
     }
 
     public function khongThayTien(Request $request, DatSan $datSan): RedirectResponse

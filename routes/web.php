@@ -100,7 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // ---- CHỦ SÂN + NHÂN VIÊN ----
         Route::middleware(['vai_tro:chu_san,nhan_vien', 'con_han_goi'])->prefix('quan-ly')->name('quan-ly.')->group(function () {
-            Route::view('/', 'quan-ly.tong-quan')->name('tong-quan');
+            Route::get('/', [\App\Http\Controllers\QuanLy\TongQuanController::class, 'index'])->name('tong-quan');
 
             // Gói dịch vụ: vẫn vào được khi đã hết hạn (middleware con_han_goi cho qua)
             Route::middleware('vai_tro:chu_san')->group(function () {
@@ -120,6 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/san/{san}/dat-tai-cho', [QuanLyDatSanController::class, 'datTaiCho'])->name('san.dat-tai-cho');
             Route::patch('/dat-san/{datSan}/xac-nhan-coc', [QuanLyDatSanController::class, 'xacNhanCoc'])->name('dat-san.xac-nhan-coc');
             Route::patch('/dat-san/{datSan}/gia-han', [QuanLyDatSanController::class, 'giaHan'])->name('dat-san.gia-han');
+            Route::patch('/dat-san/{datSan}/da-thu', [QuanLyDatSanController::class, 'daThu'])->name('dat-san.da-thu');
             Route::patch('/dat-san/{datSan}/khong-thay-tien', [QuanLyDatSanController::class, 'khongThayTien'])->name('dat-san.khong-thay-tien');
             Route::patch('/dat-san/{datSan}/khong-tra-du', [QuanLyDatSanController::class, 'khongTraDu'])->name('dat-san.khong-tra-du'); // Policy: chỉ chủ sân
             Route::patch('/dat-san/{datSan}/huy', [QuanLyDatSanController::class, 'huy'])->name('dat-san.huy');       // Policy: chỉ chủ sân

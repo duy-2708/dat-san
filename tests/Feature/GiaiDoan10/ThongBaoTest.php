@@ -75,4 +75,39 @@ class ThongBaoTest extends TestCase
         $this->assertSame(200000, (int) $g->khungGios()->where('gio_bat_dau', '20:00:00')->where('loai_ngay', 'ngay_thuong')->value('gia'));
         $this->actingAs($this->chu)->get("/quan-ly/san/{$g->id}/khung-gio")->assertDontSee('Còn giờ chưa có khung');
     }
+
+    public function test_nhan_coc_ngoai_thu_tien_san_va_doanh_thu_thang(): void
+    {
+        $khach = User::factory()->create();
+        $this->datOnline($khach, $this->a)->assertSessionHasNoErrors();
+        $don = DatSan::firstOrFail();
+
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/xac-nhan-coc", ['ngoai' => 1])->assertSessionHasNoErrors();
+        $this->assertSame('da_dat', $don->fresh()->trang_thai);
+        $this->assertSame('tien_mat', \App\Models\GiaoDich::where('dat_san_id', $don->id)->value('phuong_thuc'));
+
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu")->assertSessionHasNoErrors();
+        $this->assertSame(210000, $don->fresh()->tien_thu_tai_san);
+        $this->assertSame(0, $don->fresh()->conLaiPhai());
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu")->assertSessionHasErrors();
+
+        $this->actingAs($this->chu)->get('/quan-ly')->assertOk()
+            ->assertSee('Doanh thu tháng 11/2026')->assertSee('90.000đ')->assertSee('210.000đ')->assertSee('300.000đ');
+    }
+
+    public function test_thong_bao_cung_don_duoc_gop(): void
+    {
+        $khach = User::factory()->create();
+        $this->datOnline($khach, $this->a);
+        $don = DatSan::firstOrFail();
+        $this->actingAs($khach)->post("/dat-san/{$don->ma_don}/da-chuyen")->assertSessionHasNoErrors();
+
+        $this->assertSame(2, $this->chu->notifications()->count());
+        $this->actingAs($this->chu)->get('/')->assertSee('2 cập nhật')->assertSee('Cần xử lý (1)');
+        $this->actingAs($this->chu)->get('/thong-bao?loc=can')->assertSee('Khách báo đã chuyển · 90.000đ');
+
+        $id = $this->chu->notifications()->first()->id;
+        $this->actingAs($this->chu)->get('/thong-bao/'.$id);
+        $this->assertSame(0, $this->chu->unreadNotifications()->count());
+    }
 }

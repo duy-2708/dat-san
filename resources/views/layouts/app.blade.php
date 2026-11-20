@@ -17,11 +17,21 @@
         .the-form { max-width: 440px; }
         .btn, .form-control, .form-select { min-height: 44px; } /* vùng chạm đủ lớn trên điện thoại */
         .nut-quay-lai { font-weight: 600; border-width: 2px; }
+        .navbar .nav-link { white-space: nowrap; }
+        @media (min-width: 1200px) { .navbar-nav .nav-link { padding-left: .55rem !important; padding-right: .55rem !important; } }
+        .tb-muc { display: block; padding: .5rem .75rem; border-bottom: 1px solid #eee; text-decoration: none; color: inherit; }
+        .tb-muc:hover { background: #f6f8f7; }
+        .tb-muc .tb-dong1 { display: flex; gap: .5rem; align-items: baseline; }
+        .tb-muc .tb-tieu-de { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tb-muc .tb-dong2 { font-size: .8rem; color: #6c757d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 1.6rem; }
+        .tb-muc.chua-doc .tb-tieu-de { font-weight: 700; }
+        .tb-muc.da-doc { opacity: .7; }
+        .tb-cham { width: 8px; height: 8px; border-radius: 50%; background: #0d6efd; display: inline-block; flex-shrink: 0; align-self: center; }
     </style>
     @stack('head')
 </head>
 <body class="d-flex flex-column min-vh-100">
-<nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top">
+<nav class="navbar navbar-expand-xl navbar-dark bg-success sticky-top">
     <div class="container">
         <a class="navbar-brand" href="{{ route('trang-chu') }}"><span class="bong">⚽</span> <span>{{ config('app.name') }}</span></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuChinh" aria-label="Mở menu">
@@ -60,9 +70,12 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.san.index') }}">Sân & lịch</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.giai-dau.index') }}">Tổ chức giải</a></li>
                         @if (auth()->user()->laChuSan())
-                            <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.thanh-toan.edit') }}">Thanh toán</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.nhan-vien.index') }}">Nhân viên</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.goi.index') }}">Gói dịch vụ</a></li>
+                            <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Cài đặt</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ route('quan-ly.thanh-toan.edit') }}"><i class="bi bi-qr-code"></i> Tài khoản nhận cọc</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('quan-ly.nhan-vien.index') }}"><i class="bi bi-person-badge"></i> Nhân viên</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('quan-ly.goi.index') }}"><i class="bi bi-box-seam"></i> Gói dịch vụ</a></li>
+                                </ul></li>
                         @endif
                     @endif
                 @endauth
@@ -71,32 +84,35 @@
                 @auth
                     @php
                         $soChuaDoc = auth()->user()->unreadNotifications()->count();
-                        $tbMoi = auth()->user()->notifications()->limit(8)->get();
+                        $tbMoi = \App\Support\TrinhBayThongBao::gop(auth()->user()->notifications()->limit(40)->get())->take(12);
+                        $soCanXuLy = $tbMoi->where('can_xu_ly', true)->where('chua_doc', true)->count();
                     @endphp
-                    <li class="nav-item dropdown me-lg-2">
-                        <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown" title="Thông báo">
+                    <li class="nav-item dropdown me-xl-2">
+                        <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" title="Thông báo">
                             <i class="bi bi-bell{{ $soChuaDoc ? '-fill' : '' }} fs-5"></i>
                             @if ($soChuaDoc) <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.65rem">{{ $soChuaDoc > 99 ? '99+' : $soChuaDoc }}</span> @endif
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end p-0 shadow" style="width: min(360px, 92vw)">
-                            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                        <div class="dropdown-menu dropdown-menu-end p-0 shadow" style="width: min(380px, 94vw)" id="hopThongBao">
+                            <div class="d-flex justify-content-between align-items-center px-3 pt-2">
                                 <strong class="small">Thông báo</strong>
                                 @if ($soChuaDoc)
                                     <form method="POST" action="{{ route('thong-bao.doc-het') }}">@csrf<button class="btn btn-link btn-sm p-0">Đọc hết</button></form>
                                 @endif
                             </div>
-                            <div style="max-height: 380px; overflow-y: auto">
-                                @forelse ($tbMoi as $tb)
-                                    <a href="{{ route('thong-bao.mo', $tb->id) }}" class="dropdown-item small text-wrap py-2 border-bottom {{ $tb->read_at ? '' : 'bg-warning-subtle' }}">
-                                        <div class="fw-semibold"><i class="bi bi-{{ $tb->data['icon'] ?? 'bell' }}"></i> {{ $tb->data['tieu_de'] ?? '' }}</div>
-                                        <div class="text-muted">{{ \Illuminate\Support\Str::limit($tb->data['noi_dung'] ?? '', 110) }}</div>
-                                        <div class="text-muted" style="font-size:.7rem">{{ $tb->created_at->diffForHumans() }}</div>
-                                    </a>
+                            <div class="d-flex gap-1 px-2 py-2 border-bottom overflow-auto" style="scrollbar-width:none">
+                                @foreach (['' => 'Tất cả', 'can' => 'Cần xử lý'.($soCanXuLy ? " ($soCanXuLy)" : ''), 'don' => 'Đơn đặt', 'keo' => 'Kèo', 'khac' => 'Khác'] as $ma => $nhan)
+                                    <button type="button" class="btn btn-sm py-0 px-2 rounded-pill text-nowrap {{ $ma === '' ? 'btn-success' : 'btn-outline-secondary' }}" data-loc-tb="{{ $ma }}">{{ $nhan }}</button>
+                                @endforeach
+                            </div>
+                            <div style="max-height: 400px; overflow-y: auto">
+                                @forelse ($tbMoi as $t)
+                                    @include('thong-bao._muc', ['t' => $t])
                                 @empty
                                     <div class="text-muted small text-center py-3">Chưa có thông báo.</div>
                                 @endforelse
+                                <div class="text-muted small text-center py-3 d-none" data-trong-tb>Không có thông báo loại này.</div>
                             </div>
-                            <a href="{{ route('thong-bao.index') }}" class="dropdown-item text-center small py-2">Xem tất cả</a>
+                            <a href="{{ route('thong-bao.index') }}" class="dropdown-item text-center small py-2 border-top">Xem tất cả</a>
                         </div>
                     </li>
                     <li class="nav-item dropdown">
@@ -191,6 +207,19 @@
             setTimeout(() => { delete e.target.dataset.daGui; }, 4000);
         }
     });
+
+    document.querySelectorAll('[data-loc-tb]').forEach((nut) => nut.addEventListener('click', () => {
+        const hop = document.getElementById('hopThongBao');
+        hop.querySelectorAll('[data-loc-tb]').forEach((x) => { x.classList.toggle('btn-success', x === nut); x.classList.toggle('btn-outline-secondary', x !== nut); });
+        let con = 0;
+        hop.querySelectorAll('.tb-muc').forEach((m) => {
+            const loc = nut.dataset.locTb;
+            const hien = ! loc || (loc === 'can' ? m.dataset.can === '1' : m.dataset.nhom === loc);
+            m.classList.toggle('d-none', ! hien);
+            if (hien) con++;
+        });
+        hop.querySelector('[data-trong-tb]').classList.toggle('d-none', con > 0 || ! hop.querySelector('.tb-muc'));
+    }));
 
     const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/;
     const sangVn = (v) => { const m = iso.exec(v || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` + (m[4] ? ` ${m[4]}:${m[5]}` : '') : v; };

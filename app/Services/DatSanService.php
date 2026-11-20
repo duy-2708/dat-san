@@ -205,9 +205,9 @@ class DatSanService
     }
 
     /** Chủ sân / nhân viên đã thấy tiền về app ngân hàng → bấm xác nhận. */
-    public function xacNhanCoc(DatSan $don, User $nguoi): DatSan
+    public function xacNhanCoc(DatSan $don, User $nguoi, bool $ngoai = false): DatSan
     {
-        $don = DB::transaction(function () use ($don, $nguoi) {
+        $don = DB::transaction(function () use ($don, $nguoi, $ngoai) {
             $don = DatSan::lockForUpdate()->findOrFail($don->id); // khoá dòng: 2 nhân viên bấm cùng lúc không bị ghi đôi
             if ($don->trang_thai !== 'cho_thanh_toan') {
                 $this->loi($don->trang_thai === 'da_dat' ? 'Đơn này đã được xác nhận rồi.' : 'Đơn đã huỷ/hết hạn giữ chỗ. Hãy đặt lại cho khách.');
@@ -218,7 +218,8 @@ class DatSanService
 
             $don->forceFill(['trang_thai' => 'da_dat', 'xac_nhan_coc_boi_id' => $nguoi->id, 'xac_nhan_coc_luc' => now()])->save();
             GiaoDich::where('dat_san_id', $don->id)->where('trang_thai', 'cho_thanh_toan')
-                ->update(['trang_thai' => 'thanh_cong', 'thanh_toan_luc' => now(), 'xac_nhan_boi_id' => $nguoi->id]);
+                ->update(['trang_thai' => 'thanh_cong', 'thanh_toan_luc' => now(), 'xac_nhan_boi_id' => $nguoi->id]
+                    + ($ngoai ? ['phuong_thuc' => 'tien_mat'] : []));
 
             return $don;
         });
@@ -401,6 +402,16 @@ class DatSanService
     private function ghiUyTin(User $u, int $thayDoi, string $lyDo, string $ghiChu): void
     {
         DB::table('lich_su_uy_tin')->insert(['user_id' => $u->id, 'thay_doi' => $thayDoi, 'ly_do' => $lyDo, 'ghi_chu' => $ghiChu, 'created_at' => now()]);
+    }
+
+    public function daThuTienSan(DatSan $don, User $nguoi): DatSan
+    {
+        if ($don->trang_thai !== 'da_dat' || $don->da_thu_tien_luc) {
+            $this->loi('Đơn này chưa đặt chắc hoặc đã ghi nhận thu tiền rồi.');
+        }
+        $don->forceFill(['tien_thu_tai_san' => $don->conLaiPhai(), 'da_thu_tien_luc' => now(), 'thu_tien_boi_id' => $nguoi->id])->save();
+
+        return $don;
     }
 
     /** Chủ sân đã tự chuyển trả cọc cho khách → bấm xác nhận để lưu vết. */
