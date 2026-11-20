@@ -118,6 +118,23 @@ class Keo extends Model
         return $this->hasMany(ThamGiaKeo::class);
     }
 
+    public function tenBen(string $ben): string
+    {
+        $doi = $ben === 'a' ? $this->doiA : $this->doiB;
+
+        return $doi?->ten ?? ($ben === 'a' ? 'Đội treo kèo' : 'Đội nhận kèo');
+    }
+
+    public function nhanKetQua(?string $ma): string
+    {
+        return match ($ma) {
+            'a_thang' => $this->tenBen('a').' thắng',
+            'b_thang' => $this->tenBen('b').' thắng',
+            'hoa' => 'Hoà',
+            default => '—',
+        };
+    }
+
     public function laDoiDau(): bool
     {
         return $this->loai === 'doi_dau';

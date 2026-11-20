@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\KhungGio;
 use App\Models\San;
 use App\Services\BangGia;
+use App\Services\BangGiaChung;
 use App\Support\ThoiGian;
 use App\Support\Tien;
 use Illuminate\Support\Facades\DB;
@@ -18,8 +19,15 @@ use Illuminate\View\View;
 
 class KhungGioController extends Controller
 {
-    public function __construct(private BangGia $bangGia)
+    public function __construct(private BangGia $bangGia, private BangGiaChung $giaChung)
     {
+    }
+
+    private function dongBo(San $san, string $thongBao): string
+    {
+        $so = $this->giaChung->dongBo($san);
+
+        return $so ? $thongBao.' Đã áp dụng cho '.$so.' sân '.$san->loai_san.' khác cùng cơ sở.' : $thongBao;
     }
 
     public function index(San $san): View
@@ -31,6 +39,7 @@ class KhungGioController extends Controller
             'theoLoai' => $san->khungGios()->get()->groupBy('loai_ngay'),
             'cacMoc' => ThoiGian::cacMoc(ThoiGian::phut($san->gio_mo_cua), ThoiGian::phut($san->gio_dong_cua)),
             'tyLe' => (int) ($san->chuSan->hoSoChuSan?->ty_le_coc ?? 30),
+            'sanNhanGia' => $this->giaChung->sanNhan($san),
         ]);
     }
 
@@ -42,7 +51,7 @@ class KhungGioController extends Controller
 
         $san->khungGios()->create($d);
 
-        return back()->with('thanh_cong', 'Đã thêm khung giờ.')->withFragment($d['loai_ngay']);
+        return back()->with('thanh_cong', $this->dongBo($san, 'Đã thêm khung giờ.'))->withFragment($d['loai_ngay']);
     }
 
     public function update(Request $request, KhungGio $khungGio): RedirectResponse
@@ -53,16 +62,17 @@ class KhungGioController extends Controller
         $d = $this->kiemTra($request, $san, $khungGio);
         $khungGio->update($d);
 
-        return back()->with('thanh_cong', 'Đã cập nhật khung '.$khungGio->nhan().'.')->withFragment($d['loai_ngay']);
+        return back()->with('thanh_cong', $this->dongBo($san, 'Đã cập nhật khung '.$khungGio->nhan().'.'))->withFragment($d['loai_ngay']);
     }
 
     public function destroy(KhungGio $khungGio): RedirectResponse
     {
-        Gate::authorize('update', $khungGio->san);
+        $san = $khungGio->san;
+        Gate::authorize('update', $san);
 
         $khungGio->delete();
 
-        return back()->with('thanh_cong', 'Đã xoá khung giờ.');
+        return back()->with('thanh_cong', $this->dongBo($san, 'Đã xoá khung giờ.'));
     }
 
     public function taoNhanh(Request $request, San $san): RedirectResponse
@@ -105,7 +115,7 @@ class KhungGioController extends Controller
 
         $so = $this->bangGia->taoNhanhTheoMuc($san, $d['loai_ngays'], (int) $d['thoi_luong'], $muc->all(), (bool) ($d['ghi_de'] ?? false));
 
-        return back()->with('thanh_cong', $so > 0 ? "Đã tạo {$so} khung giờ." : 'Không tạo thêm khung nào (đã có đủ hoặc bị trùng giờ).');
+        return back()->with('thanh_cong', $this->dongBo($san, $so > 0 ? "Đã tạo {$so} khung giờ." : 'Không tạo thêm khung nào (đã có đủ hoặc bị trùng giờ).'));
     }
 
     /** Lưu cùng lúc mọi khung của 1 loại ngày (sửa giá, cọc, giờ hàng loạt). */
@@ -141,7 +151,7 @@ class KhungGioController extends Controller
             }
         });
 
-        return back()->with('thanh_cong', 'Đã lưu '.count($moi).' khung giờ.')->withFragment($loai);
+        return back()->with('thanh_cong', $this->dongBo($san, 'Đã lưu '.count($moi).' khung giờ.'))->withFragment($loai);
     }
 
     /** Kiểm tra 1 dòng khung trong form lưu hàng loạt. */

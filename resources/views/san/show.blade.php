@@ -24,7 +24,7 @@
 
         <div class="mt-3">
             <div class="d-flex justify-content-between align-items-start gap-2">
-                <h1 class="h4 mb-1">{{ $san->tenHienThi() }}</h1>
+                <h1 class="h4 mb-1">@if ($san->coSo && $san->coSo->ten !== $san->ten)<span class="text-muted fw-normal">{{ $san->coSo->ten }} ·</span> @endif{{ $san->tenHienThi() }}</h1>
                 <span class="badge bg-success">{{ \App\Models\San::LOAI[$san->loai_san] }}</span>
             </div>
             <div class="text-muted small mb-1"><i class="bi bi-geo-alt"></i> {{ $san->diaChiDayDu() }}</div>
@@ -46,11 +46,29 @@
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
-                <h2 class="h6 mb-1">Lịch sân</h2>
+                @if ($cungCoSo->count() > 1)
+                    <div class="mb-2">
+                        <div class="small text-muted mb-1"><i class="bi bi-buildings"></i> {{ $san->coSo?->ten }} có {{ $cungCoSo->count() }} sân — chọn sân:</div>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach ($cungCoSo->groupBy('loai_san') as $loai => $nhom)
+                                @if ($nhom->count() > 1)
+                                    @php $dangGop = $gop && (int) $san->loai_san === (int) $loai; @endphp
+                                    <a href="{{ route('san.show', $nhom->first()) }}" class="btn btn-sm {{ $dangGop ? 'btn-success' : 'btn-outline-success' }}">
+                                        {{ \App\Models\San::LOAI[$loai] }} bất kỳ ({{ $nhom->count() }} sân)</a>
+                                @endif
+                                @foreach ($nhom as $x)
+                                    @php $dangXem = ! $gop && $x->id === $san->id || ($nhom->count() === 1 && $x->id === $san->id); @endphp
+                                    <a href="{{ route('san.show', $x) }}{{ $nhom->count() > 1 ? '?gop=0' : '' }}" class="btn btn-sm {{ $dangXem ? 'btn-dark' : 'btn-outline-secondary' }}">{{ $x->ten }}</a>
+                                @endforeach
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+                <h2 class="h6 mb-1">Lịch {{ $gop ? \App\Models\San::LOAI[$san->loai_san].' — hệ thống tự xếp sân còn trống' : 'sân '.$san->ten }}</h2>
                 <p class="small text-muted mb-2">Chọn khung trống để đặt. Cọc {{ $hoSo->ty_le_coc }}% qua mã VietQR, giữ chỗ {{ $hoSo->phut_giu_cho }} phút.
                     Huỷ trước {{ $hoSo->gio_huy_hoan_coc }} giờ được hoàn cọc.</p>
                 @error('dat_san') <div class="alert alert-danger py-2">{{ $message }}</div> @enderror
-                @include('partials.lich-tuan', ['cheDo' => 'khach', 'url' => route('san.show', $san)])
+                @include('partials.lich-tuan', ['cheDo' => 'khach', 'url' => route('san.show', $san).($soCungLoai > 1 && ! $gop ? '?gop=0' : '')])
             </div>
         </div>
     </div>

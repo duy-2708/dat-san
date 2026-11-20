@@ -65,38 +65,45 @@
     </div>
 @endif
 
-<div class="small text-muted mb-2">{{ $sans->total() }} sân · Lịch hôm nay {{ today()->format('d/m/Y') }}:
-    <span class="badge bg-success">trống</span> <span class="badge bg-danger">đã đặt</span> <span class="badge bg-warning text-dark">đang giữ</span></div>
+<div class="small text-muted mb-2">{{ $coSos->total() }} cơ sở · Lịch hôm nay {{ today()->format('d/m/Y') }}:
+    <span class="badge bg-success">còn sân</span> <span class="badge bg-danger">hết sân</span> <span class="badge bg-warning text-dark">đang giữ</span></div>
 
 <div class="row g-3">
-    @forelse ($sans as $s)
-        @php
-            $khungs = collect($homNay[$s->id] ?? [])->where('trang_thai', '!=', 'qua_gio');
-            $soTrong = $khungs->where('trang_thai', 'trong')->count();
-        @endphp
+    @forelse ($coSos as $c)
+        @php $dau = $c->sans->first(); @endphp
         <div class="col-12 col-md-6 col-lg-4">
             <div class="card h-100 border-0 shadow-sm">
-                <a href="{{ route('san.show', $s) }}" class="ratio ratio-16x9 d-block">
-                    <img src="{{ $s->anhDaiDien() }}" class="card-img-top object-fit-cover" alt="{{ $s->ten }}" loading="lazy">
+                <a href="{{ route('san.show', $dau) }}" class="ratio ratio-16x9 d-block">
+                    <img src="{{ $dau->anhDaiDien() }}" class="card-img-top object-fit-cover" alt="{{ $c->ten }}" loading="lazy">
                 </a>
                 <div class="card-body pb-2">
-                    <div class="d-flex justify-content-between gap-2">
-                        <h2 class="h6 mb-1"><a href="{{ route('san.show', $s) }}" class="text-decoration-none text-body">{{ $s->tenHienThi() }}</a></h2>
-                        <span class="badge bg-success-subtle text-success-emphasis align-self-start">{{ \App\Models\San::LOAI[$s->loai_san] }}</span>
-                    </div>
-                    <div class="small text-muted mb-2"><i class="bi bi-geo-alt"></i> {{ $s->diaChiDayDu() }}</div>
-                    <div class="small fw-semibold mb-1">Hôm nay: {{ $soTrong }} khung trống</div>
-                    <div class="d-flex flex-nowrap overflow-auto gap-1 pb-1" style="scrollbar-width: thin">
-                        @forelse ($khungs as $o)
-                            @php $mau = ['trong' => 'success', 'dang_giu' => 'warning', 'da_dat' => 'danger'][$o['trang_thai']]; @endphp
-                            <span class="badge bg-{{ $mau }}{{ $mau === 'warning' ? ' text-dark' : '' }} flex-shrink-0">{{ substr($o['khung']->gio_bat_dau, 0, 5) }}</span>
-                        @empty
-                            <span class="small text-muted">Hết giờ hôm nay</span>
-                        @endforelse
-                    </div>
+                    <h2 class="h6 mb-1"><a href="{{ route('san.show', $dau) }}" class="text-decoration-none text-body">{{ $c->ten }}</a></h2>
+                    <div class="small text-muted mb-2"><i class="bi bi-geo-alt"></i> {{ $c->diaChiDayDu() }}</div>
+                    @foreach ($c->sans->groupBy('loai_san') as $loai => $nhom)
+                        @php
+                            $khungs = collect($homNay[$c->id][$loai] ?? [])->where('trang_thai', '!=', 'qua_gio');
+                            $soTrong = $khungs->where('trang_thai', 'trong')->count();
+                        @endphp
+                        <div class="border-top pt-2 mt-2">
+                            <div class="d-flex flex-wrap justify-content-between gap-1 small">
+                                <a href="{{ route('san.show', $nhom->first()) }}" class="fw-semibold text-decoration-none">
+                                    <span class="badge bg-success-subtle text-success-emphasis">{{ \App\Models\San::LOAI[$loai] }}</span>
+                                    {{ $nhom->map(fn ($x) => $x->tenHienThi())->join(', ') }}</a>
+                                <span class="text-muted">Hôm nay: {{ $soTrong }} khung trống</span>
+                            </div>
+                            <div class="d-flex flex-nowrap overflow-auto gap-1 pb-1 mt-1" style="scrollbar-width: thin">
+                                @forelse ($khungs as $o)
+                                    @php $mau = ['trong' => 'success', 'dang_giu' => 'warning', 'da_dat' => 'danger'][$o['trang_thai']]; @endphp
+                                    <span class="badge bg-{{ $mau }}{{ $mau === 'warning' ? ' text-dark' : '' }} flex-shrink-0" title="{{ isset($o['tong']) ? 'Còn '.$o['con_trong'].'/'.$o['tong'].' sân' : '' }}">{{ substr($o['khung']->gio_bat_dau, 0, 5) }}</span>
+                                @empty
+                                    <span class="small text-muted">Hết giờ hôm nay</span>
+                                @endforelse
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
                 <div class="card-footer bg-white border-0 pt-0">
-                    <a href="{{ route('san.show', $s) }}" class="btn btn-sm btn-success w-100">Xem tuần & đặt sân</a>
+                    <a href="{{ route('san.show', $dau) }}" class="btn btn-sm btn-success w-100">Xem tuần & đặt sân</a>
                 </div>
             </div>
         </div>
@@ -104,7 +111,7 @@
         <div class="col-12 text-center text-muted py-5 bg-white rounded">Không tìm thấy sân phù hợp. Thử bỏ bớt bộ lọc.</div>
     @endforelse
 </div>
-<div class="mt-3">{{ $sans->links() }}</div>
+<div class="mt-3">{{ $coSos->links() }}</div>
 @endsection
 
 @push('scripts')

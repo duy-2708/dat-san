@@ -2,13 +2,13 @@
 @section('title', 'Sân của tôi')
 
 @section('content')
-@php($laChu = auth()->user()->laChuSan())
+@php $laChu = auth()->user()->laChuSan(); @endphp
 <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
     <h1 class="h4 mb-0">Sân của tôi</h1>
     @if ($laChu)
         <div class="d-flex gap-2">
             <a href="{{ route('quan-ly.ngay-le.index') }}" class="btn btn-outline-secondary"><i class="bi bi-calendar-heart"></i> Ngày lễ</a>
-            <a href="{{ route('quan-ly.san.create') }}" class="btn btn-success"><i class="bi bi-plus-lg"></i> Thêm sân</a>
+            <a href="{{ route('quan-ly.san.create') }}" class="btn btn-success"><i class="bi bi-plus-lg"></i> Thêm cơ sở / sân</a>
         </div>
     @endif
 </div>
@@ -16,8 +16,17 @@
 @error('goi') <div class="alert alert-warning">{{ $message }}</div> @enderror
 @error('san') <div class="alert alert-danger">{{ $message }}</div> @enderror
 
-<div class="row g-3">
-@forelse ($sans as $s)
+@forelse ($nhomCoSo as $coSoId => $dsSan)
+    @php $cs = $dsSan->first()->coSo; @endphp
+    <div class="d-flex flex-wrap align-items-center gap-2 mt-3 mb-2">
+        <h2 class="h5 mb-0"><i class="bi bi-buildings text-success"></i> {{ $cs?->ten ?? 'Cơ sở' }}</h2>
+        <span class="text-muted small">{{ $dsSan->groupBy('loai_san')->map(fn ($g, $l) => $g->count().' sân '.$l)->join(' · ') }}</span>
+        @if ($laChu && $cs)
+            <a href="{{ route('quan-ly.san.create', ['co_so' => $cs->id]) }}" class="btn btn-sm btn-outline-success ms-auto"><i class="bi bi-plus-lg"></i> Thêm sân vào cơ sở</a>
+        @endif
+    </div>
+    <div class="row g-3">
+    @foreach ($dsSan as $s)
     <div class="col-12 col-md-6 col-lg-4">
         <div class="card h-100 border-0 shadow-sm {{ $s->trang_thai === 'tam_ngung' ? 'opacity-75' : '' }}">
             <div class="ratio ratio-16x9">
@@ -53,8 +62,10 @@
             </div>
         </div>
     </div>
+    @endforeach
+    </div>
 @empty
-    <div class="col-12">
+    <div>
         <div class="text-center text-muted py-5 bg-white rounded">
             <i class="bi bi-grid-3x3-gap display-5"></i>
             <p class="mt-2 mb-3">Chưa có sân nào.</p>
@@ -62,5 +73,4 @@
         </div>
     </div>
 @endforelse
-</div>
 @endsection

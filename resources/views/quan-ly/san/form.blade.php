@@ -20,6 +20,48 @@
         @if ($san->exists) @method('PUT') @endif
 
         <div class="row g-3">
+            @if (! $san->exists)
+                <div class="col-12">
+                    <label class="form-label fw-semibold" for="co_so_id"><i class="bi bi-buildings"></i> Thuộc cơ sở</label>
+                    <select id="co_so_id" name="co_so_id" class="form-select">
+                        <option value="">➕ Cơ sở mới (nhập địa chỉ bên dưới)</option>
+                        @foreach ($coSos as $c)
+                            <option value="{{ $c->id }}" @selected((int) old('co_so_id', $san->co_so_id) === $c->id)>{{ $c->ten }} — đang có {{ $c->sans_count }} sân</option>
+                        @endforeach
+                    </select>
+                    <div class="form-text">Một cơ sở (VD Sân Mỹ Anh) có nhiều sân: 5A, 5B, 7A... dùng chung địa chỉ, giờ mở cửa, tiện ích; sân cùng loại dùng chung bảng giá.</div>
+                </div>
+                <div class="col-md-8 phan-moi">
+                    <label class="form-label" for="ten_co_so">Tên cơ sở</label>
+                    <input id="ten_co_so" name="ten_co_so" value="{{ old('ten_co_so') }}" placeholder="VD: Sân bóng Mỹ Anh" class="form-control">
+                    <div class="form-text">Để trống = lấy theo tên sân.</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="so_luong">Số sân cùng loại</label>
+                    <input id="so_luong" name="so_luong" type="number" min="1" max="10" value="{{ old('so_luong', 1) }}" class="form-control">
+                    <div class="form-text">VD tên "Sân 5", số 3 → Sân 5A, 5B, 5C.</div>
+                </div>
+            @else
+                <div class="col-12">
+                    <label class="form-label fw-semibold" for="ten_co_so"><i class="bi bi-buildings"></i> Tên cơ sở</label>
+                    <input id="ten_co_so" name="ten_co_so" value="{{ old('ten_co_so', $san->coSo?->ten) }}" class="form-control">
+                    @php $coSoKhac = $coSos->where('id', '!=', $san->co_so_id); @endphp
+                    @if ($coSoKhac->isNotEmpty())
+                        <div class="input-group input-group-sm mt-2">
+                            <span class="input-group-text">Gộp sân này vào cơ sở</span>
+                            <select name="chuyen_co_so_id" class="form-select">
+                                <option value="">— giữ nguyên —</option>
+                                @foreach ($coSoKhac as $c) <option value="{{ $c->id }}">{{ $c->ten }} ({{ $c->sans_count }} sân)</option> @endforeach
+                            </select>
+                        </div>
+                        <div class="form-text">Gộp xong sân dùng địa chỉ, giờ, tiện ích và bảng giá chung của cơ sở mới.</div>
+                    @endif
+                    @if ($san->coSo && $san->coSo->sans->count() > 1)
+                        <div class="form-text text-warning-emphasis">Cơ sở có {{ $san->coSo->sans->count() }} sân ({{ $san->coSo->sans->pluck('ten')->join(', ') }}).
+                            Địa chỉ, giờ mở cửa, tiện ích, mô tả sửa ở đây sẽ áp dụng cho tất cả.</div>
+                    @endif
+                </div>
+            @endif
             <div class="col-md-6">
                 <label class="form-label" for="ten">Tên sân</label>
                 <input id="ten" name="ten" value="{{ old('ten', $san->ten) }}" required placeholder="VD: Sân 5A"
@@ -43,7 +85,7 @@
                 @error('loai_san') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6 phan-chung">
                 <label class="form-label" for="tinh_thanh_id">Tỉnh / Thành phố</label>
                 <select id="tinh_thanh_id" name="tinh_thanh_id" class="form-select" data-xa-phuong="#xa_phuong_id">
                     <option value="">— Chọn —</option>
@@ -52,7 +94,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 phan-chung">
                 <label class="form-label" for="xa_phuong_id">Xã / Phường</label>
                 <select id="xa_phuong_id" name="xa_phuong_id" class="form-select @error('xa_phuong_id') is-invalid @enderror">
                     <option value="">— Chọn tỉnh trước —</option>
@@ -62,27 +104,27 @@
                 </select>
                 @error('xa_phuong_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
-            <div class="col-12">
+            <div class="col-12 phan-chung">
                 <label class="form-label" for="dia_chi_chi_tiet">Số nhà, đường</label>
                 <input id="dia_chi_chi_tiet" name="dia_chi_chi_tiet" value="{{ old('dia_chi_chi_tiet', $san->dia_chi_chi_tiet) }}" required
                        placeholder="VD: 123 Nguyễn Văn Trỗi" class="form-control @error('dia_chi_chi_tiet') is-invalid @enderror">
                 @error('dia_chi_chi_tiet') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
 
-            <div class="col-6">
+            <div class="col-6 phan-chung">
                 <label class="form-label" for="gio_mo_cua">Mở cửa</label>
                 @error('gio_mo_cua') <div class="text-danger small">{{ $message }}</div> @enderror
                 <input id="gio_mo_cua" name="gio_mo_cua" value="{{ $chonGio('gio_mo_cua') }}" list="ds-gio" placeholder="VD 06:00" class="form-control @error('gio_mo_cua') is-invalid @enderror">
             </div>
-            <div class="col-6">
+            <div class="col-6 phan-chung">
                 <label class="form-label" for="gio_dong_cua">Đóng cửa</label>
                 <input id="gio_dong_cua" name="gio_dong_cua" value="{{ $chonGio('gio_dong_cua') }}" list="ds-gio" placeholder="VD 06:00" class="form-control @error('gio_dong_cua') is-invalid @enderror">
                 @error('gio_dong_cua') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
-            <div class="col-12 small text-muted mt-0">Gõ tự do hoặc chọn gợi ý (bước 15 phút). Sân mở <strong>xuyên đêm</strong>: Mở cửa 00:00, Đóng cửa 24:00.
+            <div class="col-12 small text-muted mt-0 phan-chung">Gõ tự do hoặc chọn gợi ý (bước 15 phút). Sân mở <strong>xuyên đêm</strong>: Mở cửa 00:00, Đóng cửa 24:00.
             </div>
 
-            <div class="col-12">
+            <div class="col-12 phan-chung">
                 <label class="form-label d-block">Tiện ích</label>
                 @php $daChon = old('tien_ich', $san->tien_ich ?? []); @endphp
                 <div class="row row-cols-2 row-cols-md-3 g-1">
@@ -95,7 +137,7 @@
                 </div>
             </div>
 
-            <div class="col-12">
+            <div class="col-12 phan-chung">
                 <label class="form-label" for="mo_ta">Mô tả</label>
                 <textarea id="mo_ta" name="mo_ta" rows="3" class="form-control" placeholder="Mặt cỏ, đường đi, lưu ý cho khách...">{{ old('mo_ta', $san->mo_ta) }}</textarea>
             </div>
@@ -116,6 +158,10 @@
             </div>
         </div>
 
+        <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" name="gia_rieng" value="1" id="gia_rieng" @checked(old('gia_rieng', $san->gia_rieng))>
+            <label class="form-check-label" for="gia_rieng"><strong>Giá riêng</strong> — sân này không dùng bảng giá chung với các sân cùng loại trong cơ sở</label>
+        </div>
         <button class="btn btn-success w-100 mt-3">{{ $san->exists ? 'Lưu thay đổi' : 'Tạo sân và đặt giá' }}</button>
     </form>
 
@@ -163,6 +209,15 @@
 
 @push('scripts')
 <script>
+(function () {
+    const chon = document.getElementById('co_so_id');
+    if (! chon) return;
+    const doi = () => {
+        document.querySelectorAll('.phan-chung, .phan-moi').forEach((el) => { el.classList.toggle('d-none', chon.value !== ''); });
+    };
+    chon.addEventListener('change', doi);
+    doi();
+})();
 // Chọn tỉnh → nạp danh sách xã/phường
 document.querySelectorAll('[data-xa-phuong]').forEach(function (chonTinh) {
     chonTinh.addEventListener('change', async function () {

@@ -8,6 +8,7 @@
     {{-- Giai đoạn đầu dùng CDN cho nhanh; khi triển khai sẽ chuyển sang Vite --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" rel="stylesheet">
     <style>
         body { background: #f4f6f5; }
         .navbar-brand { font-weight: 800; font-size: 1.45rem; letter-spacing: -.3px; display: flex; align-items: center; gap: .4rem; }
@@ -15,6 +16,7 @@
         .navbar-brand:hover .bong { transform: rotate(360deg); }
         .the-form { max-width: 440px; }
         .btn, .form-control, .form-select { min-height: 44px; } /* vùng chạm đủ lớn trên điện thoại */
+        .nut-quay-lai { font-weight: 600; border-width: 2px; }
     </style>
     @stack('head')
 </head>
@@ -38,6 +40,13 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.goi.index') }}">Gói</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.cai-dat.edit') }}">Cài đặt</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.nhat-ky') }}">Nhật ký</a></li>
+                        @php $soGoPhat = \App\Models\YeuCauGoPhat::where('trang_thai', 'cho_duyet')->count(); @endphp
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.duyet-go-phat') }}">Duyệt gỡ phạt
+                            @if ($soGoPhat) <span class="badge rounded-pill bg-danger">{{ $soGoPhat }}</span> @endif</a></li>
+                    @elseif (auth()->user()->laKhach())
+                        @php $soViec = app(\App\Services\ViecCanLam::class)->cua(auth()->user())->count(); @endphp
+                        <li class="nav-item"><a class="nav-link" href="{{ route('khach.thanh-toan') }}">Thanh toán
+                            @if ($soViec) <span class="badge rounded-pill bg-danger" title="Việc cần làm">{{ $soViec }}</span> @endif</a></li>
                     @elseif (auth()->user()->coVaiTro('chu_san', 'nhan_vien'))
                         <li class="nav-item"><a class="nav-link" href="{{ route('quan-ly.tong-quan') }}">Quản lý</a></li>
                         @php
@@ -92,7 +101,21 @@
 </nav>
 
 <main class="container py-4 flex-grow-1">
+    @unless (request()->routeIs('trang-chu'))
+        <a href="{{ route('trang-chu') }}" class="btn btn-outline-success btn-sm mb-3 nut-quay-lai"
+           onclick="if (document.referrer && document.referrer.indexOf(location.origin) === 0 && history.length > 1) { history.back(); return false; }">
+            <i class="bi bi-arrow-left"></i> Quay lại</a>
+    @endunless
     @include('partials.thong-bao')
+    @auth
+        @if (auth()->user()->laKhach() && ! request()->routeIs('khach.thanh-toan') && ($viecCanLam = app(\App\Services\ViecCanLam::class)->cua(auth()->user()))->isNotEmpty())
+            <div class="alert alert-danger d-flex flex-wrap justify-content-between align-items-center gap-2 py-2">
+                <span><i class="bi bi-bell-fill"></i> Bạn có <strong>{{ $viecCanLam->count() }} việc cần làm</strong>:
+                    {{ $viecCanLam->pluck('nhan')->unique()->join(', ') }}.</span>
+                <a href="{{ route('khach.thanh-toan') }}" class="btn btn-sm btn-danger">Xem & xử lý</a>
+            </div>
+        @endif
+    @endauth
     @yield('content')
 </main>
 
@@ -104,21 +127,36 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/vn.js"></script>
 <script>
-// Ô tiền: gõ 100000 hiện 100.000; khi gửi form tự bỏ dấu chấm.
 (function () {
     const dinhDang = (v) => { const so = String(v).replace(/\D/g, ''); return so ? Number(so).toLocaleString('vi-VN') : ''; };
-    document.addEventListener('input', (e) => {
-        if (! e.target.matches('input.o-tien')) return;
-        const o = e.target, truoc = o.value.length, viTri = o.selectionStart;
-        o.value = dinhDang(o.value);
-        const p = Math.max(0, viTri + o.value.length - truoc);
-        o.setSelectionRange(p, p);
-    });
-    document.querySelectorAll('input.o-tien').forEach((o) => { o.value = dinhDang(o.value); });
+    const gan = (o) => { o.value = dinhDang(o.value); };
+    document.querySelectorAll('input.o-tien').forEach(gan);
+    document.addEventListener('focusin', (e) => { if (e.target.matches('input.o-tien')) setTimeout(() => e.target.select(), 0); });
+    document.addEventListener('focusout', (e) => { if (e.target.matches('input.o-tien')) gan(e.target); });
     document.addEventListener('submit', (e) => {
         e.target.querySelectorAll('input.o-tien').forEach((o) => { o.value = o.value.replace(/\D/g, ''); });
     }, true);
+
+    const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/;
+    const sangVn = (v) => { const m = iso.exec(v || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` + (m[4] ? ` ${m[4]}:${m[5]}` : '') : v; };
+    document.querySelectorAll('input[type=date], input[type=datetime-local]').forEach((o) => {
+        const coGio = o.type === 'datetime-local';
+        const min = o.min, max = o.max;
+        o.type = 'text';
+        o.value = sangVn(o.value);
+        o.placeholder = coGio ? 'dd/mm/yyyy hh:mm' : 'dd/mm/yyyy';
+        o.autocomplete = 'off';
+        if (window.flatpickr) {
+            flatpickr(o, {
+                locale: 'vn', allowInput: true, disableMobile: true, enableTime: coGio, time_24hr: true,
+                dateFormat: coGio ? 'd/m/Y H:i' : 'd/m/Y',
+                minDate: min ? sangVn(min) : null, maxDate: max ? sangVn(max) : null,
+            });
+        }
+    });
 })();
 </script>
 <datalist id="ds-gio">@foreach (\App\Support\ThoiGian::cacMoc(0, 1440) as $m) @if (str_ends_with($m, ':00') || str_ends_with($m, ':30'))<option value="{{ $m }}">@endif @endforeach</datalist>

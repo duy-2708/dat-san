@@ -142,7 +142,7 @@
 
     {{-- Thành viên --}}
     <div class="row g-3 mb-3">
-        @foreach ($keo->laDoiDau() ? ['a' => 'Bên A (chủ kèo)', 'b' => 'Bên B'] : ['a' => 'Người chơi'] as $ben => $tenBen)
+        @foreach ($keo->laDoiDau() ? ['a' => $keo->tenBen('a').' (treo kèo)', 'b' => $keo->tenBen('b').' (nhận kèo)'] : ['a' => 'Người chơi'] as $ben => $tenBen)
             @php $ds = $keo->thamGias->where('ben', $ben)->whereIn('trang_thai', ['cho_coc', 'da_xac_nhan']); @endphp
             <div class="col-md-{{ $keo->laDoiDau() ? 6 : 12 }}">
                 <div class="card border-0 shadow-sm h-100"><div class="card-body">
@@ -151,13 +151,13 @@
                             @if ($keo->laDoiDau() && $doiBen[$ben])
                                 <a href="{{ route('doi.show', $doiBen[$ben]) }}" class="text-decoration-none d-inline-flex align-items-center gap-1">
                                     <img src="{{ $doiBen[$ben]->logoUrl() }}" width="26" height="26" class="rounded-circle object-fit-cover" alt="">{{ $doiBen[$ben]->ten }}</a>
-                                <span class="text-muted small fw-normal">· {{ $ben === 'a' ? 'chủ kèo' : 'đối thủ' }}</span>
+                                <span class="text-muted small fw-normal">· {{ $ben === 'a' ? 'đội treo kèo' : 'đội nhận kèo' }}</span>
                             @else
                                 {{ $tenBen }}
                             @endif
                         </h2>
                         @if ($keo->laDoiDau() && $keo->{$ben.'_bao_ket_qua'})
-                            <span class="small">Báo: <strong>{{ \App\Models\Keo::KET_QUA[$keo->{$ben.'_bao_ket_qua'}] }}</strong></span>
+                            <span class="small">Báo: <strong>{{ $keo->nhanKetQua($keo->{$ben.'_bao_ket_qua'}) }}</strong></span>
                         @endif
                     </div>
                     @forelse ($ds as $tg)
@@ -179,12 +179,14 @@
                                         <button class="btn btn-sm btn-outline-danger py-0">✗</button></form>
                                 @endif
                                 @if ($laChuSan && $tg->diem_danh === 'vang' && ! $tg->mien_phat)
-                                    <form method="POST" action="{{ route('quan-ly.keo.mien-phat', $tg) }}">@csrf @method('PATCH')
-                                        <button class="btn btn-sm btn-outline-secondary py-0" title="Người này thực tế có đến">Miễn phạt</button></form>
+                                    <form method="POST" action="{{ route('quan-ly.keo.mien-phat', $tg) }}" onsubmit="const l = prompt('Lý do đề nghị miễn phạt (admin sẽ xem):'); if (l === null) return false; this.ly_do.value = l;">@csrf @method('PATCH')
+                                        <input type="hidden" name="ly_do">
+                                        <button class="btn btn-sm btn-outline-secondary py-0" title="Người này thực tế có đến — gửi admin duyệt">Đề nghị miễn phạt</button></form>
                                 @endif
                                 @if ($laChuSan && $tg->user->biHanChe())
-                                    <form method="POST" action="{{ route('quan-ly.han-che.go', $tg->user) }}">@csrf @method('PATCH')
-                                        <button class="btn btn-sm btn-outline-primary py-0">Gỡ hạn chế</button></form>
+                                    <form method="POST" action="{{ route('quan-ly.han-che.go', $tg->user) }}" onsubmit="const l = prompt('Lý do đề nghị gỡ hạn chế (admin sẽ xem):'); if (l === null) return false; this.ly_do.value = l;">@csrf @method('PATCH')
+                                        <input type="hidden" name="ly_do">
+                                        <button class="btn btn-sm btn-outline-primary py-0">Đề nghị gỡ hạn chế</button></form>
                                 @endif
                             </span>
                         </div>
@@ -221,7 +223,7 @@
             @if ($laDaiDien)
                 <form method="POST" action="{{ route('keo.ket-qua', $keo) }}" class="d-flex flex-wrap gap-2">@csrf
                     @foreach (\App\Models\Keo::KET_QUA as $ma => $nhan)
-                        <button name="ket_qua" value="{{ $ma }}" class="btn btn-outline-dark btn-sm">{{ $nhan }}</button>
+                        <button name="ket_qua" value="{{ $ma }}" class="btn btn-outline-dark btn-sm">{{ $keo->nhanKetQua($ma) }}</button>
                     @endforeach
                 </form>
             @endif
@@ -229,7 +231,7 @@
                 <form method="POST" action="{{ route('quan-ly.keo.chot', $keo) }}" class="d-flex flex-wrap gap-2 mt-2 align-items-center">@csrf @method('PATCH')
                     <span class="small fw-semibold">Chủ sân chốt:</span>
                     @foreach (\App\Models\Keo::KET_QUA as $ma => $nhan)
-                        <button name="ket_qua" value="{{ $ma }}" class="btn btn-sm btn-dark" onclick="return confirm('Chốt: {{ $nhan }}?')">{{ $nhan }}</button>
+                        <button name="ket_qua" value="{{ $ma }}" class="btn btn-sm btn-dark" onclick="return confirm('Chốt: {{ e($keo->nhanKetQua($ma)) }}?')">{{ $keo->nhanKetQua($ma) }}</button>
                     @endforeach
                 </form>
             @endif
@@ -239,11 +241,11 @@
     {{-- Quyết toán --}}
     @if ($quyetToan)
         <div class="card border-0 shadow-sm mb-3"><div class="card-body">
-            <h2 class="h6">Kết quả: {{ \App\Models\Keo::KET_QUA[$keo->ket_qua] }} — tiền sân {{ $tien($keo->tien_san) }}</h2>
+            <h2 class="h6">Kết quả: {{ $keo->nhanKetQua($keo->ket_qua) }} — tiền sân {{ $tien($keo->tien_san) }}</h2>
             <table class="table table-sm small mb-0">
                 <thead><tr><th></th><th class="text-end">Phải chịu</th><th class="text-end">Đã cọc</th><th class="text-end">Trả thêm tại sân</th></tr></thead>
                 <tbody>
-                @foreach (['a' => 'Bên A', 'b' => 'Bên B'] as $ben => $ten)
+                @foreach (['a' => $keo->tenBen('a'), 'b' => $keo->tenBen('b')] as $ben => $ten)
                     @php $q = $quyetToan[$ben]; @endphp
                     <tr><td>{{ $ten }}</td><td class="text-end">{{ $tien($q['phan']) }}</td><td class="text-end">{{ $tien($q['da_tra']) }}</td>
                         <td class="text-end fw-semibold">{{ $q['con'] >= 0 ? $tien($q['con']) : 'Sân trả lại '.$tien(-$q['con']) }}</td></tr>

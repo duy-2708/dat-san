@@ -79,4 +79,34 @@ class LichSan
 
         return $ngays;
     }
+
+    public function tuanGop(\Illuminate\Support\Collection $sans, CarbonInterface $tuNgay, int $soNgay = 7): array
+    {
+        $cacLich = $sans->values()->map(fn (San $s) => ['san' => $s, 'lich' => $this->tuan($s, $tuNgay, $soNgay)]);
+        $goc = $cacLich[0]['lich'];
+        foreach ($goc as $i => $ngay) {
+            foreach ($ngay['khungs'] as $j => $o) {
+                $bd = $o['khung']->gio_bat_dau;
+                $trong = [];
+                foreach ($cacLich as $l) {
+                    foreach ($l['lich'][$i]['khungs'] as $o2) {
+                        if ($o2['khung']->gio_bat_dau === $bd && $o2['trang_thai'] === 'trong') {
+                            $trong[] = [$l['san'], $o2['khung']];
+                            break;
+                        }
+                    }
+                }
+                $o['san'] = $cacLich[0]['san'];
+                $o['tong'] = $cacLich->count();
+                $o['con_trong'] = count($trong);
+                if (in_array($o['trang_thai'], ['da_dat', 'dang_giu'], true) && $trong) {
+                    $o['trang_thai'] = 'trong';
+                    [$o['san'], $o['khung']] = $trong[0];
+                }
+                $goc[$i]['khungs'][$j] = $o;
+            }
+        }
+
+        return $goc;
+    }
 }

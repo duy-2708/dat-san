@@ -18,6 +18,13 @@
 @if ($errors->any())
     <div class="alert alert-danger py-2">{{ $errors->first() }}</div>
 @endif
+@if ($sanNhanGia->isNotEmpty())
+    <div class="alert alert-info py-2 small"><i class="bi bi-link-45deg"></i> Bảng giá dùng chung cho {{ \App\Models\San::LOAI[$san->loai_san] }} của cơ sở:
+        <strong>{{ $san->ten }}, {{ $sanNhanGia->pluck('ten')->join(', ') }}</strong> — sửa ở đây là áp dụng cho tất cả.
+        Sân nào cần giá khác: vào <em>Thông tin sân</em> → bật <strong>Giá riêng</strong>.</div>
+@elseif ($san->gia_rieng)
+    <div class="alert alert-warning py-2 small">Sân này đang dùng <strong>giá riêng</strong>, không theo bảng giá chung của cơ sở.</div>
+@endif
 
 @if ($laChu)
 {{-- TẠO NHANH --}}

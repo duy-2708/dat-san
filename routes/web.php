@@ -71,6 +71,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // ---- ADMIN ----
         Route::middleware(['vai_tro:admin', 'admin_2fa'])->prefix('admin')->name('admin.')->group(function () {
             Route::get('/nhat-ky', [NhatKyController::class, 'index'])->name('nhat-ky');
+            Route::get('/duyet-go-phat', [\App\Http\Controllers\Admin\DuyetGoPhatController::class, 'index'])->name('duyet-go-phat');
+            Route::patch('/duyet-go-phat/{yeuCau}', [\App\Http\Controllers\Admin\DuyetGoPhatController::class, 'xuLy'])->name('duyet-go-phat.xu-ly');
             Route::get('/chu-san', [ChuSanController::class, 'index'])->name('chu-san.index');
             Route::get('/chu-san/tao', [ChuSanController::class, 'create'])->name('chu-san.create');
             Route::post('/chu-san', [ChuSanController::class, 'store'])->name('chu-san.store');
@@ -197,6 +199,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // ---- KHÁCH ----
         Route::middleware('vai_tro:khach')->name('khach.')->group(function () {
             Route::get('/tai-khoan', [KhachController::class, 'taiKhoan'])->name('tai-khoan');
+            Route::get('/thanh-toan-cua-toi', [KhachController::class, 'thanhToan'])->name('thanh-toan');
             Route::get('/keo/tao', [KeoController::class, 'create'])->name('keo.create');
             Route::post('/keo', [KeoController::class, 'store'])->name('keo.store');
             Route::post('/keo/{keo}/nhan', [KeoController::class, 'nhan'])->name('keo.nhan');

@@ -52,6 +52,29 @@
         @endforeach
         <input type="hidden" name="ngay" value="{{ $loc['ngay'] ?? '' }}"><input type="hidden" name="loai" value="{{ $loc['loai'] ?? '' }}"><input type="hidden" name="kieu" value="{{ $loc['kieu'] ?? '' }}">
     </div>
+    @php
+        $dangLoc = array_filter([
+            ($loc['tinh'] ?? null) ? $tinhThanhs->firstWhere('id', (int) $loc['tinh'])?->ten : null,
+            ($loc['xa'] ?? null) ? $xaPhuongs->firstWhere('id', (int) $loc['xa'])?->ten : null,
+            ($loc['san'] ?? null) ? $sans->firstWhere('id', (int) $loc['san'])?->ten : null,
+            ($loc['loai_san'] ?? null) ? 'Sân '.$loc['loai_san'] : null,
+            ($loc['ngay'] ?? null) ? (['hom_nay' => 'Hôm nay', 'ngay_mai' => 'Ngày mai', 'cuoi_tuan' => 'Cuối tuần'][$loc['ngay']]
+                ?? rescue(fn () => \Carbon\Carbon::parse($loc['ngay'])->format('d/m/Y'), $loc['ngay'], false)) : null,
+            ($loc['loai'] ?? null) ? ['doi_dau' => 'Đội đấu đội', 'ghep_le' => 'Ghép lẻ'][$loc['loai']] ?? null : null,
+            ($loc['kieu'] ?? null) ? ['da_dat' => 'Đã đặt sân', 'chua_dat' => 'Chưa đặt sân'][$loc['kieu']] ?? null : null,
+        ]);
+    @endphp
+    <div class="col-12 d-flex flex-wrap gap-2 align-items-center border-top pt-2">
+        <button class="btn btn-sm btn-success"><i class="bi bi-funnel-fill"></i> Lọc</button>
+        @if ($dangLoc)
+            <a href="{{ route('keo.index') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i> Xoá lọc</a>
+            <span class="text-muted">Đang lọc:</span>
+            @foreach ($dangLoc as $nhan) <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">{{ $nhan }}</span> @endforeach
+            <span class="text-muted">— {{ $keos->count() }} kèo</span>
+        @else
+            <span class="text-muted">Chưa lọc — đang xem tất cả kèo sắp tới ({{ $keos->count() }})</span>
+        @endif
+    </div>
 </form>
 
 {{-- Chú thích --}}

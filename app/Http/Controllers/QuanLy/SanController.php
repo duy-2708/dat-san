@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\QuanLy;
 
 use App\Http\Controllers\Controller;
+use App\Models\CoSo;
 use App\Models\San;
+use App\Services\BangGiaChung;
 use App\Models\TinhThanh;
 use App\Support\ThoiGian;
 use Illuminate\Http\RedirectResponse;
@@ -23,12 +25,12 @@ class SanController extends Controller
 
         $sans = San::query()
             ->where('chu_san_id', $request->user()->idChuSanQuanLy()) // chỉ sân của mình
-            ->with(['anhSans', 'xaPhuong.tinhThanh', 'sanCons'])
+            ->with(['anhSans', 'xaPhuong.tinhThanh', 'sanCons', 'coSo'])
             ->withCount('khungGios')
             ->orderBy('loai_san')->orderBy('ten')
             ->get();
 
-        return view('quan-ly.san.index', compact('sans'));
+        return view('quan-ly.san.index', ['sans' => $sans, 'nhomCoSo' => $sans->groupBy('co_so_id')]);
     }
 
     public function create(Request $request): View|RedirectResponse
@@ -39,56 +41,112 @@ class SanController extends Controller
             return redirect()->route('quan-ly.san.index')->withErrors(['goi' => $loi]);
         }
 
-        return view('quan-ly.san.form', $this->duLieuForm($request, new San([
-            'gio_mo_cua' => '06:00:00', 'gio_dong_cua' => '23:00:00', 'loai_san' => 5,
-        ])));
+        $san = new San(['gio_mo_cua' => '06:00:00', 'gio_dong_cua' => '23:00:00', 'loai_san' => 5]);
+        $coSo = CoSo::where('chu_san_id', $request->user()->id)->find($request->query('co_so'));
+        if ($coSo) {
+            $san->forceFill($coSo->giaTriChung());
+            $san->co_so_id = $coSo->id;
+        }
+
+        return view('quan-ly.san.form', $this->duLieuForm($request, $san));
     }
 
     public function store(Request $request): RedirectResponse
     {
         Gate::authorize('create', San::class);
 
-        if ($loi = $this->vuotGioiHanGoi($request)) {
+        $soLuong = max(1, min(10, (int) $request->input('so_luong', 1)));
+        if ($loi = $this->vuotGioiHanGoi($request, $soLuong)) {
             return redirect()->route('quan-ly.san.index')->withErrors(['goi' => $loi]);
         }
 
+        $coSo = $request->filled('co_so_id')
+            ? CoSo::where('chu_san_id', $request->user()->id)->findOrFail((int) $request->input('co_so_id'))
+            : null;
+        if ($coSo) {
+            $request->merge(collect($coSo->giaTriChung())->map(fn ($v, $k) => str_starts_with($k, 'gio_') ? substr((string) $v, 0, 5) : $v)->all()
+                + ['tinh_thanh_id' => $coSo->xaPhuong?->tinh_thanh_id]);
+        }
         $duLieu = $this->kiemTra($request);
+        $request->validate(['ten_co_so' => ['nullable', 'string', 'max:100']]);
 
-        $san = DB::transaction(function () use ($request, $duLieu) {
-            $san = new San($duLieu);
-            $san->chu_san_id = $request->user()->id;   // luôn là người đang đăng nhập
-            $san->slug = Str::slug($duLieu['ten']).'-'.Str::lower(Str::random(6));
-            $san->save();
-            $san->sanCons()->sync($this->sanConHopLe($request, $san));
+        $sans = DB::transaction(function () use ($request, $duLieu, $coSo, $soLuong) {
+            $tao = [];
+            for ($i = 0; $i < $soLuong; $i++) {
+                $san = new San($duLieu);
+                if ($soLuong > 1) {
+                    $san->ten = mb_substr($duLieu['ten'], 0, 98).chr(65 + $i);
+                }
+                $san->chu_san_id = $request->user()->id;
+                $san->gia_rieng = $request->boolean('gia_rieng');
+                $san->slug = Str::slug($san->ten).'-'.Str::lower(Str::random(6));
+                $coSo ??= CoSo::taoTuSan($san, $request->input('ten_co_so'));
+                $san->co_so_id = $coSo->id;
+                $san->save();
+                if ($soLuong === 1) {
+                    $san->sanCons()->sync($this->sanConHopLe($request, $san));
+                }
+                app(BangGiaChung::class)->nhanTuSanCungLoai($san);
+                $tao[] = $san;
+            }
 
-            return $san;
+            return $tao;
         });
+        $san = $sans[0];
 
         return redirect()->route('quan-ly.san.khung-gio.index', $san)
-            ->with('thanh_cong', "Đã tạo {$san->ten}. Bước tiếp theo: đặt khung giờ và giá.");
+            ->with('thanh_cong', count($sans) > 1
+                ? 'Đã tạo '.count($sans).' sân: '.collect($sans)->pluck('ten')->join(', ').'. Đặt giá cho '.$san->ten.' là áp dụng cho cả '.count($sans).' sân.'
+                : "Đã tạo {$san->ten}. Bước tiếp theo: đặt khung giờ và giá.");
     }
 
     public function edit(Request $request, San $san): View
     {
         Gate::authorize('update', $san);
 
-        return view('quan-ly.san.form', $this->duLieuForm($request, $san->load('xaPhuong', 'sanCons', 'anhSans')));
+        return view('quan-ly.san.form', $this->duLieuForm($request, $san->load('xaPhuong', 'sanCons', 'anhSans', 'coSo.sans')));
     }
 
     public function update(Request $request, San $san): RedirectResponse
     {
         Gate::authorize('update', $san);
 
+        $coSoMoi = $request->filled('chuyen_co_so_id')
+            ? CoSo::where('chu_san_id', $san->chu_san_id)->where('id', '!=', $san->co_so_id)->findOrFail((int) $request->input('chuyen_co_so_id'))
+            : null;
+        if ($coSoMoi) {
+            $request->merge(collect($coSoMoi->giaTriChung())->map(fn ($v, $k) => str_starts_with($k, 'gio_') ? substr((string) $v, 0, 5) : $v)->all());
+        }
         $duLieu = $this->kiemTra($request, $san);
 
         if ($san->sanChas()->where('loai_san', '<=', $duLieu['loai_san'])->exists()) {
             throw ValidationException::withMessages(['loai_san' => 'Sân này đang là một phần của sân lớn hơn, không đổi thành loại bằng/lớn hơn sân đó được.']);
         }
 
-        DB::transaction(function () use ($request, $san, $duLieu) {
-            $san->fill($duLieu)->save();
+        $request->validate(['ten_co_so' => ['nullable', 'string', 'max:100']]);
+        $nhanGiaChung = ! $request->boolean('gia_rieng') && ($san->gia_rieng || $coSoMoi || (int) $san->loai_san !== (int) $duLieu['loai_san']);
+
+        DB::transaction(function () use ($request, $san, $duLieu, $coSoMoi) {
+            $coSoCu = $san->co_so_id;
+            $san->fill($duLieu);
+            $san->gia_rieng = $request->boolean('gia_rieng');
+            if ($coSoMoi) {
+                $san->co_so_id = $coSoMoi->id;
+            }
+            $san->save();
             $san->sanCons()->sync($this->sanConHopLe($request, $san));
+            $coSo = $coSoMoi ?? $san->coSo ?? CoSo::taoTuSan($san);
+            if (! $coSoMoi) {
+                $coSo->forceFill(collect(CoSo::COT_CHUNG)->mapWithKeys(fn ($cot) => [$cot => $san->getAttribute($cot)])->all()
+                    + ['ten' => $request->input('ten_co_so') ?: $coSo->ten])->save();
+                $coSo->dongBoXuongSan();
+            } elseif ($coSoCu && ! San::where('co_so_id', $coSoCu)->exists()) {
+                CoSo::whereKey($coSoCu)->delete();
+            }
         });
+        if ($nhanGiaChung) {
+            app(BangGiaChung::class)->nhanTuSanCungLoai($san->fresh());
+        }
 
         return redirect()->route('quan-ly.san.edit', $san)->with('thanh_cong', 'Đã lưu thông tin sân.');
     }
@@ -194,10 +252,10 @@ class SanController extends Controller
         return array_values($hopLe);
     }
 
-    private function vuotGioiHanGoi(Request $request): ?string
+    private function vuotGioiHanGoi(Request $request, int $them = 1): ?string
     {
         $goi = $request->user()->hoSoChuSan?->goiApDung();
-        if ($goi && $request->user()->sans()->count() >= $goi->so_san_toi_da) {
+        if ($goi && $request->user()->sans()->count() + $them > $goi->so_san_toi_da) {
             return "Gói {$goi->ten} chỉ cho tối đa {$goi->so_san_toi_da} sân. Vào mục Gói dịch vụ để nâng gói.";
         }
 
@@ -217,6 +275,7 @@ class SanController extends Controller
                 ->when($san->exists, fn ($q) => $q->where('id', '!=', $san->id))
                 ->orderBy('loai_san')->orderBy('ten')->get(),
             'cacMoc' => ThoiGian::cacMoc(),
+            'coSos' => CoSo::where('chu_san_id', $request->user()->idChuSanQuanLy())->withCount('sans')->orderBy('ten')->get(),
         ];
     }
 }

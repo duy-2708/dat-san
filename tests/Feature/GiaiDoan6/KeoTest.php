@@ -158,6 +158,9 @@ class KeoTest extends TestCase
 
         // Chủ sân gỡ hạn chế
         $this->actingAs($this->chu)->patch("/quan-ly/han-che/{$b->id}/go")->assertSessionHasNoErrors();
+        $this->assertNotNull($b->fresh()->han_che_luc);
+        $yc = \App\Models\YeuCauGoPhat::where('user_id', $b->id)->firstOrFail();
+        $this->actingAs(User::factory()->admin()->create())->patch("/admin/duyet-go-phat/{$yc->id}", ['dong_y' => 1])->assertSessionHasNoErrors();
         $this->assertNull($b->fresh()->han_che_luc);
         $this->actingAs(User::factory()->chuSan()->create())->patch("/quan-ly/han-che/{$tvB->id}/go")->assertForbidden();
     }
@@ -176,7 +179,10 @@ class KeoTest extends TestCase
         $this->assertSame(1, $tvB->fresh()->so_tran_vang);
 
         $tg = ThamGiaKeo::where('user_id', $tvB->id)->firstOrFail();
-        $this->actingAs($this->chu)->patch("/quan-ly/tham-gia-keo/{$tg->id}/mien-phat")->assertSessionHasNoErrors();
+        $this->actingAs($this->chu)->patch("/quan-ly/tham-gia-keo/{$tg->id}/mien-phat", ['ly_do' => 'Có đến'])->assertSessionHasNoErrors();
+        $this->assertSame(90, $tvB->fresh()->diem_uy_tin);
+        $yc = \App\Models\YeuCauGoPhat::firstOrFail();
+        $this->actingAs(User::factory()->admin()->create())->patch("/admin/duyet-go-phat/{$yc->id}", ['dong_y' => 1])->assertSessionHasNoErrors();
         $this->assertSame(100, $tvB->fresh()->diem_uy_tin);
         $this->assertSame(0, $tvB->fresh()->so_tran_vang);
         $this->assertSame(90, $b->fresh()->diem_uy_tin);                // đại diện B vẫn bị trừ

@@ -29,8 +29,28 @@ class DatSanController extends Controller
             'thoi_luong' => ['nullable', 'integer'],
         ]);
 
-        $don = $this->datSan->giuCho($request->user(), San::findOrFail($d['san_id']), $d['ngay'], (int) $d['khung_gio_id'],
-            isset($d['thoi_luong']) ? (int) $d['thoi_luong'] : null);
+        $san = San::findOrFail($d['san_id']);
+        $thoiLuong = isset($d['thoi_luong']) ? (int) $d['thoi_luong'] : null;
+        $khung = \App\Models\KhungGio::where('san_id', $san->id)->find((int) $d['khung_gio_id']);
+        $ungVien = $request->boolean('tu_xep') && $khung ? $san->cungLoaiCungCoSo() : collect([$san]);
+        $loiCuoi = null;
+        $don = null;
+        foreach ($ungVien as $s) {
+            $kId = $s->id === $san->id ? (int) $d['khung_gio_id']
+                : \App\Models\KhungGio::where('san_id', $s->id)->where('loai_ngay', $khung->loai_ngay)->where('gio_bat_dau', $khung->gio_bat_dau)->value('id');
+            if (! $kId) {
+                continue;
+            }
+            try {
+                $don = $this->datSan->giuCho($request->user(), $s, $d['ngay'], (int) $kId, $thoiLuong);
+                break;
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $loiCuoi = $e;
+            }
+        }
+        if (! $don) {
+            throw $loiCuoi ?? \Illuminate\Validation\ValidationException::withMessages(['dat_san' => 'Khung giờ này đã hết sân trống.']);
+        }
 
         return redirect()->route('dat-san.thanh-toan', $don);
     }

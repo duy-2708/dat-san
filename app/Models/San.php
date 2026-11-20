@@ -40,7 +40,28 @@ class San extends Model
         return [
             'tien_ich' => 'array',
             'loai_san' => 'integer',
+            'gia_rieng' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (San $s) {
+            if (! $s->co_so_id) {
+                $s->forceFill(['co_so_id' => CoSo::taoTuSan($s)->id])->saveQuietly();
+            }
+        });
+    }
+
+    public function coSo(): BelongsTo
+    {
+        return $this->belongsTo(CoSo::class);
+    }
+
+    public function cungLoaiCungCoSo(): \Illuminate\Support\Collection
+    {
+        return San::where('co_so_id', $this->co_so_id)->where('loai_san', $this->loai_san)->where('trang_thai', 'hoat_dong')
+            ->orderBy('ten')->get()->sortBy(fn ($x) => $x->id === $this->id ? 0 : 1)->values();
     }
 
     // ---- Quan hệ ----

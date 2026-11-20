@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ChanTaiKhoanBiKhoa;
 use App\Http\Middleware\KiemTraVaiTro;
+use App\Http\Middleware\ChuanHoaNgay;
 use App\Http\Middleware\ChuanHoaTien;
 use App\Http\Middleware\GhiNhatKy;
 use App\Http\Middleware\GioiHanThaoTac;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Chạy cho mọi request thuộc nhóm "web"
         $middleware->appendToGroup('web', ChanTaiKhoanBiKhoa::class);
         $middleware->appendToGroup('web', ChuanHoaTien::class);
+        $middleware->appendToGroup('web', ChuanHoaNgay::class);
         $middleware->appendToGroup('web', GioiHanThaoTac::class);
         $middleware->appendToGroup('web', GhiNhatKy::class);
 

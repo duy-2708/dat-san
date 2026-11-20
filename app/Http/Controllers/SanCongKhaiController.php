@@ -17,12 +17,18 @@ class SanCongKhaiController extends Controller
         abort_unless($san->trang_thai === 'hoat_dong' && $hoSo?->conHan(), 404);
 
         $tu = $this->ngayBatDau($request);
+        $cungCoSo = San::where('co_so_id', $san->co_so_id)->where('trang_thai', 'hoat_dong')->orderBy('loai_san')->orderBy('ten')->get();
+        $cungLoai = $san->cungLoaiCungCoSo();
+        $gop = $cungLoai->count() > 1 && $request->query('gop', '1') !== '0';
 
         return view('san.show', [
-            'san' => $san->load('anhSans', 'xaPhuong.tinhThanh', 'sanCons'),
+            'san' => $san->load('anhSans', 'xaPhuong.tinhThanh', 'sanCons', 'coSo'),
             'hoSo' => $hoSo,
             'tu' => $tu,
-            'lich' => $lich->tuan($san, $tu), // chiTiet = false → KHÔNG lộ tên người đặt
+            'cungCoSo' => $cungCoSo,
+            'gop' => $gop,
+            'soCungLoai' => $cungLoai->count(),
+            'lich' => $gop ? $lich->tuanGop($cungLoai, $tu) : $lich->tuan($san, $tu),
         ]);
     }
 

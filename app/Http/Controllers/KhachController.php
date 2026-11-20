@@ -28,4 +28,17 @@ class KhachController extends Controller
 
         return view('khach.tai-khoan', compact('sapToi', 'daQua', 'keoCuaToi'));
     }
+
+    public function thanhToan(Request $request, \App\Services\ViecCanLam $viec): View
+    {
+        $u = $request->user();
+
+        return view('khach.thanh-toan', [
+            'viec' => $viec->cua($u),
+            'lichSu' => \App\Models\GiaoDich::with('datSan.san')->where('nguoi_tra_id', $u->id)
+                ->where('trang_thai', '!=', 'cho_thanh_toan')->latest('id')->paginate(20),
+            'donDaDat' => DatSan::with('san')->where('khach_id', $u->id)->where('trang_thai', 'da_dat')
+                ->orderByDesc('ngay')->limit(20)->get(),
+        ]);
+    }
 }

@@ -21,9 +21,10 @@
         ->with('doiA')->get()->groupBy(fn ($k) => $k->batDauLuc()->format('Y-m-d H:i'));
 @endphp
 <div class="d-flex align-items-center justify-content-between mb-2">
-    <a href="{{ $url }}?tu={{ $truoc->toDateString() }}" class="btn btn-sm btn-outline-secondary {{ $cheDo === 'khach' && $tu->lte(today()) ? 'disabled' : '' }}"><i class="bi bi-chevron-left"></i></a>
+    @php $noi = str_contains($url, '?') ? '&' : '?'; @endphp
+    <a href="{{ $url }}{{ $noi }}tu={{ $truoc->toDateString() }}" class="btn btn-sm btn-outline-secondary {{ $cheDo === 'khach' && $tu->lte(today()) ? 'disabled' : '' }}"><i class="bi bi-chevron-left"></i></a>
     <span class="small fw-semibold">{{ $tu->format('d/m/Y') }} – {{ $tu->copy()->addDays(6)->format('d/m/Y') }}</span>
-    <a href="{{ $url }}?tu={{ $sau->toDateString() }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-right"></i></a>
+    <a href="{{ $url }}{{ $noi }}tu={{ $sau->toDateString() }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-right"></i></a>
 </div>
 
 <ul class="nav nav-pills flex-nowrap overflow-auto gap-1 pb-2 mb-2" role="tablist" style="scrollbar-width: thin">
@@ -51,6 +52,7 @@
                 $k = $o['khung'];
                 $tt = $o['trang_thai'];
                 $don = $o['don'];
+                $sanO = $o['san'] ?? $san;
                 $mau = ['trong' => 'success', 'dang_giu' => 'warning', 'da_dat' => 'danger', 'qua_gio' => 'secondary'][$tt];
                 $nhan = ['trong' => 'Trống', 'dang_giu' => 'Đang giữ', 'da_dat' => 'Đã đặt', 'qua_gio' => 'Đã qua'][$tt];
             @endphp
@@ -68,6 +70,9 @@
                         @endif
                     @endif
                     <div class="small text-muted">{{ $tien($k->gia) }}đ</div>
+                    @if (isset($o['tong']) && $tt !== 'qua_gio')
+                        <div class="small {{ $o['con_trong'] ? 'text-success' : 'text-danger' }}" style="font-size:.75rem">Còn {{ $o['con_trong'] }}/{{ $o['tong'] }} sân</div>
+                    @endif
 
                     @if ($cheDo === 'khach')
                         @if ($tt === 'trong')
@@ -77,7 +82,8 @@
                                     <div class="collapse" id="o{{ $n['ngay']->format('md') }}{{ $k->id }}">
                                     <form method="POST" action="{{ route('khach.dat-san.store') }}" class="mt-1">
                                         @csrf
-                                        <input type="hidden" name="san_id" value="{{ $san->id }}">
+                                        <input type="hidden" name="san_id" value="{{ $sanO->id }}">
+                                        @isset($o['tong']) <input type="hidden" name="tu_xep" value="1"> @endisset
                                         <input type="hidden" name="ngay" value="{{ $n['ngay']->toDateString() }}">
                                         <input type="hidden" name="khung_gio_id" value="{{ $k->id }}">
                                         <select name="thoi_luong" class="form-select form-select-sm mb-1" title="Đá bao lâu (tính từ {{ substr($k->gio_bat_dau, 0, 5) }})">
@@ -87,7 +93,7 @@
                                         </select>
                                         <button class="btn btn-sm btn-success w-100">Đặt · cọc {{ $tien($k->cocTheoPhut($k->soPhut(), $tyLeCoc)) }}</button>
                                     </form>
-                                    <a href="{{ route('keo.tao-truoc', ['san' => $san->id, 'ngay' => $n['ngay']->toDateString(), 'khung' => $k->id]) }}"
+                                    <a href="{{ route('keo.tao-truoc', ['san' => $sanO->id, 'ngay' => $n['ngay']->toDateString(), 'khung' => $k->id]) }}"
                                        class="btn btn-sm btn-outline-danger w-100 mt-1" title="Chưa cần đặt sân — đủ đội mới cọc">⚔ Cáp kèo giờ này</a>
                                     </div>
                                 @else
@@ -106,7 +112,7 @@
                                     data-ngay="{{ $n['ngay']->toDateString() }}" data-khung="{{ $k->id }}"
                                     data-thoi-luong='@json(collect($k->cacThoiLuong($dongPhut))->map(fn ($p) => ['p' => $p, 'nhan' => $nhanPhut($p).' · '.$tien($k->giaTheoPhut($p)).'đ', 'chon' => $p === $k->soPhut()]))'
                                     data-nhan="{{ $n['ngay']->format('d/m/Y') }} {{ $k->nhan() }}">+ Đặt tại chỗ</button>
-                            <a href="{{ route('keo.tao-truoc', ['san' => $san->id, 'ngay' => $n['ngay']->toDateString(), 'khung' => $k->id]) }}"
+                            <a href="{{ route('keo.tao-truoc', ['san' => $sanO->id, 'ngay' => $n['ngay']->toDateString(), 'khung' => $k->id]) }}"
                                class="btn btn-sm btn-outline-danger w-100 mt-1">⚔ Mở ô cáp kèo</a>
                         @elseif ($don)
                             <div class="small mt-1">

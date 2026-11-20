@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CoSo;
 use App\Models\San;
 use App\Models\TinhThanh;
 use App\Models\XaPhuong;
@@ -22,25 +23,30 @@ class TrangChuController extends Controller
             'q' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $sans = San::query()
-            ->with(['anhSans', 'xaPhuong.tinhThanh'])
-            ->where('trang_thai', 'hoat_dong')
-            // chủ sân còn hạn gói & không bị khoá
-            ->whereHas('chuSan', fn ($q) => $q->where('trang_thai', 'hoat_dong')
+        $locSan = fn ($q) => $q->where('trang_thai', 'hoat_dong')
+            ->whereHas('chuSan', fn ($u) => $u->where('trang_thai', 'hoat_dong')
                 ->whereHas('hoSoChuSan', fn ($h) => \App\Models\HoSoChuSan::locConHan($h)))
+            ->when($loc['loai'] ?? null, fn ($w, $l) => $w->where('loai_san', $l));
+
+        $coSos = CoSo::query()
+            ->with(['xaPhuong.tinhThanh', 'sans' => fn ($q) => $locSan($q)->with('anhSans')])
+            ->whereHas('sans', $locSan)
             ->when($loc['tinh'] ?? null, fn ($q, $t) => $q->whereHas('xaPhuong', fn ($x) => $x->where('tinh_thanh_id', $t)))
             ->when($loc['xa'] ?? null, fn ($q, $x) => $q->where('xa_phuong_id', $x))
-            ->when($loc['loai'] ?? null, fn ($q, $l) => $q->where('loai_san', $l))
-            ->when($loc['q'] ?? null, fn ($q, $t) => $q->where(fn ($w) => $w
-                ->where('ten', 'like', "%{$t}%")->orWhere('biet_danh', 'like', "%{$t}%")))
+            ->when($loc['q'] ?? null, fn ($q, $t) => $q->where(fn ($w) => $w->where('ten', 'like', "%{$t}%")
+                ->orWhereHas('sans', fn ($s) => $s->where('ten', 'like', "%{$t}%")->orWhere('biet_danh', 'like', "%{$t}%"))))
             ->orderBy('ten')
             ->paginate(12)
             ->withQueryString();
 
-        $datSan->nhaChoQuaHan(); // nhả ô quá hạn 1 lần trước khi dựng lịch
+        $datSan->nhaChoQuaHan();
         $homNay = [];
-        foreach ($sans as $s) {
-            $homNay[$s->id] = $lich->tuan($s, today(), 1)[0]['khungs']; // KHÔNG lộ người đặt
+        foreach ($coSos as $c) {
+            foreach ($c->sans->groupBy('loai_san') as $loai => $nhom) {
+                $homNay[$c->id][$loai] = $nhom->count() > 1
+                    ? $lich->tuanGop($nhom, today(), 1)[0]['khungs']
+                    : $lich->tuan($nhom->first(), today(), 1)[0]['khungs'];
+            }
         }
 
         $keoMoi = \App\Models\Keo::with(['san.xaPhuong', 'datSan.san.xaPhuong', 'khungGio', 'doiA', 'daiDienA', 'nguoiTao'])
@@ -54,7 +60,7 @@ class TrangChuController extends Controller
         return view('trang-chu', [
             'soKeoMo' => $keoMoi->count(),
             'keoMoi' => $keoMoi->take(6),
-            'sans' => $sans,
+            'coSos' => $coSos,
             'homNay' => $homNay,
             'loc' => $loc,
             'tinhThanhs' => TinhThanh::orderBy('thu_tu')->get(),

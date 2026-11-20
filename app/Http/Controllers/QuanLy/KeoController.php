@@ -8,6 +8,7 @@ use App\Models\GiaoDich;
 use App\Models\Keo;
 use App\Models\ThamGiaKeo;
 use App\Models\User;
+use App\Models\YeuCauGoPhat;
 use App\Services\KeoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,35 +37,44 @@ class KeoController extends Controller
         $d = $request->validate(['ket_qua' => ['required', Rule::in(array_keys(Keo::KET_QUA))]]);
         $this->keo->chotKetQua($request->user(), $keo, $d['ket_qua']);
 
-        return back()->with('thanh_cong', 'Đã chốt kết quả: '.Keo::KET_QUA[$d['ket_qua']].'.');
+        return back()->with('thanh_cong', 'Đã chốt kết quả: '.$keo->nhanKetQua($d['ket_qua']).'.');
     }
 
     public function mienPhat(Request $request, ThamGiaKeo $thamGia): RedirectResponse
     {
         $u = $request->user();
-        abort_unless($u->laChuSan() && (int) $thamGia->keo->datSan->san->chu_san_id === $u->id, 403);
-        $this->keo->mienPhat($thamGia, $u);
+        abort_unless($u->laChuSan() && (int) $thamGia->keo->sanThuc()->chu_san_id === $u->id, 403);
+        if ($thamGia->diem_danh !== 'vang' || $thamGia->mien_phat) {
+            return back()->withErrors(['keo' => 'Người này không bị tính vắng.']);
+        }
+        $this->guiDeNghi($request, 'mien_phat', $thamGia->user_id, $thamGia->id);
 
-        return back()->with('thanh_cong', "Đã miễn phạt cho {$thamGia->user->name}.");
+        return back()->with('thanh_cong', "Đã gửi đề nghị miễn phạt cho {$thamGia->user->name}. Admin duyệt xong mới cộng lại uy tín.");
     }
 
-    /** Gỡ hạn chế cho người bị hạn chế vì kèo ở sân của mình. */
     public function goHanChe(Request $request, User $user): RedirectResponse
     {
         $chu = $request->user();
         $lienQuan = DB::table('lich_su_uy_tin')
             ->join('keo', 'keo.id', '=', 'lich_su_uy_tin.keo_id')
-            ->join('dat_san', 'dat_san.id', '=', 'keo.dat_san_id')
-            ->join('san', 'san.id', '=', 'dat_san.san_id')
+            ->leftJoin('dat_san', 'dat_san.id', '=', 'keo.dat_san_id')
+            ->join('san', 'san.id', '=', DB::raw('COALESCE(dat_san.san_id, keo.san_id)'))
             ->where('lich_su_uy_tin.user_id', $user->id)
-            ->where('lich_su_uy_tin.ly_do', 'khong_xac_nhan_ket_qua')
             ->where('san.chu_san_id', $chu->id)
             ->exists();
         abort_unless($chu->laChuSan() && $lienQuan, 403);
+        $this->guiDeNghi($request, 'go_han_che', $user->id, null);
 
-        $this->keo->goHanChe($user);
+        return back()->with('thanh_cong', "Đã gửi đề nghị gỡ hạn chế cho {$user->name}. Chờ admin duyệt.");
+    }
 
-        return back()->with('thanh_cong', "Đã gỡ hạn chế cho {$user->name}.");
+    private function guiDeNghi(Request $request, string $loai, int $userId, ?int $thamGiaId): void
+    {
+        $request->validate(['ly_do' => ['nullable', 'string', 'max:300']]);
+        $yc = YeuCauGoPhat::where(['loai' => $loai, 'user_id' => $userId, 'tham_gia_keo_id' => $thamGiaId, 'trang_thai' => 'cho_duyet'])->first()
+            ?? new YeuCauGoPhat;
+        $yc->forceFill(['loai' => $loai, 'user_id' => $userId, 'tham_gia_keo_id' => $thamGiaId, 'trang_thai' => 'cho_duyet',
+            'chu_san_id' => $request->user()->id, 'ly_do' => $request->input('ly_do')])->save();
     }
 
     /** Tạo kèo hộ cho lịch đặt tại chỗ (khách gọi điện, không có tài khoản). */
