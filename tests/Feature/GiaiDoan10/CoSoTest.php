@@ -127,4 +127,70 @@ class CoSoTest extends TestCase
         $this->assertSame($pl->dia_chi_chi_tiet, $pl2->fresh()->dia_chi_chi_tiet);
         $this->assertNull(CoSo::find($cu));
     }
+
+    public function test_chi_ghep_trong_cung_co_so(): void
+    {
+        $cs = $this->taoCoSo(2);
+        $khac = San::factory()->cua($this->chu)->create(['ten' => 'Sân Phước Long']);
+        $this->actingAs($this->chu)->post('/quan-ly/san', ['co_so_id' => $cs->id, 'ten' => 'Sân 7A', 'loai_san' => 7, 'san_con_ids' => [$khac->id]])
+            ->assertSessionHasErrors('san_con_ids');
+
+        $ids = $cs->sans()->pluck('id')->all();
+        $this->actingAs($this->chu)->post('/quan-ly/san', ['co_so_id' => $cs->id, 'ten' => 'Sân 7A', 'loai_san' => 7, 'san_con_ids' => $ids])
+            ->assertSessionHasNoErrors();
+        $this->assertEqualsCanonicalizing($ids, San::where('ten', 'Sân 7A')->firstOrFail()->sanCons()->pluck('san.id')->all());
+        $this->actingAs($this->chu)->get('/quan-ly/san/tao?co_so='.$cs->id)->assertOk()->assertSee('id="ghep'.$ids[0].'"', false)->assertDontSee('id="ghep'.$khac->id.'"', false);
+    }
+
+    public function test_xoa_san_tao_nham_va_xoa_ca_co_so(): void
+    {
+        $cs = $this->taoCoSo(3);
+        [$a, $b, $c] = $cs->sans()->get()->all();
+        app(DatSanService::class)->ghiDon($a, '2026-11-18', 17 * 60, 18 * 60, [
+            'ten_khach_tai_cho' => 'Khách', 'sdt_khach_tai_cho' => '0988777666',
+            'gia_chot' => 300000, 'tien_coc' => 0, 'nguon' => 'tai_cho', 'trang_thai' => 'da_dat',
+        ]);
+
+        $this->actingAs($this->chu)->delete("/quan-ly/san/{$c->id}")->assertSessionHasNoErrors();
+        $this->assertNull(San::find($c->id));
+        $this->actingAs($this->chu)->delete("/quan-ly/san/{$a->id}")->assertSessionHasErrors('san');
+        $this->actingAs($this->chu)->delete("/quan-ly/co-so/{$cs->id}")->assertSessionHasErrors('san');
+        $this->assertNotNull(CoSo::find($cs->id));
+
+        $cs2 = CoSo::find($this->taoCoSo2()->id);
+        $this->actingAs($this->chu)->delete("/quan-ly/co-so/{$cs2->id}")->assertSessionHasNoErrors();
+        $this->assertNull(CoSo::find($cs2->id));
+        $this->assertSame(0, San::where('co_so_id', $cs2->id)->count());
+        $this->actingAs(User::factory()->chuSan()->create())->delete("/quan-ly/co-so/{$cs->id}")->assertForbidden();
+    }
+
+    private function taoCoSo2(): CoSo
+    {
+        $this->actingAs($this->chu)->post('/quan-ly/san', [
+            'ten_co_so' => 'Cơ Sở Nhầm', 'ten' => 'Sân X', 'loai_san' => 5, 'so_luong' => 2,
+            'xa_phuong_id' => XaPhuong::factory()->create()->id, 'dia_chi_chi_tiet' => '1 Trần Phú',
+            'gio_mo_cua' => '06:00', 'gio_dong_cua' => '23:00',
+        ])->assertSessionHasNoErrors();
+
+        return CoSo::where('ten', 'Cơ Sở Nhầm')->firstOrFail();
+    }
+
+    public function test_tao_nhanh_gia_cuoi_tuan_va_le_khac(): void
+    {
+        $cs = $this->taoCoSo(1);
+        $a = $cs->sans()->first();
+        $this->actingAs($this->chu)->post("/quan-ly/san/{$a->id}/khung-gio/tao-nhanh", [
+            'loai_ngays' => ['ngay_thuong', 'cuoi_tuan', 'ngay_le'], 'thoi_luong' => 60, 'gia_khac_ngay' => 1,
+            'muc' => [['tu' => '06:00', 'den' => '23:00', 'gia' => '200.000', 'gia_cuoi_tuan' => '250.000', 'gia_le' => '']],
+        ])->assertSessionHasNoErrors();
+
+        $gia = fn ($loai) => (int) $a->khungGios()->where('loai_ngay', $loai)->where('gio_bat_dau', '17:00:00')->value('gia');
+        $this->assertSame(200000, $gia('ngay_thuong'));
+        $this->assertSame(250000, $gia('cuoi_tuan'));
+        $this->assertSame(200000, $gia('ngay_le'));
+
+        $this->actingAs($this->chu)->post("/quan-ly/san/{$a->id}/khung-gio/tao-nhanh", [
+            'loai_ngays' => ['ngay_thuong'], 'thoi_luong' => 60, 'muc' => [['tu' => '06:00', 'den' => '23:00', 'gia' => '200000000000000']],
+        ])->assertSessionHasErrors('gia');
+    }
 }

@@ -26,7 +26,7 @@ class SanController extends Controller
         $sans = San::query()
             ->where('chu_san_id', $request->user()->idChuSanQuanLy()) // chỉ sân của mình
             ->with(['anhSans', 'xaPhuong.tinhThanh', 'sanCons', 'coSo'])
-            ->withCount('khungGios')
+            ->withCount(['khungGios', 'datSans'])
             ->orderBy('loai_san')->orderBy('ten')
             ->get();
 
@@ -167,16 +167,52 @@ class SanController extends Controller
     {
         Gate::authorize('delete', $san);
 
-        if (DB::table('dat_san')->where('san_id', $san->id)->exists()) {
-            return back()->withErrors(['san' => 'Sân đã có lượt đặt, không xoá được. Hãy dùng "Tạm ngưng".']);
+        if ($loi = $this->lyDoKhongXoa($san)) {
+            return back()->withErrors(['san' => $loi]);
         }
 
         DB::transaction(function () use ($san) {
+            $coSoId = $san->co_so_id;
             DB::table('san_ghep')->where('san_cha_id', $san->id)->orWhere('san_con_id', $san->id)->delete();
-            $san->delete(); // ảnh, khung giờ xoá theo (CASCADE)
+            $san->delete();
+            if ($coSoId && ! San::where('co_so_id', $coSoId)->exists()) {
+                CoSo::whereKey($coSoId)->delete();
+            }
         });
 
         return redirect()->route('quan-ly.san.index')->with('thanh_cong', "Đã xoá {$san->ten}.");
+    }
+
+    public function xoaCoSo(Request $request, CoSo $coSo): RedirectResponse
+    {
+        abort_unless((int) $coSo->chu_san_id === $request->user()->id, 403);
+
+        foreach ($coSo->sans()->get() as $s) {
+            if ($loi = $this->lyDoKhongXoa($s)) {
+                return back()->withErrors(['san' => $loi]);
+            }
+        }
+        DB::transaction(function () use ($coSo) {
+            $ids = $coSo->sans()->pluck('id');
+            DB::table('san_ghep')->whereIn('san_cha_id', $ids)->orWhereIn('san_con_id', $ids)->delete();
+            San::whereIn('id', $ids)->delete();
+            $coSo->delete();
+        });
+
+        return redirect()->route('quan-ly.san.index')->with('thanh_cong', "Đã xoá cơ sở {$coSo->ten}.");
+    }
+
+    private function lyDoKhongXoa(San $san): ?string
+    {
+        if (DB::table('dat_san')->where('san_id', $san->id)->exists()) {
+            return "{$san->ten} đã có lượt đặt, không xoá được (giữ lịch sử tiền). Hãy dùng \"Tạm ngưng\".";
+        }
+        if (DB::table('keo')->where('san_id', $san->id)->exists()
+            || DB::table('tran_dau')->where('san_id', $san->id)->exists()) {
+            return "{$san->ten} đang gắn với kèo hoặc trận đấu giải, không xoá được. Hãy dùng \"Tạm ngưng\".";
+        }
+
+        return null;
     }
 
     // ------------------------------------------------------------------
@@ -236,6 +272,7 @@ class SanController extends Controller
         $hopLe = San::query()
             ->whereIn('id', $ids)
             ->where('chu_san_id', $san->chu_san_id)
+            ->where('co_so_id', $san->co_so_id)
             ->where('loai_san', '<', $san->loai_san)
             ->where('id', '!=', $san->id)
             ->pluck('id')->all();
@@ -245,7 +282,7 @@ class SanController extends Controller
 
         if (count($hopLe) !== count(array_unique($ids))) {
             throw ValidationException::withMessages([
-                'san_con_ids' => 'Chỉ ghép được từ sân NHỎ HƠN của chính bạn (VD sân 11 ghép từ sân 5/7).',
+                'san_con_ids' => 'Chỉ ghép được từ sân NHỎ HƠN trong cùng cơ sở (VD sân 11 ghép từ sân 5/7).',
             ]);
         }
 
@@ -271,9 +308,10 @@ class SanController extends Controller
             'tinhThanhs' => TinhThanh::orderBy('thu_tu')->get(),
             'tinhDangChon' => $tinhId,
             'xaPhuongs' => $tinhId ? \App\Models\XaPhuong::where('tinh_thanh_id', $tinhId)->orderBy('ten')->get() : collect(),
-            'sanCoTheGhep' => $request->user()->sans()
-                ->when($san->exists, fn ($q) => $q->where('id', '!=', $san->id))
-                ->orderBy('loai_san')->orderBy('ten')->get(),
+            'sanCoTheGhep' => $san->co_so_id
+                ? San::where('co_so_id', $san->co_so_id)->when($san->exists, fn ($q) => $q->where('id', '!=', $san->id))
+                    ->orderBy('loai_san')->orderBy('ten')->get()
+                : collect(),
             'cacMoc' => ThoiGian::cacMoc(),
             'coSos' => CoSo::where('chu_san_id', $request->user()->idChuSanQuanLy())->withCount('sans')->orderBy('ten')->get(),
         ];

@@ -146,6 +146,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::put('/san/{san}', [SanController::class, 'update'])->name('san.update');
                 Route::patch('/san/{san}/trang-thai', [SanController::class, 'doiTrangThai'])->name('san.trang-thai');
                 Route::delete('/san/{san}', [SanController::class, 'destroy'])->name('san.destroy');
+                Route::delete('/co-so/{coSo}', [SanController::class, 'xoaCoSo'])->name('co-so.destroy');
 
                 Route::post('/san/{san}/anh', [AnhSanController::class, 'store'])->name('san.anh.store');
                 Route::patch('/anh-san/{anh}/len-dau', [AnhSanController::class, 'lenDau'])->name('anh-san.len-dau');

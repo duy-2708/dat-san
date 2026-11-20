@@ -81,6 +81,11 @@ class San extends Model
         return $this->hasMany(AnhSan::class)->orderBy('thu_tu')->orderBy('id');
     }
 
+    public function datSans(): HasMany
+    {
+        return $this->hasMany(DatSan::class);
+    }
+
     public function khungGios(): HasMany
     {
         return $this->hasMany(KhungGio::class)->orderBy('gio_bat_dau');

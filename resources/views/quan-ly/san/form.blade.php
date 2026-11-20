@@ -151,7 +151,7 @@
                         <label class="form-check-label" for="ghep{{ $s->id }}">{{ $s->ten }} <span class="text-muted small">({{ \App\Models\San::LOAI[$s->loai_san] }})</span></label>
                     </div>
                 @empty
-                    <div class="text-muted small">Chưa có sân khác để ghép.</div>
+                    <div class="text-muted small">{{ $san->co_so_id ? 'Cơ sở chưa có sân khác để ghép.' : 'Sân ghép chỉ chọn được trong cùng cơ sở — tạo cơ sở xong rồi thêm sân lớn vào sau.' }}</div>
                 @endforelse
                 <div class="form-text">Khi sân lớn được đặt, các sân con bị khoá cùng giờ và ngược lại. Chỉ chọn sân nhỏ hơn sân này.</div>
                 @error('san_con_ids') <div class="text-danger small">{{ $message }}</div> @enderror
@@ -215,7 +215,9 @@
     const doi = () => {
         document.querySelectorAll('.phan-chung, .phan-moi').forEach((el) => { el.classList.toggle('d-none', chon.value !== ''); });
     };
-    chon.addEventListener('change', doi);
+    chon.addEventListener('change', () => {
+        location.href = '{{ route('quan-ly.san.create') }}' + (chon.value ? '?co_so=' + chon.value : '');
+    });
     doi();
 })();
 // Chọn tỉnh → nạp danh sách xã/phường

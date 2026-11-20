@@ -80,9 +80,12 @@ class KhungGioController extends Controller
         Gate::authorize('update', $san);
 
         $this->chuanHoaTien($request, ['gia', 'gia_vang']);
+        $khacNgay = $request->boolean('gia_khac_ngay');
         $muc = collect($request->input('muc', []))
             ->map(fn ($m) => ['tu' => ThoiGian::chuanHoa($m['tu'] ?? null), 'den' => ThoiGian::chuanHoa($m['den'] ?? null),
-                'gia' => Tien::so($m['gia'] ?? null), 'vang' => ! empty($m['vang'])])
+                'gia' => Tien::so($m['gia'] ?? null), 'vang' => ! empty($m['vang']),
+                'cuoi_tuan' => $khacNgay ? Tien::so($m['gia_cuoi_tuan'] ?? null) : null,
+                'ngay_le' => $khacNgay ? Tien::so($m['gia_le'] ?? null) : null])
             ->filter(fn ($m) => $m['tu'] && $m['den'] && $m['gia'] !== null)
             ->values();
 
@@ -99,6 +102,9 @@ class KhungGioController extends Controller
             'loai_ngays.required' => 'Chọn ít nhất một loại ngày.',
             'gia.required' => 'Nhập giá cho ít nhất một buổi.',
         ]);
+        if ($muc->contains(fn ($m) => max($m['gia'], $m['cuoi_tuan'] ?? 0, $m['ngay_le'] ?? 0) > 100000000)) {
+            throw ValidationException::withMessages(['gia' => 'Giá mỗi khung tối đa 100.000.000đ — kiểm tra lại số vừa nhập.']);
+        }
         if ($d['thoi_luong'] % ThoiGian::BUOC_PHUT !== 0) {
             throw ValidationException::withMessages(['thoi_luong' => 'Thời lượng trận phải là bội số 15 phút (VD 60, 75, 90).']);
         }
@@ -113,7 +119,12 @@ class KhungGioController extends Controller
             }
         }
 
-        $so = $this->bangGia->taoNhanhTheoMuc($san, $d['loai_ngays'], (int) $d['thoi_luong'], $muc->all(), (bool) ($d['ghi_de'] ?? false));
+        $so = 0;
+        foreach ($d['loai_ngays'] as $loai) {
+            $mucLoai = $muc->map(fn ($m) => ['gia' => (int) ($m[$loai] ?? null ?: $m['gia'])] + $m)
+                ->map(fn ($m) => array_intersect_key($m, array_flip(['tu', 'den', 'gia', 'vang'])))->all();
+            $so += $this->bangGia->taoNhanhTheoMuc($san, [$loai], (int) $d['thoi_luong'], $mucLoai, (bool) ($d['ghi_de'] ?? false));
+        }
 
         return back()->with('thanh_cong', $this->dongBo($san, $so > 0 ? "Đã tạo {$so} khung giờ." : 'Không tạo thêm khung nào (đã có đủ hoặc bị trùng giờ).'));
     }

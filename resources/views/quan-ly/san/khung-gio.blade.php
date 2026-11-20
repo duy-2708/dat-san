@@ -50,6 +50,15 @@
             </div>
             <div class="col-12">
                 <div class="small fw-semibold mb-1">Giá theo buổi <span class="text-muted fw-normal">(sửa giờ và giá tuỳ ý; để trống giá = không tạo khung buổi đó)</span></div>
+                <div class="form-check form-switch small mb-2">
+                    <input class="form-check-input" type="checkbox" name="gia_khac_ngay" value="1" id="giaKhacNgay"
+                           onchange="document.querySelectorAll('.cot-gia-khac').forEach(e => e.classList.toggle('d-none', ! this.checked))">
+                    <label class="form-check-label" for="giaKhacNgay"><strong>Cuối tuần / ngày lễ giá khác</strong> — tắt: mọi loại ngày cùng một giá; bật: nhập thêm giá T7–CN và giá lễ (để trống = lấy giá ngày thường)</label>
+                </div>
+                <div class="row g-1 small text-muted d-none d-md-flex">
+                    <div class="col-md-2"></div><div class="col-md-1">Từ</div><div class="col-md-1">Đến</div>
+                    <div class="col-md-2">Ngày thường</div><div class="col-md-2 cot-gia-khac d-none">T7, CN</div><div class="col-md-2 cot-gia-khac d-none">Ngày lễ</div>
+                </div>
                 @php
                     $mo = substr($san->gio_mo_cua, 0, 5); $dong = substr($san->gio_dong_cua, 0, 5);
                     $goiY = [['Sáng', $mo, '11:00', false], ['Trưa', '11:00', '15:00', false], ['Chiều', '15:00', '17:00', false], ['Tối (giờ vàng)', '17:00', '21:00', true], ['Khuya', '21:00', $dong, false]];
@@ -57,10 +66,12 @@
                 @foreach ($goiY as $i => [$ten, $tu, $den, $vang])
                     <div class="row g-1 align-items-center mb-1">
                         <div class="col-12 col-md-2 small">{{ $ten }}</div>
-                        <div class="col-4 col-md-2"><input name="muc[{{ $i }}][tu]" value="{{ $tu }}" list="ds-gio" class="form-control form-control-sm" placeholder="từ"></div>
-                        <div class="col-4 col-md-2"><input name="muc[{{ $i }}][den]" value="{{ $den }}" list="ds-gio" class="form-control form-control-sm" placeholder="đến"></div>
-                        <div class="col-4 col-md-3"><div class="input-group input-group-sm"><input name="muc[{{ $i }}][gia]" inputmode="numeric" class="form-control o-tien" placeholder="VD 300.000"><span class="input-group-text">đ</span></div></div>
-                        <div class="col-12 col-md-3 small"><label><input type="checkbox" name="muc[{{ $i }}][vang]" value="1" @checked($vang)> Giờ vàng</label></div>
+                        <div class="col-3 col-md-1"><input name="muc[{{ $i }}][tu]" value="{{ $tu }}" list="ds-gio" class="form-control form-control-sm" placeholder="từ"></div>
+                        <div class="col-3 col-md-1"><input name="muc[{{ $i }}][den]" value="{{ $den }}" list="ds-gio" class="form-control form-control-sm" placeholder="đến"></div>
+                        <div class="col-6 col-md-2"><input name="muc[{{ $i }}][gia]" inputmode="numeric" class="form-control form-control-sm o-tien" placeholder="VD 300.000"></div>
+                        <div class="col-6 col-md-2 cot-gia-khac d-none"><input name="muc[{{ $i }}][gia_cuoi_tuan]" inputmode="numeric" class="form-control form-control-sm o-tien" placeholder="Giá T7, CN"></div>
+                        <div class="col-6 col-md-2 cot-gia-khac d-none"><input name="muc[{{ $i }}][gia_le]" inputmode="numeric" class="form-control form-control-sm o-tien" placeholder="Giá lễ"></div>
+                        <div class="col-12 col-md-2 small"><label><input type="checkbox" name="muc[{{ $i }}][vang]" value="1" @checked($vang)> Giờ vàng</label></div>
                     </div>
                 @endforeach
             </div>

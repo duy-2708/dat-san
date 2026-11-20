@@ -23,6 +23,12 @@
         <span class="text-muted small">{{ $dsSan->groupBy('loai_san')->map(fn ($g, $l) => $g->count().' sân '.$l)->join(' · ') }}</span>
         @if ($laChu && $cs)
             <a href="{{ route('quan-ly.san.create', ['co_so' => $cs->id]) }}" class="btn btn-sm btn-outline-success ms-auto"><i class="bi bi-plus-lg"></i> Thêm sân vào cơ sở</a>
+            @if ($dsSan->sum('dat_sans_count') === 0)
+                <form method="POST" action="{{ route('quan-ly.co-so.destroy', $cs) }}" onsubmit="return confirm('Xoá cả cơ sở {{ e($cs->ten) }} và {{ $dsSan->count() }} sân bên trong? Không hoàn tác được.')">
+                    @csrf @method('DELETE')
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Xoá cơ sở</button>
+                </form>
+            @endif
         @endif
     </div>
     <div class="row g-3">
@@ -52,6 +58,12 @@
                 <a href="{{ route('quan-ly.san.khung-gio.index', $s) }}" class="btn btn-sm btn-outline-success"><i class="bi bi-clock"></i> Giá</a>
                 @if ($laChu)
                     <a href="{{ route('quan-ly.san.edit', $s) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Sửa</a>
+                    @if ($s->dat_sans_count === 0)
+                        <form method="POST" action="{{ route('quan-ly.san.destroy', $s) }}" onsubmit="return confirm('Xoá hẳn {{ e($s->ten) }}? Không hoàn tác được.')">
+                            @csrf @method('DELETE')
+                            <button class="btn btn-sm btn-outline-danger" title="Chỉ xoá được khi chưa có lượt đặt"><i class="bi bi-trash"></i></button>
+                        </form>
+                    @endif
                     <form method="POST" action="{{ route('quan-ly.san.trang-thai', $s) }}">
                         @csrf @method('PATCH')
                         <button class="btn btn-sm btn-outline-{{ $s->trang_thai === 'hoat_dong' ? 'warning' : 'success' }}">

@@ -21,6 +21,8 @@ class SanGhepTest extends TestCase
 
     private function capNhat(San $san, array $conIds)
     {
+        San::whereIn('id', $conIds)->where('chu_san_id', $this->chu->id)->update(['co_so_id' => $san->co_so_id]);
+
         return $this->actingAs($this->chu)->put("/quan-ly/san/{$san->id}", [
             'ten' => $san->ten, 'loai_san' => $san->loai_san, 'xa_phuong_id' => $san->xa_phuong_id,
             'dia_chi_chi_tiet' => $san->dia_chi_chi_tiet, 'gio_mo_cua' => '06:00', 'gio_dong_cua' => '23:00',

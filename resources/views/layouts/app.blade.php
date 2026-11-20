@@ -131,14 +131,34 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/vn.js"></script>
 <script>
 (function () {
-    const dinhDang = (v) => { const so = String(v).replace(/\D/g, ''); return so ? Number(so).toLocaleString('vi-VN') : ''; };
-    const gan = (o) => { o.value = dinhDang(o.value); };
-    document.querySelectorAll('input.o-tien').forEach(gan);
-    document.addEventListener('focusin', (e) => { if (e.target.matches('input.o-tien')) setTimeout(() => e.target.select(), 0); });
-    document.addEventListener('focusout', (e) => { if (e.target.matches('input.o-tien')) gan(e.target); });
+    const dinhDang = (v) => { const so = String(v).replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 12); return so ? so.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''; };
+    document.querySelectorAll('input.o-tien').forEach((o) => { o.value = dinhDang(o.value); o.maxLength = 15; });
+    document.addEventListener('input', (e) => {
+        const o = e.target;
+        if (! o.matches('input.o-tien') || e.isComposing) return;
+        const soTruoc = o.value.slice(0, o.selectionStart).replace(/\D/g, '').length;
+        const moi = dinhDang(o.value);
+        if (moi === o.value) return;
+        o.value = moi;
+        let p = 0, dem = 0;
+        while (p < moi.length && dem < soTruoc) { if (/\d/.test(moi[p])) dem++; p++; }
+        o.setSelectionRange(p, p);
+    });
+    document.addEventListener('keydown', (e) => {
+        const o = e.target;
+        if (! o.matches('input.o-tien') || o.selectionStart !== o.selectionEnd) return;
+        if (e.key === 'Backspace' && o.value[o.selectionStart - 1] === '.') o.setSelectionRange(o.selectionStart - 1, o.selectionStart - 1);
+        if (e.key === 'Delete' && o.value[o.selectionStart] === '.') o.setSelectionRange(o.selectionStart + 1, o.selectionStart + 1);
+    });
     document.addEventListener('submit', (e) => {
+        if (e.defaultPrevented) return;
+        if (e.target.dataset.daGui) { e.preventDefault(); return; }
         e.target.querySelectorAll('input.o-tien').forEach((o) => { o.value = o.value.replace(/\D/g, ''); });
-    }, true);
+        if ((e.target.method || 'get').toLowerCase() === 'post') {
+            e.target.dataset.daGui = '1';
+            setTimeout(() => { delete e.target.dataset.daGui; }, 4000);
+        }
+    });
 
     const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/;
     const sangVn = (v) => { const m = iso.exec(v || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` + (m[4] ? ` ${m[4]}:${m[5]}` : '') : v; };
