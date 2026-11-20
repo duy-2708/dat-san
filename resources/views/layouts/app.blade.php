@@ -133,9 +133,9 @@
 (function () {
     const dinhDang = (v) => { const so = String(v).replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 12); return so ? so.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''; };
     document.querySelectorAll('input.o-tien').forEach((o) => { o.value = dinhDang(o.value); o.maxLength = 15; });
-    document.addEventListener('input', (e) => {
+    const xuLy = (e) => {
         const o = e.target;
-        if (! o.matches('input.o-tien') || e.isComposing) return;
+        if (! o.matches || ! o.matches('input.o-tien') || e.isComposing) return;
         const soTruoc = o.value.slice(0, o.selectionStart).replace(/\D/g, '').length;
         const moi = dinhDang(o.value);
         if (moi === o.value) return;
@@ -143,7 +143,9 @@
         let p = 0, dem = 0;
         while (p < moi.length && dem < soTruoc) { if (/\d/.test(moi[p])) dem++; p++; }
         o.setSelectionRange(p, p);
-    });
+    };
+    ['input', 'keyup', 'compositionend', 'change'].forEach((t) => document.addEventListener(t, xuLy));
+    document.addEventListener('focusout', (e) => { if (e.target.matches && e.target.matches('input.o-tien')) e.target.value = dinhDang(e.target.value); });
     document.addEventListener('keydown', (e) => {
         const o = e.target;
         if (! o.matches('input.o-tien') || o.selectionStart !== o.selectionEnd) return;

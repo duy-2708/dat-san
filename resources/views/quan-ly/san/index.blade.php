@@ -63,6 +63,11 @@
                             @csrf @method('DELETE')
                             <button class="btn btn-sm btn-outline-danger" title="Chỉ xoá được khi chưa có lượt đặt"><i class="bi bi-trash"></i></button>
                         </form>
+                    @elseif (! app()->isProduction())
+                        <form method="POST" action="{{ route('quan-ly.san.xoa-han', $s) }}" onsubmit="return confirm('CHẠY THỬ: xoá hẳn {{ e($s->ten) }} cùng {{ $s->dat_sans_count }} lượt đặt, kèo và giao dịch của sân? Không hoàn tác được.')">
+                            @csrf @method('DELETE')
+                            <button class="btn btn-sm btn-danger" title="Chỉ có khi chạy thử trên máy — máy chủ thật không có nút này"><i class="bi bi-trash"></i> Xoá hẳn</button>
+                        </form>
                     @endif
                     <form method="POST" action="{{ route('quan-ly.san.trang-thai', $s) }}">
                         @csrf @method('PATCH')

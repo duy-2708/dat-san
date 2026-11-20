@@ -193,4 +193,21 @@ class CoSoTest extends TestCase
             'loai_ngays' => ['ngay_thuong'], 'thoi_luong' => 60, 'muc' => [['tu' => '06:00', 'den' => '23:00', 'gia' => '200000000000000']],
         ])->assertSessionHasErrors('gia');
     }
+
+    public function test_chay_thu_xoa_han_san_da_co_luot_dat(): void
+    {
+        $cs = $this->taoCoSo(1);
+        $a = $cs->sans()->first();
+        $this->actingAs($this->chu)->post("/quan-ly/san/{$a->id}/khung-gio/tao-nhanh", ['loai_ngays' => ['ngay_thuong'], 'thoi_luong' => 60, 'gia' => 300000]);
+        $this->actingAs(User::factory()->create())->post('/dat-san', [
+            'san_id' => $a->id, 'ngay' => '2026-11-18', 'khung_gio_id' => $a->khungGios()->where('gio_bat_dau', '17:00:00')->value('id'),
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(1, DatSan::count());
+
+        $this->actingAs(User::factory()->chuSan()->create())->delete("/quan-ly/san/{$a->id}/xoa-han")->assertForbidden();
+        $this->actingAs($this->chu)->delete("/quan-ly/san/{$a->id}/xoa-han")->assertSessionHasNoErrors();
+        $this->assertNull(San::find($a->id));
+        $this->assertSame(0, DatSan::count());
+        $this->assertNull(CoSo::find($cs->id));
+    }
 }

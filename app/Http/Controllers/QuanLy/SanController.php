@@ -183,6 +183,32 @@ class SanController extends Controller
         return redirect()->route('quan-ly.san.index')->with('thanh_cong', "Đã xoá {$san->ten}.");
     }
 
+    public function xoaHan(San $san): RedirectResponse
+    {
+        Gate::authorize('delete', $san);
+        abort_if(app()->isProduction(), 404);
+
+        DB::transaction(function () use ($san) {
+            $donIds = DB::table('dat_san')->where('san_id', $san->id)->pluck('id');
+            $keoIds = DB::table('keo')->where('san_id', $san->id)->orWhereIn('dat_san_id', $donIds)->pluck('id');
+            $tgIds = DB::table('tham_gia_keo')->whereIn('keo_id', $keoIds)->pluck('id');
+            DB::table('giao_dich')->whereIn('keo_id', $keoIds)->orWhereIn('tham_gia_keo_id', $tgIds)->orWhereIn('dat_san_id', $donIds)->delete();
+            DB::table('tham_gia_keo')->whereIn('id', $tgIds)->delete();
+            DB::table('xin_keo')->whereIn('keo_id', $keoIds)->delete();
+            DB::table('keo')->whereIn('id', $keoIds)->delete();
+            DB::table('o_lich')->whereIn('dat_san_id', $donIds)->orWhere('san_id', $san->id)->delete();
+            DB::table('dat_san')->whereIn('id', $donIds)->delete();
+            DB::table('san_ghep')->where('san_cha_id', $san->id)->orWhere('san_con_id', $san->id)->delete();
+            $coSoId = $san->co_so_id;
+            $san->delete();
+            if ($coSoId && ! San::where('co_so_id', $coSoId)->exists()) {
+                CoSo::whereKey($coSoId)->delete();
+            }
+        });
+
+        return redirect()->route('quan-ly.san.index')->with('thanh_cong', "Đã xoá hẳn {$san->ten} cùng mọi lượt đặt, kèo, giao dịch thử của sân.");
+    }
+
     public function xoaCoSo(Request $request, CoSo $coSo): RedirectResponse
     {
         abort_unless((int) $coSo->chu_san_id === $request->user()->id, 403);
