@@ -93,9 +93,10 @@ class DatSanController extends Controller
     public function daThu(Request $request, DatSan $datSan): RedirectResponse
     {
         Gate::authorize('quanLy', $datSan);
-        $don = $this->datSan->daThuTienSan($datSan, $request->user());
+        $d = $request->validate(['so_tien' => ['nullable', 'integer', 'min:0']]);
+        $don = $this->datSan->daThuTienSan($datSan, $request->user(), isset($d['so_tien']) ? (int) $d['so_tien'] : null);
 
-        return back()->with('thanh_cong', "Đã ghi nhận thu {$don->tien_thu_tai_san}đ tiền sân đơn {$don->ma_don} — tính vào doanh thu tháng.");
+        return back()->with('thanh_cong', 'Đã ghi nhận thu '.number_format($don->tien_thu_tai_san, 0, ',', '.')."đ tiền sân đơn {$don->ma_don} ({$don->san->ten}) — tính vào doanh thu tháng.");
     }
 
     public function khongThayTien(Request $request, DatSan $datSan): RedirectResponse

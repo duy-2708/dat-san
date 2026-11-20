@@ -48,7 +48,7 @@ class BoSungDatSanTest extends TestCase
 
     public function test_chu_san_xem_trang_cong_khai_khong_bi_403_va_dat_tai_cho_theo_thoi_luong(): void
     {
-        $this->actingAs($this->chu)->get('/san/'.$this->a->slug)->assertOk()->assertSee('chỉ tài khoản', false)->assertDontSee('Đặt · cọc');
+        $this->actingAs($this->chu)->get('/san/'.$this->a->slug)->assertOk()->assertSee('+ Đặt tại chỗ')->assertDontSee('Đặt · cọc');
 
         $this->actingAs($this->chu)->post("/quan-ly/san/{$this->a->id}/dat-tai-cho", [
             'ngay' => '2026-11-18', 'khung_gio_id' => $this->khung($this->a, '19:00')->id, 'ten' => 'Anh Ba', 'sdt' => '0911222333', 'thoi_luong' => 120,

@@ -132,8 +132,10 @@
                 @endif
             </div>
             @if ($d->trang_thai === 'da_dat' && ! $d->da_thu_tien_luc)
-                <form method="POST" action="{{ route('quan-ly.dat-san.da-thu', $d) }}" onsubmit="return confirm(@js('Đã nhận đủ '.$tien($d->conLaiPhai()).' tiền sân đơn '.$d->ma_don.'?'))">@csrf @method('PATCH')
-                    <button class="btn btn-sm btn-success"><i class="bi bi-cash-coin"></i> Đã nhận {{ $tien($d->conLaiPhai()) }}</button></form>
+                <form method="POST" action="{{ route('quan-ly.dat-san.da-thu', $d) }}" class="input-group input-group-sm" style="max-width: 250px">@csrf @method('PATCH')
+                    <span class="input-group-text">Thu</span>
+                    <input name="so_tien" value="{{ $d->conLaiPhai() }}" inputmode="numeric" class="form-control o-tien" title="Số tiền thực nhận (sửa nếu khách trả khác)">
+                    <button class="btn btn-success"><i class="bi bi-check-lg"></i> Đã nhận</button></form>
             @endif
             @if ($laChu)
                 @if ($d->khach_id && $d->batDauLuc()->isPast())

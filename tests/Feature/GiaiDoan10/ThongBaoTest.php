@@ -110,4 +110,22 @@ class ThongBaoTest extends TestCase
         $this->actingAs($this->chu)->get('/thong-bao/'.$id);
         $this->assertSame(0, $this->chu->unreadNotifications()->count());
     }
+
+    public function test_thu_tien_nhap_so_khac_va_dat_tai_cho_mo_dung_ngay(): void
+    {
+        $khach = User::factory()->create();
+        app(DatSanService::class)->ghiDon($this->a, '2026-11-19', 17 * 60, 18 * 60, [
+            'khach_id' => $khach->id, 'gia_chot' => 300000, 'tien_coc' => 90000, 'nguon' => 'online',
+            'trang_thai' => 'da_dat', 'xac_nhan_coc_luc' => now(),
+        ]);
+        $don = DatSan::firstOrFail();
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu", ['so_tien' => '250.000'])->assertSessionHasNoErrors();
+        $this->assertSame(250000, $don->fresh()->tien_thu_tai_san);
+
+        $k = $this->khung($this->a, '19:00');
+        $this->actingAs($this->chu)->get("/san/{$this->a->slug}")->assertSee('+ Đặt tại chỗ')
+            ->assertSee(route('quan-ly.san.lich', ['san' => $this->a, 'tu' => '2026-11-18', 'mo' => $k->id]));
+        $this->actingAs($this->chu)->get(route('quan-ly.san.lich', ['san' => $this->a, 'tu' => '2026-11-19', 'mo' => $k->id]))
+            ->assertOk()->assertSee('data-khung="'.$k->id.'"', false)->assertSee('Đã thu 250.000');
+    }
 }

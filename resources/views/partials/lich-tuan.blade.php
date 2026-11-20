@@ -71,7 +71,8 @@
                     @endif
                     <div class="small text-muted">{{ $tien($k->gia) }}đ</div>
                     @if (isset($o['tong']) && $tt !== 'qua_gio')
-                        <div class="small text-break lh-sm {{ $o['con_trong'] ? 'text-success' : 'text-danger' }}" style="font-size:.75rem">Còn {{ $o['con_trong'] }}/{{ $o['tong'] }} sân{{ $o['con_trong'] ? ': '.implode(', ', $o['ten_trong']) : '' }}</div>
+                        <div class="small {{ $o['con_trong'] ? 'text-success' : 'text-danger' }}" style="font-size:.75rem"
+                             @if ($o['con_trong']) title="Còn trống: {{ implode(', ', $o['ten_trong']) }}" @endif>Còn {{ $o['con_trong'] }}/{{ $o['tong'] }} sân @if ($o['con_trong']) <i class="bi bi-info-circle"></i> @endif</div>
                     @endif
 
                     @if ($cheDo === 'khach')
@@ -105,8 +106,12 @@
                                        class="btn btn-sm btn-outline-danger w-100 mt-1" title="Chưa cần đặt sân — đủ đội mới cọc">⚔ Cáp kèo giờ này</a>
                                     </div>
                                 @else
-                                    <div class="small text-muted mt-1">Trống — chỉ tài khoản <strong>khách</strong> đặt online.
-                                        @can('view', $san) <a href="{{ route('quan-ly.san.lich', $san) }}">Đặt tại chỗ</a> @endcan</div>
+                                    @can('view', $sanO)
+                                        <a href="{{ route('quan-ly.san.lich', ['san' => $sanO, 'tu' => $n['ngay']->toDateString(), 'mo' => $k->id]) }}"
+                                           class="btn btn-sm btn-outline-success w-100 mt-1">+ Đặt tại chỗ{{ isset($o['tong']) ? ' · '.$sanO->ten : '' }}</a>
+                                    @else
+                                        <span class="badge bg-success-subtle text-success-emphasis w-100 mt-1 py-2">Trống</span>
+                                    @endcan
                                 @endif
                             @else
                                 <a href="{{ route('login') }}" class="btn btn-sm btn-outline-success w-100 mt-1">Đăng nhập để đặt</a>
@@ -131,6 +136,16 @@
                                     <div class="text-truncate fw-semibold">{{ $don->tenNguoiDat() }}</div>
                                     <div><a href="tel:{{ $don->sdtNguoiDat() }}">{{ $don->sdtNguoiDat() }}</a></div>
                                     <div class="text-muted">{{ $don->ma_don }} · {{ $don->nguon === 'tai_cho' ? 'Tại chỗ' : 'Online' }}</div>
+                                    @if ($don->trang_thai === 'da_dat')
+                                        @if ($don->da_thu_tien_luc)
+                                            <div class="text-success"><i class="bi bi-cash-coin"></i> Đã thu {{ $tien($don->tien_thu_tai_san) }}</div>
+                                        @else
+                                            <form method="POST" action="{{ route('quan-ly.dat-san.da-thu', $don) }}" class="input-group input-group-sm mt-1">@csrf @method('PATCH')
+                                                <input name="so_tien" value="{{ $don->conLaiPhai() }}" inputmode="numeric" class="form-control o-tien px-1" title="Số tiền sân thực nhận">
+                                                <button class="btn btn-success px-2" title="Đã nhận tiền sân"><i class="bi bi-check-lg"></i></button>
+                                            </form>
+                                        @endif
+                                    @endif
                                     @if ($don->nguon === 'tai_cho' && $don->trang_thai === 'da_dat' && $don->batDauLuc()->isFuture())
                                         @php $keoO = \App\Models\Keo::where('dat_san_id', $don->id)->first(); @endphp
                                         <a href="{{ $keoO ? route('keo.show', $keoO) : route('quan-ly.keo.create', $don) }}" class="btn btn-sm btn-outline-danger py-0 mt-1">{{ $keoO ? 'Xem kèo' : 'Tạo kèo hộ' }}</a>
@@ -150,3 +165,13 @@
     </div>
 @endforeach
 </div>
+@if ($cheDo !== 'khach' && request('mo'))
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const nut = document.querySelector('[data-bs-target="#modalTaiCho"][data-ngay="{{ $tu->toDateString() }}"][data-khung="{{ (int) request('mo') }}"]');
+        if (nut) { nut.scrollIntoView({ block: 'center' }); setTimeout(() => nut.click(), 300); }
+    });
+    </script>
+    @endpush
+@endif

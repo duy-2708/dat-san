@@ -404,12 +404,16 @@ class DatSanService
         DB::table('lich_su_uy_tin')->insert(['user_id' => $u->id, 'thay_doi' => $thayDoi, 'ly_do' => $lyDo, 'ghi_chu' => $ghiChu, 'created_at' => now()]);
     }
 
-    public function daThuTienSan(DatSan $don, User $nguoi): DatSan
+    public function daThuTienSan(DatSan $don, User $nguoi, ?int $soTien = null): DatSan
     {
         if ($don->trang_thai !== 'da_dat' || $don->da_thu_tien_luc) {
             $this->loi('Đơn này chưa đặt chắc hoặc đã ghi nhận thu tiền rồi.');
         }
-        $don->forceFill(['tien_thu_tai_san' => $don->conLaiPhai(), 'da_thu_tien_luc' => now(), 'thu_tien_boi_id' => $nguoi->id])->save();
+        $soTien ??= $don->conLaiPhai();
+        if ($soTien < 0 || $soTien > max(1, $don->gia_chot) * 3) {
+            $this->loi('Số tiền thu không hợp lệ.');
+        }
+        $don->forceFill(['tien_thu_tai_san' => $soTien, 'da_thu_tien_luc' => now(), 'thu_tien_boi_id' => $nguoi->id])->save();
 
         return $don;
     }

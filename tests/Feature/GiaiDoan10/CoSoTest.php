@@ -223,7 +223,7 @@ class CoSoTest extends TestCase
 
         $k = $a->khungGios()->where('gio_bat_dau', '17:00:00')->firstOrFail();
         $khach = User::factory()->create();
-        $this->actingAs($khach)->get("/san/{$a->slug}")->assertSee('Còn 2/2 sân: A, B')->assertSee('Bắt đầu 17:30');
+        $this->actingAs($khach)->get("/san/{$a->slug}")->assertSee('Còn 2/2 sân')->assertSee('Còn trống: A, B')->assertSee('Bắt đầu 17:30');
 
         $this->actingAs($khach)->post('/dat-san', ['san_id' => $a->id, 'ngay' => '2026-11-18', 'khung_gio_id' => $k->id, 'bat_dau' => '17:30', 'thoi_luong' => 90])
             ->assertSessionHasNoErrors();
