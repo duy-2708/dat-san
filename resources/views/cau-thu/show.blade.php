@@ -17,7 +17,7 @@
             </div>
             <div class="small text-muted mt-1">{{ $u->uyTinNhan() }}</div>
             @if (auth()->id() === $u->id)
-                <a href="{{ route('ho-so.edit') }}" class="btn btn-sm btn-outline-success mt-2">Sửa hồ sơ</a>
+                <a href="{{ route('ho-so.edit') }}" class="btn btn-sm btn-success mt-2">Sửa hồ sơ</a>
             @endif
         </div>
     </div>

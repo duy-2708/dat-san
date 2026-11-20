@@ -42,7 +42,7 @@
     @php $moSan = (bool) ($loc['tinh'] ?? null); @endphp
     <div class="bg-white rounded shadow-sm p-2 mb-3">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#keoMoi" aria-expanded="{{ $moSan ? 'true' : 'false' }}">
+            <button class="btn btn-sm btn-danger" type="button" data-bs-toggle="collapse" data-bs-target="#keoMoi" aria-expanded="{{ $moSan ? 'true' : 'false' }}">
                 ⚔ {{ $soKeoMo }} kèo đang tìm đối{{ $moSan ? ' trong tỉnh đã chọn' : '' }} <i class="bi bi-chevron-down"></i></button>
             <a href="{{ route('keo.index', array_filter(['tinh' => $loc['tinh'] ?? null])) }}" class="btn btn-sm btn-danger fw-semibold"><i class="bi bi-funnel"></i> Xem tất cả & lọc kèo</a>
         </div>

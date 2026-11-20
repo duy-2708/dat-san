@@ -21,7 +21,7 @@
             </div>
             <form method="POST" action="{{ route('quan-ly.nhan-vien.khoa', $nv) }}">
                 @csrf @method('PATCH')
-                <button class="btn btn-sm {{ $nv->trang_thai === 'bi_khoa' ? 'btn-outline-success' : 'btn-outline-danger' }}">
+                <button class="btn btn-sm {{ $nv->trang_thai === 'bi_khoa' ? 'btn-success' : 'btn-danger' }}">
                     {{ $nv->trang_thai === 'bi_khoa' ? 'Mở khoá' : 'Khoá' }}
                 </button>
             </form>

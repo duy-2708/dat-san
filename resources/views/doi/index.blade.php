@@ -10,7 +10,7 @@
     <div class="col-12 col-md-6"><input name="q" value="{{ $tuKhoa }}" class="form-control" placeholder="Tìm tên đội..."></div>
     <div class="col-8 col-md-4"><select name="tinh" class="form-select"><option value="">Mọi tỉnh/thành</option>
         @foreach ($tinhThanhs as $t) <option value="{{ $t->id }}" @selected($tinh === $t->id)>{{ $t->ten }}</option> @endforeach</select></div>
-    <div class="col-4 col-md-2"><button class="btn btn-outline-success w-100">Tìm</button></div>
+    <div class="col-4 col-md-2"><button class="btn btn-success w-100">Tìm</button></div>
 </form>
 <p class="small text-muted">Bấm vào đội → <strong>Xin vào đội</strong> → chờ đội trưởng duyệt. Hoặc nhờ đội trưởng gửi link mời / thêm bạn bằng SĐT.</p>
 <div class="row g-2">

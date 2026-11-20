@@ -7,7 +7,7 @@
     <h1 class="h4 mb-0">Sân của tôi</h1>
     @if ($laChu)
         <div class="d-flex gap-2">
-            <a href="{{ route('quan-ly.ngay-le.index') }}" class="btn btn-outline-secondary"><i class="bi bi-calendar-heart"></i> Ngày lễ</a>
+            <a href="{{ route('quan-ly.ngay-le.index') }}" class="btn btn-secondary"><i class="bi bi-calendar-heart"></i> Ngày lễ</a>
             <a href="{{ route('quan-ly.san.create') }}" class="btn btn-success"><i class="bi bi-plus-lg"></i> Thêm cơ sở / sân</a>
         </div>
     @endif
@@ -22,11 +22,11 @@
         <h2 class="h5 mb-0"><i class="bi bi-buildings text-success"></i> {{ $cs?->ten ?? 'Cơ sở' }}</h2>
         <span class="text-muted small">{{ $dsSan->groupBy('loai_san')->map(fn ($g, $l) => $g->count().' sân '.$l)->join(' · ') }}</span>
         @if ($laChu && $cs)
-            <a href="{{ route('quan-ly.san.create', ['co_so' => $cs->id]) }}" class="btn btn-sm btn-outline-success ms-auto"><i class="bi bi-plus-lg"></i> Thêm sân vào cơ sở</a>
+            <a href="{{ route('quan-ly.san.create', ['co_so' => $cs->id]) }}" class="btn btn-sm btn-success ms-auto"><i class="bi bi-plus-lg"></i> Thêm sân vào cơ sở</a>
             @if ($dsSan->sum('dat_sans_count') === 0)
                 <form method="POST" action="{{ route('quan-ly.co-so.destroy', $cs) }}" onsubmit="return confirm('Xoá cả cơ sở {{ e($cs->ten) }} và {{ $dsSan->count() }} sân bên trong? Không hoàn tác được.')">
                     @csrf @method('DELETE')
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Xoá cơ sở</button>
+                    <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> Xoá cơ sở</button>
                 </form>
             @endif
         @endif
@@ -55,13 +55,13 @@
             </div>
             <div class="card-footer bg-white border-0 d-flex flex-wrap gap-2">
                 <a href="{{ route('quan-ly.san.lich', $s) }}" class="btn btn-sm btn-success flex-grow-1"><i class="bi bi-calendar-week"></i> Lịch</a>
-                <a href="{{ route('quan-ly.san.khung-gio.index', $s) }}" class="btn btn-sm btn-outline-success"><i class="bi bi-clock"></i> Giá</a>
+                <a href="{{ route('quan-ly.san.khung-gio.index', $s) }}" class="btn btn-sm btn-success"><i class="bi bi-clock"></i> Giá</a>
                 @if ($laChu)
-                    <a href="{{ route('quan-ly.san.edit', $s) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Sửa</a>
+                    <a href="{{ route('quan-ly.san.edit', $s) }}" class="btn btn-sm btn-secondary"><i class="bi bi-pencil"></i> Sửa</a>
                     @if ($s->dat_sans_count === 0)
                         <form method="POST" action="{{ route('quan-ly.san.destroy', $s) }}" onsubmit="return confirm('Xoá hẳn {{ e($s->ten) }}? Không hoàn tác được.')">
                             @csrf @method('DELETE')
-                            <button class="btn btn-sm btn-outline-danger" title="Chỉ xoá được khi chưa có lượt đặt"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-sm btn-danger" title="Chỉ xoá được khi chưa có lượt đặt"><i class="bi bi-trash"></i></button>
                         </form>
                     @elseif (! app()->isProduction())
                         <form method="POST" action="{{ route('quan-ly.san.xoa-han', $s) }}" onsubmit="return confirm('CHẠY THỬ: xoá hẳn {{ e($s->ten) }} cùng {{ $s->dat_sans_count }} lượt đặt, kèo và giao dịch của sân? Không hoàn tác được.')">
@@ -71,7 +71,7 @@
                     @endif
                     <form method="POST" action="{{ route('quan-ly.san.trang-thai', $s) }}">
                         @csrf @method('PATCH')
-                        <button class="btn btn-sm btn-outline-{{ $s->trang_thai === 'hoat_dong' ? 'warning' : 'success' }}">
+                        <button class="btn btn-sm btn-{{ $s->trang_thai === 'hoat_dong' ? 'warning' : 'success' }}">
                             {{ $s->trang_thai === 'hoat_dong' ? 'Tạm ngưng' : 'Mở lại' }}
                         </button>
                     </form>

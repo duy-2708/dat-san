@@ -30,16 +30,16 @@
                         <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Đã nhận cọc</button></form>
                     <form method="POST" action="{{ route('quan-ly.dat-san.xac-nhan-coc', $d) }}" onsubmit="return confirm(@js('Đã nhận cọc '.$tien($d->tien_coc).' NGOÀI (tiền mặt / chuyển riêng) cho '.$d->ma_don.'? Sân sẽ đặt chắc luôn.'))">@csrf @method('PATCH')
                         <input type="hidden" name="ngoai" value="1">
-                        <button class="btn btn-sm btn-outline-success" title="Khách đưa tiền mặt hoặc chuyển khoản riêng"><i class="bi bi-cash"></i> Nhận cọc ngoài</button></form>
+                        <button class="btn btn-sm btn-success" title="Khách đưa tiền mặt hoặc chuyển khoản riêng"><i class="bi bi-cash"></i> Nhận cọc ngoài</button></form>
                     @if ($d->bao_da_chuyen_luc)
                         <form method="POST" action="{{ route('quan-ly.dat-san.khong-thay-tien', $d) }}" onsubmit="return confirm('Không thấy tiền {{ $d->ma_don }}? Đơn bị huỷ và khách bị trừ uy tín.')">@csrf @method('PATCH')
-                            <button class="btn btn-sm btn-outline-danger">Không thấy tiền</button></form>
+                            <button class="btn btn-sm btn-danger">Không thấy tiền</button></form>
                     @endif
                     <form method="POST" action="{{ route('quan-ly.dat-san.gia-han', $d) }}">@csrf @method('PATCH')
-                        <button class="btn btn-sm btn-outline-secondary">+15 phút</button></form>
+                        <button class="btn btn-sm btn-secondary">+15 phút</button></form>
                     @if ($laChu)
                         <form method="POST" action="{{ route('quan-ly.dat-san.huy', $d) }}" onsubmit="return confirm(@js('Huỷ giữ chỗ '.$d->ma_don."\n".$d->moTaNgan()."\nKhách: ".$d->tenNguoiDat().'?'))">@csrf @method('PATCH')
-                            <button class="btn btn-sm btn-outline-danger">Huỷ</button></form>
+                            <button class="btn btn-sm btn-danger">Huỷ</button></form>
                     @endif
                 </div>
             </div>
@@ -47,6 +47,29 @@
     </div>
 @empty
     <div class="text-muted small bg-white rounded p-3 mb-3">Không có đơn chờ cọc.</div>
+@endforelse
+
+{{-- CHỜ THU TIỀN SÂN --}}
+<h2 class="h6 mt-4"><i class="bi bi-cash-coin text-success"></i> Chờ thu tiền sân <span class="badge bg-success">{{ $choThu->count() }}</span></h2>
+<p class="small text-muted">Lượt đã tới giờ đá (online lẫn tại chỗ). Đá xong thu tiền khách rồi bấm "Đã nhận" — số tiền vào doanh thu tháng của đúng sân đó.</p>
+@forelse ($choThu as $d)
+    <div class="card border-0 shadow-sm mb-2 border-start border-success border-4">
+        <div class="card-body py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="small">
+                <div class="fw-semibold">{{ $d->moTaNgan() }}
+                    @if ($d->ketThucLuc()->isFuture()) <span class="badge bg-info text-dark">Đang đá</span> @endif</div>
+                {{ $d->tenNguoiDat() }} · <a href="tel:{{ $d->sdtNguoiDat() }}">{{ $d->sdtNguoiDat() }}</a>
+                · {{ $d->ma_don }} · <span class="badge bg-light text-dark border">{{ $d->nguon === 'tai_cho' ? 'Tại chỗ' : 'Online' }}</span><br>
+                Giá {{ $tien($d->gia_chot) }} · đã cọc {{ $tien($d->xac_nhan_coc_luc ? $d->tien_coc : 0) }} · <strong>còn {{ $tien($d->conLaiPhai()) }}</strong>
+            </div>
+            <form method="POST" action="{{ route('quan-ly.dat-san.da-thu', $d) }}" class="input-group input-group-sm" style="max-width: 260px">@csrf @method('PATCH')
+                <span class="input-group-text">Thu</span>
+                <input name="so_tien" value="{{ $d->conLaiPhai() }}" inputmode="numeric" class="form-control o-tien" title="Số tiền thực nhận (sửa nếu khách trả khác)">
+                <button class="btn btn-success"><i class="bi bi-check-lg"></i> Đã nhận</button></form>
+        </div>
+    </div>
+@empty
+    <div class="text-muted small bg-white rounded p-3 mb-3">Không có lượt nào chờ thu.</div>
 @endforelse
 
 {{-- CỌC KÈO --}}
@@ -59,7 +82,7 @@
             <span class="d-flex gap-1">
                 @if ($g->bao_da_chuyen_luc)
                     <form method="POST" action="{{ route('quan-ly.coc-keo.khong-thay-tien', $g) }}" onsubmit="return confirm('Không thấy tiền {{ $g->noi_dung_ck }}? Người này mất chỗ trong kèo và bị trừ uy tín.')">@csrf @method('PATCH')
-                        <button class="btn btn-sm btn-outline-danger">Không thấy tiền</button></form>
+                        <button class="btn btn-sm btn-danger">Không thấy tiền</button></form>
                 @endif
                 <form method="POST" action="{{ route('quan-ly.coc-keo.xac-nhan', $g) }}">@csrf @method('PATCH')
                     <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Đã nhận cọc</button></form>
@@ -75,7 +98,7 @@
         <div class="card border-0 shadow-sm mb-2 border-start border-danger border-4"><div class="card-body py-2 d-flex flex-wrap justify-content-between gap-2 align-items-center">
             <div class="small">Hoàn <strong>{{ $tien($g->so_tien) }}</strong> cho {{ $g->nguoiTra?->name }} ({{ $g->nguoiTra?->so_dien_thoai }}) · khoản {{ $g->noi_dung_ck }}</div>
             <form method="POST" action="{{ route('quan-ly.coc-keo.da-hoan', $g) }}">@csrf @method('PATCH')
-                <button class="btn btn-sm btn-outline-success">Đã hoàn</button></form>
+                <button class="btn btn-sm btn-success">Đã hoàn</button></form>
         </div></div>
     @endforeach
 @endif
@@ -104,7 +127,7 @@
                     Hoàn <strong>{{ $tien($d->tien_coc) }}</strong> cho {{ $d->tenNguoiDat() }} ({{ $d->sdtNguoiDat() }}) · Lý do: {{ $d->ly_do_huy }}
                 </div>
                 <form method="POST" action="{{ route('quan-ly.dat-san.da-hoan', $d) }}">@csrf @method('PATCH')
-                    <button class="btn btn-sm btn-outline-success">Đã hoàn</button></form>
+                    <button class="btn btn-sm btn-success">Đã hoàn</button></form>
             </div>
         </div>
     @endforeach
@@ -131,11 +154,8 @@
                     · <strong>thu thêm {{ $tien($d->conLaiPhai()) }}</strong>
                 @endif
             </div>
-            @if ($d->trang_thai === 'da_dat' && ! $d->da_thu_tien_luc)
-                <form method="POST" action="{{ route('quan-ly.dat-san.da-thu', $d) }}" class="input-group input-group-sm" style="max-width: 250px">@csrf @method('PATCH')
-                    <span class="input-group-text">Thu</span>
-                    <input name="so_tien" value="{{ $d->conLaiPhai() }}" inputmode="numeric" class="form-control o-tien" title="Số tiền thực nhận (sửa nếu khách trả khác)">
-                    <button class="btn btn-success"><i class="bi bi-check-lg"></i> Đã nhận</button></form>
+            @if ($d->trang_thai === 'da_dat' && ! $d->da_thu_tien_luc && $d->batDauLuc()->isFuture())
+                <span class="small text-muted">Thu sau khi tới giờ đá</span>
             @endif
             @if ($laChu)
                 @if ($d->khach_id && $d->batDauLuc()->isPast())
@@ -144,11 +164,11 @@
                     @else
                         <form method="POST" action="{{ route('quan-ly.dat-san.khong-tra-du', $d) }}"
                               onsubmit="return confirm('Báo {{ $d->tenNguoiDat() }} KHÔNG thanh toán đủ? Lần 1: trừ 20 uy tín + cấm đặt 30 ngày. Lần 2: khoá tài khoản.')">@csrf @method('PATCH')
-                            <button class="btn btn-sm btn-outline-dark">Không thanh toán đủ</button></form>
+                            <button class="btn btn-sm btn-dark">Không thanh toán đủ</button></form>
                     @endif
                 @else
                     <form method="POST" action="{{ route('quan-ly.dat-san.huy', $d) }}" onsubmit="return confirm(@js('Huỷ đơn '.$d->ma_don."\n".$d->moTaNgan()."\nKhách: ".$d->tenNguoiDat()."?\nNếu khách đã cọc, bạn cần hoàn cọc.'))">@csrf @method('PATCH')
-                        <button class="btn btn-sm btn-outline-danger">Huỷ</button></form>
+                        <button class="btn btn-sm btn-danger">Huỷ</button></form>
                 @endif
             @endif
         </div>

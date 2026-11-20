@@ -23,7 +23,7 @@
                     <form method="POST" action="{{ route('keo.ket-qua', $k) }}" class="d-flex flex-wrap gap-1"
                           onsubmit="return confirm('Xác nhận: ' + event.submitter.innerText + '?')">@csrf
                         @foreach (\App\Models\Keo::KET_QUA as $ma => $nhan)
-                            <button name="ket_qua" value="{{ $ma }}" class="btn btn-sm {{ $ma === 'hoa' ? 'btn-outline-secondary' : 'btn-outline-dark' }}">{{ $k->nhanKetQua($ma) }}</button>
+                            <button name="ket_qua" value="{{ $ma }}" class="btn btn-sm {{ $ma === 'hoa' ? 'btn-secondary' : 'btn-dark' }}">{{ $k->nhanKetQua($ma) }}</button>
                         @endforeach
                         <a href="{{ $v['url'] }}" class="btn btn-sm btn-link">Xem kèo</a>
                     </form>

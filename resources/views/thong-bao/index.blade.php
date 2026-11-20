@@ -6,7 +6,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
         <h1 class="h4 mb-0"><i class="bi bi-bell"></i> Thông báo</h1>
         <form method="POST" action="{{ route('thong-bao.doc-het') }}">@csrf
-            <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-check2-all"></i> Đánh dấu đọc hết</button></form>
+            <button class="btn btn-sm btn-secondary"><i class="bi bi-check2-all"></i> Đánh dấu đọc hết</button></form>
     </div>
     <form class="d-flex flex-wrap gap-1 align-items-center mb-2">
         @foreach (['' => 'Tất cả', 'can' => 'Cần xử lý', 'don' => 'Đơn đặt', 'keo' => 'Kèo', 'khac' => 'Khác'] as $ma => $nhan)

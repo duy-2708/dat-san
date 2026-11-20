@@ -28,9 +28,9 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
             <h2 class="h6 mb-0"><i class="bi bi-graph-up-arrow text-success"></i> Doanh thu tháng {{ $thang->format('m/Y') }}</h2>
             <div class="btn-group btn-group-sm">
-                <a href="?thang={{ $thang->copy()->subMonth()->format('Y-m') }}" class="btn btn-outline-secondary"><i class="bi bi-chevron-left"></i></a>
-                <a href="?thang={{ now()->format('Y-m') }}" class="btn btn-outline-secondary">Tháng này</a>
-                <a href="?thang={{ $thang->copy()->addMonth()->format('Y-m') }}" class="btn btn-outline-secondary"><i class="bi bi-chevron-right"></i></a>
+                <a href="?thang={{ $thang->copy()->subMonth()->format('Y-m') }}" class="btn btn-secondary"><i class="bi bi-chevron-left"></i></a>
+                <a href="?thang={{ now()->format('Y-m') }}" class="btn btn-secondary">Tháng này</a>
+                <a href="?thang={{ $thang->copy()->addMonth()->format('Y-m') }}" class="btn btn-secondary"><i class="bi bi-chevron-right"></i></a>
             </div>
         </div>
         <div class="row g-2 text-center">

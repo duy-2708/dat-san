@@ -36,7 +36,7 @@
         @else
             <div class="alert alert-secondary">Khoản cọc đã hết hạn / huỷ.</div>
         @endif
-        <a href="{{ route('keo.show', $k) }}" class="btn btn-outline-secondary w-100">Về trang kèo</a>
+        <a href="{{ route('keo.show', $k) }}" class="btn btn-secondary w-100">Về trang kèo</a>
     </div></div>
 </div>
 @endsection

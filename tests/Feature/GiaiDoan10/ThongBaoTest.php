@@ -128,4 +128,18 @@ class ThongBaoTest extends TestCase
         $this->actingAs($this->chu)->get(route('quan-ly.san.lich', ['san' => $this->a, 'tu' => '2026-11-19', 'mo' => $k->id]))
             ->assertOk()->assertSee('data-khung="'.$k->id.'"', false)->assertSee('Đã thu 250.000');
     }
+
+    public function test_toi_gio_da_hien_cho_thu_tien_san(): void
+    {
+        $this->actingAs($this->chu)->post("/quan-ly/san/{$this->a->id}/dat-tai-cho", [
+            'ngay' => '2026-11-18', 'khung_gio_id' => $this->khung($this->a, '17:00')->id, 'ten' => 'Anh Ba', 'sdt' => '0911222333',
+        ])->assertSessionHasNoErrors();
+        $don = DatSan::firstOrFail();
+
+        $this->actingAs($this->chu)->get('/quan-ly/dat-san')->assertSee('Không có lượt nào chờ thu')->assertSee('Thu sau khi tới giờ đá');
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-18 18:05'));
+        $this->actingAs($this->chu)->get('/quan-ly/dat-san')->assertSee('Chờ thu tiền sân')->assertSee($don->ma_don)->assertDontSee('Không có lượt nào chờ thu');
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu", ['so_tien' => '300.000'])->assertSessionHasNoErrors();
+        $this->actingAs($this->chu)->get('/quan-ly/dat-san')->assertSee('Không có lượt nào chờ thu');
+    }
 }

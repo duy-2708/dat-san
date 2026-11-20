@@ -14,7 +14,7 @@
             @endforeach
         </select>
     </div>
-    <div class="col-4 col-md-2"><button class="btn btn-outline-secondary w-100">Lọc</button></div>
+    <div class="col-4 col-md-2"><button class="btn btn-secondary w-100">Lọc</button></div>
 </form>
 
 <div class="table-responsive bg-white rounded shadow-sm">
@@ -33,7 +33,7 @@
                 <td class="text-end">
                     @if ($u->biHanChe())
                         <form method="POST" action="{{ route('admin.tai-khoan.go-han-che', $u) }}" class="d-inline">@csrf @method('PATCH')
-                            <button class="btn btn-sm btn-outline-primary" title="{{ $u->ly_do_han_che }}">Gỡ hạn chế</button></form>
+                            <button class="btn btn-sm btn-primary" title="{{ $u->ly_do_han_che }}">Gỡ hạn chế</button></form>
                     @endif
                     @include('admin.nut-khoa', ['u' => $u])
                 </td>

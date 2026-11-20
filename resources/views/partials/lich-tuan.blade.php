@@ -22,9 +22,9 @@
 @endphp
 <div class="d-flex align-items-center justify-content-between mb-2">
     @php $noi = str_contains($url, '?') ? '&' : '?'; @endphp
-    <a href="{{ $url }}{{ $noi }}tu={{ $truoc->toDateString() }}" class="btn btn-sm btn-outline-secondary {{ $cheDo === 'khach' && $tu->lte(today()) ? 'disabled' : '' }}"><i class="bi bi-chevron-left"></i></a>
+    <a href="{{ $url }}{{ $noi }}tu={{ $truoc->toDateString() }}" class="btn btn-sm btn-secondary {{ $cheDo === 'khach' && $tu->lte(today()) ? 'disabled' : '' }}"><i class="bi bi-chevron-left"></i></a>
     <span class="small fw-semibold">{{ $tu->format('d/m/Y') }} – {{ $tu->copy()->addDays(6)->format('d/m/Y') }}</span>
-    <a href="{{ $url }}{{ $noi }}tu={{ $sau->toDateString() }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-chevron-right"></i></a>
+    <a href="{{ $url }}{{ $noi }}tu={{ $sau->toDateString() }}" class="btn btn-sm btn-secondary"><i class="bi bi-chevron-right"></i></a>
 </div>
 
 <ul class="nav nav-pills flex-nowrap overflow-auto gap-1 pb-2 mb-2" role="tablist" style="scrollbar-width: thin">
@@ -103,30 +103,30 @@
                                         <button class="btn btn-sm btn-success w-100">Đặt · cọc {{ $tien($k->cocTheoPhut($k->soPhut(), $tyLeCoc)) }}</button>
                                     </form>
                                     <a href="{{ route('keo.tao-truoc', ['san' => $sanO->id, 'ngay' => $n['ngay']->toDateString(), 'khung' => $k->id]) }}"
-                                       class="btn btn-sm btn-outline-danger w-100 mt-1" title="Chưa cần đặt sân — đủ đội mới cọc">⚔ Cáp kèo giờ này</a>
+                                       class="btn btn-sm btn-danger w-100 mt-1" title="Chưa cần đặt sân — đủ đội mới cọc">⚔ Cáp kèo giờ này</a>
                                     </div>
                                 @else
                                     @can('view', $sanO)
                                         <a href="{{ route('quan-ly.san.lich', ['san' => $sanO, 'tu' => $n['ngay']->toDateString(), 'mo' => $k->id]) }}"
-                                           class="btn btn-sm btn-outline-success w-100 mt-1">+ Đặt tại chỗ{{ isset($o['tong']) ? ' · '.$sanO->ten : '' }}</a>
+                                           class="btn btn-sm btn-success w-100 mt-1">+ Đặt tại chỗ{{ isset($o['tong']) ? ' · '.$sanO->ten : '' }}</a>
                                     @else
                                         <span class="badge bg-success-subtle text-success-emphasis w-100 mt-1 py-2">Trống</span>
                                     @endcan
                                 @endif
                             @else
-                                <a href="{{ route('login') }}" class="btn btn-sm btn-outline-success w-100 mt-1">Đăng nhập để đặt</a>
+                                <a href="{{ route('login') }}" class="btn btn-sm btn-success w-100 mt-1">Đăng nhập để đặt</a>
                             @endauth
                         @else
                             <span class="badge bg-{{ $mau }} w-100 mt-1 py-2">{{ $nhan }}</span>
                         @endif
                     @else
                         @if ($tt === 'trong')
-                            <button type="button" class="btn btn-sm btn-outline-success w-100 mt-1" data-bs-toggle="modal" data-bs-target="#modalTaiCho"
+                            <button type="button" class="btn btn-sm btn-success w-100 mt-1" data-bs-toggle="modal" data-bs-target="#modalTaiCho"
                                     data-ngay="{{ $n['ngay']->toDateString() }}" data-khung="{{ $k->id }}"
                                     data-thoi-luong='@json(collect($k->cacThoiLuong($dongPhut))->map(fn ($p) => ['p' => $p, 'nhan' => $nhanPhut($p).' · '.$tien($k->giaTheoPhut($p)).'đ', 'chon' => $p === $k->soPhut()]))'
                                     data-nhan="{{ $n['ngay']->format('d/m/Y') }} {{ $k->nhan() }}">+ Đặt tại chỗ</button>
                             <a href="{{ route('keo.tao-truoc', ['san' => $sanO->id, 'ngay' => $n['ngay']->toDateString(), 'khung' => $k->id]) }}"
-                               class="btn btn-sm btn-outline-danger w-100 mt-1">⚔ Mở ô cáp kèo</a>
+                               class="btn btn-sm btn-danger w-100 mt-1">⚔ Mở ô cáp kèo</a>
                         @elseif ($don)
                             <div class="small mt-1">
                                 <span class="badge bg-{{ $mau }}">{{ $nhan }}</span>
@@ -139,16 +139,13 @@
                                     @if ($don->trang_thai === 'da_dat')
                                         @if ($don->da_thu_tien_luc)
                                             <div class="text-success"><i class="bi bi-cash-coin"></i> Đã thu {{ $tien($don->tien_thu_tai_san) }}</div>
-                                        @else
-                                            <form method="POST" action="{{ route('quan-ly.dat-san.da-thu', $don) }}" class="input-group input-group-sm mt-1">@csrf @method('PATCH')
-                                                <input name="so_tien" value="{{ $don->conLaiPhai() }}" inputmode="numeric" class="form-control o-tien px-1" title="Số tiền sân thực nhận">
-                                                <button class="btn btn-success px-2" title="Đã nhận tiền sân"><i class="bi bi-check-lg"></i></button>
-                                            </form>
+                                        @elseif ($don->batDauLuc()->lte(now()))
+                                            <a href="{{ route('quan-ly.dat-san.index') }}" class="btn btn-sm btn-success w-100 mt-1"><i class="bi bi-cash-coin"></i> Thu tiền</a>
                                         @endif
                                     @endif
                                     @if ($don->nguon === 'tai_cho' && $don->trang_thai === 'da_dat' && $don->batDauLuc()->isFuture())
                                         @php $keoO = \App\Models\Keo::where('dat_san_id', $don->id)->first(); @endphp
-                                        <a href="{{ $keoO ? route('keo.show', $keoO) : route('quan-ly.keo.create', $don) }}" class="btn btn-sm btn-outline-danger py-0 mt-1">{{ $keoO ? 'Xem kèo' : 'Tạo kèo hộ' }}</a>
+                                        <a href="{{ $keoO ? route('keo.show', $keoO) : route('quan-ly.keo.create', $don) }}" class="btn btn-sm btn-danger py-0 mt-1">{{ $keoO ? 'Xem kèo' : 'Tạo kèo hộ' }}</a>
                                     @endif
                                 @endif
                             </div>

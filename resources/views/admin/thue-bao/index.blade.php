@@ -39,7 +39,7 @@
                         <form method="POST" action="{{ route('admin.thue-bao.xac-nhan', $tb) }}" class="d-inline" onsubmit="return confirm('Đã nhận {{ number_format($tb->so_tien, 0, ',', '.') }}đ với nội dung {{ $tb->noiDungChuyenKhoan() }}?')">@csrf @method('PATCH')
                             <button class="btn btn-sm btn-success py-0">Đã nhận tiền</button></form>
                         <form method="POST" action="{{ route('admin.thue-bao.huy', $tb) }}" class="d-inline">@csrf @method('PATCH')
-                            <button class="btn btn-sm btn-outline-secondary py-0">Huỷ</button></form>
+                            <button class="btn btn-sm btn-secondary py-0">Huỷ</button></form>
                     @endif
                 </td></tr>
         @empty

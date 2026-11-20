@@ -60,11 +60,11 @@
                         </div>
                         @if (($laDT && $tv->vai_tro !== 'doi_truong') || ($u && $tv->user_id === $u->id && $tv->vai_tro !== 'doi_truong'))
                             <form method="POST" action="{{ route('khach.doi.roi', $tv) }}" onsubmit="return confirm('{{ $laDT && $tv->user_id !== $u->id ? 'Mời '.$tv->user->name.' ra khỏi đội?' : 'Rời đội?' }}')">@csrf @method('DELETE')
-                                <button class="btn btn-sm btn-outline-danger py-0">{{ $laDT && $tv->user_id !== $u->id ? 'Mời ra' : 'Rời đội' }}</button></form>
+                                <button class="btn btn-sm btn-danger py-0">{{ $laDT && $tv->user_id !== $u->id ? 'Mời ra' : 'Rời đội' }}</button></form>
                         @endif
                         @if ($laDT && $tv->vai_tro !== 'doi_truong')
                             <form method="POST" action="{{ route('khach.doi.doi-truong', $doi) }}" onsubmit="return confirm('Chuyển đội trưởng cho {{ $tv->user->name }}?')">@csrf
-                                <input type="hidden" name="user_id" value="{{ $tv->user_id }}"><button class="btn btn-sm btn-outline-secondary py-0" title="Chuyển đội trưởng">C</button></form>
+                                <input type="hidden" name="user_id" value="{{ $tv->user_id }}"><button class="btn btn-sm btn-secondary py-0" title="Chuyển đội trưởng">C</button></form>
                         @endif
                     </div>
                 </div>
@@ -79,7 +79,7 @@
                         <a href="{{ route('cau-thu.show', $tv->user) }}">{{ $tv->user->name }} · {{ $tv->user->uyTinNhan() }}</a>
                         <span class="d-flex gap-1">
                             <form method="POST" action="{{ route('khach.doi.duyet', $tv) }}">@csrf @method('PATCH')<input type="hidden" name="dong_y" value="1"><button class="btn btn-sm btn-success py-0">Nhận</button></form>
-                            <form method="POST" action="{{ route('khach.doi.duyet', $tv) }}">@csrf @method('PATCH')<input type="hidden" name="dong_y" value="0"><button class="btn btn-sm btn-outline-secondary py-0">Từ chối</button></form>
+                            <form method="POST" action="{{ route('khach.doi.duyet', $tv) }}">@csrf @method('PATCH')<input type="hidden" name="dong_y" value="0"><button class="btn btn-sm btn-secondary py-0">Từ chối</button></form>
                         </span>
                     </div>
                 @endforeach
@@ -88,7 +88,7 @@
                 <div class="fw-semibold mb-1">Mời thành viên</div>
                 <div class="input-group input-group-sm mb-1">
                     <input id="linkMoi" class="form-control" readonly value="{{ route('doi.show', $doi) }}">
-                    <button type="button" class="btn btn-outline-primary" onclick="navigator.clipboard.writeText(document.getElementById('linkMoi').value); this.textContent='Đã chép'">Chép link mời</button>
+                    <button type="button" class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('linkMoi').value); this.textContent='Đã chép'">Chép link mời</button>
                 </div>
                 <div class="text-muted">Gửi link này qua Zalo/Messenger. Người nhận đăng nhập → bấm <strong>Xin vào đội</strong> → bạn bấm <strong>Nhận</strong> ở trên. Hoặc thêm thẳng bằng SĐT/email đã đăng ký:</div>
             </div>

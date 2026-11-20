@@ -10,7 +10,7 @@
 <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
     <a href="{{ route('quan-ly.san.index') }}" class="btn btn-link px-0"><i class="bi bi-arrow-left"></i></a>
     <h1 class="h4 mb-0">Khung giờ & giá — {{ $san->ten }}</h1>
-    @if ($laChu) <a href="{{ route('quan-ly.san.edit', $san) }}" class="btn btn-sm btn-outline-secondary ms-auto"><i class="bi bi-pencil"></i> Thông tin sân</a> @endif
+    @if ($laChu) <a href="{{ route('quan-ly.san.edit', $san) }}" class="btn btn-sm btn-secondary ms-auto"><i class="bi bi-pencil"></i> Thông tin sân</a> @endif
 </div>
 <p class="text-muted small">Mở cửa {{ $gio($san->gio_mo_cua) }}–{{ $gio($san->gio_dong_cua) }}. Khách đặt theo từng khung. Cọc để trống = tự tính {{ $tyLe }}% giá khung, hoặc tự nhập số tiền cọc mong muốn.
     Ngày lễ chưa đặt giá riêng thì dùng giá cuối tuần. Giờ gõ tự do (VD <code>6h30</code>, <code>22:15</code>), bước 15 phút; mở xuyên đêm đặt 00:00–24:00.</p>
@@ -135,7 +135,7 @@
                                 <label><input type="checkbox" name="khung[{{ $k->id }}][dang_ap_dung]" value="1" @checked($k->dang_ap_dung)> Mở bán</label>
                             </div>
                             <div class="col-3 col-md-1 text-end">
-                                <button class="btn btn-sm btn-outline-danger" form="xoa{{ $k->id }}" onclick="return confirm('Xoá khung {{ $k->nhan() }}?')"><i class="bi bi-trash"></i></button>
+                                <button class="btn btn-sm btn-danger" form="xoa{{ $k->id }}" onclick="return confirm('Xoá khung {{ $k->nhan() }}?')"><i class="bi bi-trash"></i></button>
                             </div>
                         </div>
                     @endforeach

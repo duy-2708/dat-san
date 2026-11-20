@@ -23,7 +23,7 @@
                 <form method="POST" action="{{ route('admin.duyet-go-phat.xu-ly', $y) }}" class="d-flex gap-1">@csrf @method('PATCH')
                     <input type="hidden" name="dong_y" value="0">
                     <input name="ghi_chu_admin" class="form-control form-control-sm" placeholder="Lý do từ chối">
-                    <button class="btn btn-sm btn-outline-danger">Từ chối</button></form>
+                    <button class="btn btn-sm btn-danger">Từ chối</button></form>
             </div>
         </div>
     </div></div>

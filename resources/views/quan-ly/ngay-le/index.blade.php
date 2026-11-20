@@ -16,7 +16,7 @@
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>{{ \Carbon\Carbon::parse($le->ngay)->format('d/m/Y') }} — {{ $le->ten }}</span>
                     <form method="POST" action="{{ route('quan-ly.ngay-le.destroy', $le) }}">@csrf @method('DELETE')
-                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button></form>
+                        <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button></form>
                 </li>
             @empty
                 <li class="list-group-item text-muted small">Chưa có.</li>

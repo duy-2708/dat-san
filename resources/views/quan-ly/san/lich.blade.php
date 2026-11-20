@@ -5,7 +5,7 @@
 <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
     <a href="{{ route('quan-ly.san.index') }}" class="btn btn-link px-0"><i class="bi bi-arrow-left"></i></a>
     <h1 class="h4 mb-0">Lịch {{ $san->ten }}</h1>
-    <a href="{{ route('san.show', $san) }}" target="_blank" class="btn btn-sm btn-outline-secondary ms-auto"><i class="bi bi-eye"></i> Khách thấy gì</a>
+    <a href="{{ route('san.show', $san) }}" target="_blank" class="btn btn-sm btn-secondary ms-auto"><i class="bi bi-eye"></i> Khách thấy gì</a>
 </div>
 @if ($errors->any()) <div class="alert alert-danger py-2">{{ $errors->first() }}</div> @endif
 

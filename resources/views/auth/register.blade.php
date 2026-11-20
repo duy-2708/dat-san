@@ -8,7 +8,7 @@
             <h1 class="h4 mb-1 text-center">Tạo tài khoản</h1>
             <p class="text-muted small text-center mb-3">Mỗi email và mỗi số điện thoại chỉ đăng ký được 1 tài khoản.</p>
 
-            <a href="{{ route('google.redirect') }}" class="btn btn-outline-dark w-100 mb-3">
+            <a href="{{ route('google.redirect') }}" class="btn btn-dark w-100 mb-3">
                 <i class="bi bi-google me-1"></i> Đăng ký bằng Google
             </a>
 

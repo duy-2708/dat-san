@@ -35,6 +35,10 @@ class DatSanController extends Controller
                 ->whereNotIn('id', \App\Models\Keo::where('trang_thai', 'cho_coc')->whereNotNull('dat_san_id')->select('dat_san_id'))
                 ->orderByRaw('bao_da_chuyen_luc is null')->orderBy('giu_cho_den')->get(),
             'choHoan' => (clone $base)->where('xu_ly_coc', 'cho_hoan')->orderBy('huy_luc')->get(),
+            'choThu' => (clone $base)->where('trang_thai', 'da_dat')->whereNull('da_thu_tien_luc')
+                ->whereBetween('ngay', [today()->subDays(14)->toDateString(), today()->toDateString()])
+                ->orderBy('ngay')->orderBy('gio_bat_dau')->get()
+                ->filter(fn ($d) => $d->batDauLuc()->lte(now()))->values(),
             'trongNgay' => (clone $base)->where('ngay', $ngay->toDateString())->where('trang_thai', 'da_dat')
                 ->orderBy('gio_bat_dau')->get(),
             'cocKeoHoan' => \App\Models\GiaoDich::where('chu_san_id', $chuSanId)->where('xu_ly_hoan', 'cho_hoan')->with('nguoiTra')->get(),

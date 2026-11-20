@@ -21,7 +21,7 @@
                     @if ($gd?->phuong_thuc === 'payos')
                         <div class="alert alert-success py-2 small"><i class="bi bi-lightning-charge-fill"></i> Sân dùng cổng tự động: chuyển xong là <strong>tự xác nhận</strong>, không cần chờ chủ sân.</div>
                         @if (! empty($gd->du_lieu_cong['checkout_url']))
-                            <a href="{{ $gd->du_lieu_cong['checkout_url'] }}" class="btn btn-outline-success btn-sm mb-3" rel="noopener">Mở trang thanh toán PayOS</a>
+                            <a href="{{ $gd->du_lieu_cong['checkout_url'] }}" class="btn btn-success btn-sm mb-3" rel="noopener">Mở trang thanh toán PayOS</a>
                         @endif
                     @endif
                     <ul class="list-group list-group-flush text-start small mb-3">
@@ -59,12 +59,12 @@
             </div>
 
             <div class="d-flex gap-2">
-                <a href="{{ route('san.show', $don->san) }}" class="btn btn-outline-secondary flex-grow-1">Lịch sân</a>
+                <a href="{{ route('san.show', $don->san) }}" class="btn btn-secondary flex-grow-1">Lịch sân</a>
                 @can('huy', $don)
                     @if ($don->trang_thai !== 'da_huy')
                         <form method="POST" action="{{ route('dat-san.huy', $don) }}" onsubmit="return confirm(@js('Huỷ đơn '.$don->ma_don."\n".$don->moTaNgan().'?'))">
                             @csrf
-                            <button class="btn btn-outline-danger">Huỷ</button>
+                            <button class="btn btn-danger">Huỷ</button>
                         </form>
                     @endif
                 @endcan

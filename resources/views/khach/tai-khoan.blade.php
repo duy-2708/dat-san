@@ -22,8 +22,8 @@
                 </div>
                 <div class="small text-muted mt-1">{{ $u->uyTinNhan() }}</div>
                 <div class="d-flex gap-1 justify-content-center mt-2">
-                    <a href="{{ route('cau-thu.show', $u) }}" class="btn btn-sm btn-outline-success">Hồ sơ cầu thủ</a>
-                    <a href="{{ route('khach.doi.create') }}" class="btn btn-sm btn-outline-primary">Tạo đội</a>
+                    <a href="{{ route('cau-thu.show', $u) }}" class="btn btn-sm btn-success">Hồ sơ cầu thủ</a>
+                    <a href="{{ route('khach.doi.create') }}" class="btn btn-sm btn-primary">Tạo đội</a>
                 </div>
                 @foreach ($u->doiDangChoi as $doi)
                     <a href="{{ route('doi.show', $doi) }}" class="d-inline-flex align-items-center gap-1 small mt-2 me-2"><img src="{{ $doi->logoUrl() }}" width="22" height="22" class="rounded-circle" alt="">{{ $doi->ten }}</a>
@@ -53,9 +53,9 @@
                         @if ($d->trang_thai === 'da_dat' && $d->batDauLuc()->isFuture())
                             @php $keoCua = \App\Models\Keo::where('dat_san_id', $d->id)->first(); @endphp
                             @if ($keoCua)
-                                <a href="{{ route('keo.show', $keoCua) }}" class="btn btn-sm btn-outline-danger text-nowrap">Xem kèo</a>
+                                <a href="{{ route('keo.show', $keoCua) }}" class="btn btn-sm btn-danger text-nowrap">Xem kèo</a>
                             @else
-                                <a href="{{ route('khach.keo.create', ['don' => $d->ma_don]) }}" class="btn btn-sm btn-outline-danger text-nowrap">Tạo kèo</a>
+                                <a href="{{ route('khach.keo.create', ['don' => $d->ma_don]) }}" class="btn btn-sm btn-danger text-nowrap">Tạo kèo</a>
                             @endif
                         @endif
                     </div>

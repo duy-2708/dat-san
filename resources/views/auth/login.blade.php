@@ -7,7 +7,7 @@
         <div class="card-body p-4">
             <h1 class="h4 mb-3 text-center">Đăng nhập</h1>
 
-            <a href="{{ route('google.redirect') }}" class="btn btn-outline-dark w-100 mb-3">
+            <a href="{{ route('google.redirect') }}" class="btn btn-dark w-100 mb-3">
                 <i class="bi bi-google me-1"></i> Đăng nhập bằng Google
             </a>
             <div class="text-center text-muted small mb-3">hoặc dùng email</div>

@@ -11,7 +11,7 @@
 <form class="mb-3" method="GET">
     <div class="input-group">
         <input name="q" value="{{ $tuKhoa }}" class="form-control" placeholder="Tìm tên, email, SĐT, tên cơ sở">
-        <button class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
+        <button class="btn btn-secondary"><i class="bi bi-search"></i></button>
     </div>
 </form>
 
@@ -34,7 +34,7 @@
                     @else <span class="badge bg-success">Hoạt động</span> @endif
                 </td>
                 <td class="text-end text-nowrap">
-                    <button type="button" class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="collapse" data-bs-target="#gh{{ $cs->id }}">Gia hạn</button>
+                    <button type="button" class="btn btn-sm btn-primary py-0" data-bs-toggle="collapse" data-bs-target="#gh{{ $cs->id }}">Gia hạn</button>
                     @include('admin.nut-khoa', ['u' => $cs])
                 </td>
             </tr>

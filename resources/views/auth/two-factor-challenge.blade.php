@@ -21,7 +21,7 @@
                 <form method="POST" action="{{ route('two-factor.login.store') }}" class="mt-2">
                     @csrf
                     <input name="recovery_code" autocomplete="off" placeholder="xxxxxxxxxx-xxxxxxxxxx" class="form-control mb-2">
-                    <button class="btn btn-outline-secondary w-100">Dùng mã dự phòng</button>
+                    <button class="btn btn-secondary w-100">Dùng mã dự phòng</button>
                     <div class="form-text">Mỗi mã dự phòng chỉ dùng được 1 lần.</div>
                 </form>
             </details>

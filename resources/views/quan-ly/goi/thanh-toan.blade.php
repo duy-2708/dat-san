@@ -24,9 +24,9 @@
     @endif
 
     <div class="d-flex justify-content-center gap-2">
-        <a href="{{ route('quan-ly.goi.index') }}" class="btn btn-outline-secondary btn-sm">Quay lại</a>
+        <a href="{{ route('quan-ly.goi.index') }}" class="btn btn-secondary btn-sm">Quay lại</a>
         @if ($tb->trang_thai === 'cho_thanh_toan')
-            <form method="POST" action="{{ route('quan-ly.goi.huy', $tb) }}">@csrf @method('PATCH')<button class="btn btn-outline-danger btn-sm">Huỷ đơn</button></form>
+            <form method="POST" action="{{ route('quan-ly.goi.huy', $tb) }}">@csrf @method('PATCH')<button class="btn btn-danger btn-sm">Huỷ đơn</button></form>
         @endif
     </div>
 </div>

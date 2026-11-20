@@ -8,7 +8,7 @@
         <a href="{{ route('quan-ly.giai-dau.index') }}" class="btn btn-link px-0"><i class="bi bi-arrow-left"></i></a>
         <h1 class="h5 mb-0">{{ $g->ten }}</h1>
         <span class="badge bg-secondary">{{ \App\Models\GiaiDau::TRANG_THAI[$g->trang_thai] }}</span>
-        <a href="{{ route('giai-dau.show', $g) }}" target="_blank" class="btn btn-sm btn-outline-secondary ms-auto"><i class="bi bi-eye"></i> Trang công khai</a>
+        <a href="{{ route('giai-dau.show', $g) }}" target="_blank" class="btn btn-sm btn-secondary ms-auto"><i class="bi bi-eye"></i> Trang công khai</a>
     </div>
     @if ($errors->any()) <div class="alert alert-danger py-2">{{ $errors->first() }}</div> @endif
     <div class="alert alert-light border small py-2">
@@ -28,7 +28,7 @@
                 @if ($laChu && $dk->trang_thai === 'cho_duyet' && $g->trang_thai === 'mo_dang_ky')
                     <span class="d-flex gap-1">
                         <form method="POST" action="{{ route('quan-ly.giai-dau.duyet', $dk) }}">@csrf @method('PATCH')<input type="hidden" name="dong_y" value="1"><button class="btn btn-sm btn-success py-0">Duyệt</button></form>
-                        <form method="POST" action="{{ route('quan-ly.giai-dau.duyet', $dk) }}">@csrf @method('PATCH')<input type="hidden" name="dong_y" value="0"><button class="btn btn-sm btn-outline-secondary py-0">Từ chối</button></form>
+                        <form method="POST" action="{{ route('quan-ly.giai-dau.duyet', $dk) }}">@csrf @method('PATCH')<input type="hidden" name="dong_y" value="0"><button class="btn btn-sm btn-secondary py-0">Từ chối</button></form>
                     </span>
                 @else
                     <span class="badge bg-{{ $dk->trang_thai === 'da_duyet' ? 'success' : ($dk->trang_thai === 'tu_choi' ? 'secondary' : 'warning text-dark') }}">{{ ['cho_duyet' => 'Chờ duyệt', 'da_duyet' => 'Đã duyệt', 'tu_choi' => 'Từ chối'][$dk->trang_thai] }}</span>

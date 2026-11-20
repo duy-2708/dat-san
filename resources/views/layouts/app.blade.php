@@ -148,7 +148,7 @@
 
 <main class="container py-4 flex-grow-1">
     @unless (request()->routeIs('trang-chu'))
-        <a href="{{ route('trang-chu') }}" class="btn btn-outline-success btn-sm mb-3 nut-quay-lai"
+        <a href="{{ route('trang-chu') }}" class="btn btn-success btn-sm mb-3 nut-quay-lai"
            onclick="if (document.referrer && document.referrer.indexOf(location.origin) === 0 && history.length > 1) { history.back(); return false; }">
             <i class="bi bi-arrow-left"></i> Quay lại</a>
     @endunless
@@ -210,7 +210,7 @@
 
     document.querySelectorAll('[data-loc-tb]').forEach((nut) => nut.addEventListener('click', () => {
         const hop = document.getElementById('hopThongBao');
-        hop.querySelectorAll('[data-loc-tb]').forEach((x) => { x.classList.toggle('btn-success', x === nut); x.classList.toggle('btn-outline-secondary', x !== nut); });
+        hop.querySelectorAll('[data-loc-tb]').forEach((x) => { x.classList.toggle('btn-success', x === nut); x.classList.toggle('btn-secondary', x !== nut); });
         let con = 0;
         hop.querySelectorAll('.tb-muc').forEach((m) => {
             const loc = nut.dataset.locTb;

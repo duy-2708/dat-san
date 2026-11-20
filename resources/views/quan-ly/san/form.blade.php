@@ -207,7 +207,7 @@
             <form method="POST" action="{{ route('quan-ly.san.anh.store', $san) }}" enctype="multipart/form-data" class="d-flex gap-2">
                 @csrf
                 <input type="file" name="anh[]" accept="image/*" multiple class="form-control @error('anh') is-invalid @enderror @error('anh.*') is-invalid @enderror">
-                <button class="btn btn-outline-success text-nowrap"><i class="bi bi-upload"></i> Tải lên</button>
+                <button class="btn btn-success text-nowrap"><i class="bi bi-upload"></i> Tải lên</button>
             </form>
             @error('anh') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
             @if ($errors->has('anh.*')) <div class="text-danger small mt-1">{{ $errors->first('anh.*') }}</div> @endif

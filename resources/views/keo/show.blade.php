@@ -57,7 +57,7 @@
             <div class="input-group input-group-sm mt-3">
                 <span class="input-group-text">Link mời</span>
                 <input id="linkMoi" class="form-control" readonly value="{{ route('keo.show', ['keo' => $keo, 'ma' => $keo->ma_moi]) }}">
-                <button type="button" class="btn btn-outline-primary" onclick="navigator.clipboard.writeText(document.getElementById('linkMoi').value); this.textContent='Đã chép'">Chép</button>
+                <button type="button" class="btn btn-primary" onclick="navigator.clipboard.writeText(document.getElementById('linkMoi').value); this.textContent='Đã chép'">Chép</button>
             </div>
             <div class="form-text">Kèo riêng không hiện ở danh sách. Gửi link này cho đội đối thủ qua Zalo/Messenger.</div>
         @endif
@@ -124,7 +124,7 @@
                         <form method="POST" action="{{ route('keo.duyet-xin', $x) }}" onsubmit="return confirm('{{ $keo->dai_dien_a_id ? 'Nhận đội này? Kèo sẽ CHỐT: web giữ sân và hai đội phải cọc.' : 'Nhận đội này làm bên A?' }}')">@csrf @method('PATCH')
                             <input type="hidden" name="dong_y" value="1"><button class="btn btn-sm btn-success">Nhận</button></form>
                         <form method="POST" action="{{ route('keo.duyet-xin', $x) }}">@csrf @method('PATCH')
-                            <input type="hidden" name="dong_y" value="0"><button class="btn btn-sm btn-outline-secondary">Từ chối</button></form>
+                            <input type="hidden" name="dong_y" value="0"><button class="btn btn-sm btn-secondary">Từ chối</button></form>
                     </span>
                 </div>
             @empty
@@ -134,7 +134,7 @@
                 <form method="POST" action="{{ route('keo.them-doi', $keo) }}" class="d-flex gap-1 mt-2">@csrf
                     <input name="doi" list="dsDoi" class="form-control form-control-sm" placeholder="Sân thêm thẳng một đội: gõ tên đội">
                     <datalist id="dsDoi">@foreach ($tatCaDoi as $doi) <option value="{{ $doi->ten }}"> @endforeach</datalist>
-                    <button class="btn btn-sm btn-outline-success text-nowrap">Thêm đội</button>
+                    <button class="btn btn-sm btn-success text-nowrap">Thêm đội</button>
                 </form>
             @endif
         </div></div>
@@ -173,20 +173,20 @@
                                 @if (! $keo->laDoiDau() && $daToiGio && ($laSan || $keo->laDaiDien($u ?? new \App\Models\User, 'a')) && $tg->vai_tro === 'nguoi_le' && $tg->trang_thai === 'da_xac_nhan')
                                     <form method="POST" action="{{ route('keo.diem-danh', $keo) }}">@csrf
                                         <input type="hidden" name="tham_gia_id" value="{{ $tg->id }}"><input type="hidden" name="co_mat" value="1">
-                                        <button class="btn btn-sm btn-outline-success py-0">✓</button></form>
+                                        <button class="btn btn-sm btn-success py-0">✓</button></form>
                                     <form method="POST" action="{{ route('keo.diem-danh', $keo) }}">@csrf
                                         <input type="hidden" name="tham_gia_id" value="{{ $tg->id }}"><input type="hidden" name="co_mat" value="0">
-                                        <button class="btn btn-sm btn-outline-danger py-0">✗</button></form>
+                                        <button class="btn btn-sm btn-danger py-0">✗</button></form>
                                 @endif
                                 @if ($laChuSan && $tg->diem_danh === 'vang' && ! $tg->mien_phat)
                                     <form method="POST" action="{{ route('quan-ly.keo.mien-phat', $tg) }}" onsubmit="const l = prompt('Lý do đề nghị miễn phạt (admin sẽ xem):'); if (l === null) return false; this.ly_do.value = l;">@csrf @method('PATCH')
                                         <input type="hidden" name="ly_do">
-                                        <button class="btn btn-sm btn-outline-secondary py-0" title="Người này thực tế có đến — gửi admin duyệt">Đề nghị miễn phạt</button></form>
+                                        <button class="btn btn-sm btn-secondary py-0" title="Người này thực tế có đến — gửi admin duyệt">Đề nghị miễn phạt</button></form>
                                 @endif
                                 @if ($laChuSan && $tg->user->biHanChe())
                                     <form method="POST" action="{{ route('quan-ly.han-che.go', $tg->user) }}" onsubmit="const l = prompt('Lý do đề nghị gỡ hạn chế (admin sẽ xem):'); if (l === null) return false; this.ly_do.value = l;">@csrf @method('PATCH')
                                         <input type="hidden" name="ly_do">
-                                        <button class="btn btn-sm btn-outline-primary py-0">Đề nghị gỡ hạn chế</button></form>
+                                        <button class="btn btn-sm btn-primary py-0">Đề nghị gỡ hạn chế</button></form>
                                 @endif
                             </span>
                         </div>
@@ -197,17 +197,17 @@
                     @if ($keo->laDoiDau() && $u && $keo->laDaiDien($u, $ben) && in_array($keo->trang_thai, ['dang_tim', 'cho_coc', 'da_chot'], true) && ! $daToiGio)
                         <form method="POST" action="{{ route('khach.keo.thanh-vien', $keo) }}" class="d-flex gap-1 mt-2">@csrf
                             <input name="tim" class="form-control form-control-sm" placeholder="Thêm thành viên: SĐT hoặc email">
-                            <button class="btn btn-sm btn-outline-success text-nowrap">Thêm</button></form>
+                            <button class="btn btn-sm btn-success text-nowrap">Thêm</button></form>
                     @endif
 
                     @if ($keo->laDoiDau() && $daToiGio && ($laSan || $keo->laDaiDien($u ?? new \App\Models\User, 'a')) && $ds->isNotEmpty() && $keo->trang_thai !== 'da_huy')
                         <div class="d-flex gap-1 mt-2">
                             <form method="POST" action="{{ route('keo.diem-danh', $keo) }}">@csrf
                                 <input type="hidden" name="ben" value="{{ $ben }}"><input type="hidden" name="co_mat" value="1">
-                                <button class="btn btn-sm btn-outline-success">Cả bên có mặt</button></form>
+                                <button class="btn btn-sm btn-success">Cả bên có mặt</button></form>
                             <form method="POST" action="{{ route('keo.diem-danh', $keo) }}" onsubmit="return confirm('Đánh vắng cả {{ $tenBen }}? Mọi thành viên bị trừ uy tín.')">@csrf
                                 <input type="hidden" name="ben" value="{{ $ben }}"><input type="hidden" name="co_mat" value="0">
-                                <button class="btn btn-sm btn-outline-danger">Cả bên vắng</button></form>
+                                <button class="btn btn-sm btn-danger">Cả bên vắng</button></form>
                         </div>
                     @endif
                 </div></div>
@@ -223,7 +223,7 @@
             @if ($laDaiDien)
                 <form method="POST" action="{{ route('keo.ket-qua', $keo) }}" class="d-flex flex-wrap gap-2">@csrf
                     @foreach (\App\Models\Keo::KET_QUA as $ma => $nhan)
-                        <button name="ket_qua" value="{{ $ma }}" class="btn btn-outline-dark btn-sm">{{ $keo->nhanKetQua($ma) }}</button>
+                        <button name="ket_qua" value="{{ $ma }}" class="btn btn-dark btn-sm">{{ $keo->nhanKetQua($ma) }}</button>
                     @endforeach
                 </form>
             @endif
@@ -259,7 +259,7 @@
         <form method="POST" action="{{ route('quan-ly.keo.huy', $keo) }}" class="d-flex gap-2 justify-content-end mb-2"
               onsubmit="return confirm('Huỷ kèo? Ai đã cọc kèo sẽ được đánh dấu chờ bạn hoàn tiền.')">@csrf @method('PATCH')
             <input name="ly_do" class="form-control form-control-sm" style="max-width: 260px" placeholder="Lý do huỷ (VD: sân hỏng đèn)">
-            <button class="btn btn-sm btn-outline-danger text-nowrap">Chủ sân huỷ kèo</button>
+            <button class="btn btn-sm btn-danger text-nowrap">Chủ sân huỷ kèo</button>
         </form>
     @endif
     @if ($u && $keo->laDaiDien($u, 'a') && $keo->trang_thai === 'dang_tim')

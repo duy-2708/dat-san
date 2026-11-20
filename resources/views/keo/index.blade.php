@@ -67,7 +67,7 @@
     <div class="col-12 d-flex flex-wrap gap-2 align-items-center border-top pt-2">
         <button class="btn btn-sm btn-success"><i class="bi bi-funnel-fill"></i> Lọc</button>
         @if ($dangLoc)
-            <a href="{{ route('keo.index') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i> Xoá lọc</a>
+            <a href="{{ route('keo.index') }}" class="btn btn-sm btn-danger"><i class="bi bi-x-lg"></i> Xoá lọc</a>
             <span class="text-muted">Đang lọc:</span>
             @foreach ($dangLoc as $nhan) <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">{{ $nhan }}</span> @endforeach
             <span class="text-muted">— {{ $keos->count() }} kèo</span>

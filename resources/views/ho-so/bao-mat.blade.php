@@ -46,11 +46,11 @@
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     <form method="POST" action="{{ route('two-factor.regenerate-recovery-codes') }}">@csrf
-                        <button class="btn btn-sm btn-outline-secondary">Tạo bộ mã dự phòng mới</button>
+                        <button class="btn btn-sm btn-secondary">Tạo bộ mã dự phòng mới</button>
                     </form>
                     @unless ($u->laAdmin() && config('bao_mat.admin_2fa'))
                         <form method="POST" action="{{ route('two-factor.disable') }}" onsubmit="return confirm('Tắt xác minh 2 bước? Tài khoản sẽ kém an toàn hơn.')">@csrf @method('DELETE')
-                            <button class="btn btn-sm btn-outline-danger">Tắt xác minh 2 bước</button>
+                            <button class="btn btn-sm btn-danger">Tắt xác minh 2 bước</button>
                         </form>
                     @endunless
                 </div>
