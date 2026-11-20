@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\XinKeo;
 use Carbon\Carbon;
 use App\Payments\QuanLyCong;
+use App\Support\BaoTin;
 use App\Support\ThoiGian;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -123,6 +124,7 @@ class KeoService
             $phut = $this->hoSo($k)->phut_giu_cho;
             $tg = $this->ghiThamGia($k, $u, 'b', 'dai_dien', 'cho_coc', now()->addMinutes($phut));
             $k->forceFill(['dai_dien_b_id' => $u->id, 'doi_b_id' => $doiB?->id])->save();
+            BaoTin::gui($k->idDaiDienA(), 'Kèo có đội nhận', ($doiB?->ten ?? $u->name).' đã nhận kèo '.$k->nhanGio().' '.$k->batDauLuc()->format('d/m/Y').', đang chờ đội đó cọc.', route('keo.show', $k), 'people');
 
             return $this->taoCoc($k, $tg, 'coc_keo_doi', $k->coc_moi_ben);
         });
@@ -225,6 +227,7 @@ class KeoService
             $this->loi('Khoản này không ở trạng thái chờ hoàn.');
         }
         $gd->forceFill(['xu_ly_hoan' => 'da_hoan', 'da_hoan_luc' => now()])->save();
+        BaoTin::gui($gd->nguoi_tra_id, 'Đã hoàn cọc '.$gd->noi_dung_ck, 'Chủ sân đã chuyển trả '.number_format((int) $gd->so_tien, 0, ',', '.').'đ tiền cọc kèo.', route('khach.thanh-toan'), 'arrow-counterclockwise', true);
     }
 
     // ================================================================ KÈO TRƯỚC, ĐẶT SÂN SAU
@@ -320,6 +323,8 @@ class KeoService
 
         $x = XinKeo::where('keo_id', $k->id)->where('user_id', $u->id)->first() ?? new XinKeo;
         $x->forceFill(['keo_id' => $k->id, 'user_id' => $u->id, 'doi_id' => $doi->id, 'trang_thai' => 'cho_duyet', 'loi_nhan' => $loiNhan])->save();
+        BaoTin::gui($k->dai_dien_a_id ? [$k->dai_dien_a_id] : BaoTin::phiaSan($k->sanThuc()->chu_san_id),
+            'Có đội xin nhận kèo', $doi->ten.' ('.$u->name.') xin vào kèo '.$k->nhanGio().' '.$k->batDauLuc()->format('d/m/Y').'. Vào duyệt nhé.', route('keo.show', $k), 'people');
 
         return $x;
     }
@@ -358,11 +363,12 @@ class KeoService
         }
         if (! $dongY) {
             $x->forceFill(['trang_thai' => 'tu_choi'])->save();
+            BaoTin::gui($x->user_id, 'Yêu cầu nhận kèo bị từ chối', 'Kèo '.$k->nhanGio().' '.$k->batDauLuc()->format('d/m/Y').' đã chọn đội khác hoặc không nhận.', route('keo.index'), 'x-circle');
 
             return $k;
         }
 
-        return DB::transaction(function () use ($x) {
+        $k = DB::transaction(function () use ($x) {
             $k = Keo::lockForUpdate()->findOrFail($x->keo_id);
             if ($k->trang_thai !== 'dang_tim' || $k->batDauLuc()->lte(now())) {
                 $this->loi('Kèo không còn nhận đội.');
@@ -383,6 +389,17 @@ class KeoService
 
             return $this->chotKeoTruoc($k);
         });
+
+        BaoTin::gui($x->user_id, 'Được nhận vào kèo', 'Đội của bạn đã vào kèo '.$k->nhanGio().' '.$k->batDauLuc()->format('d/m/Y').'.', route('keo.show', $k), 'check-circle');
+        if (in_array($k->trang_thai, ['cho_coc', 'da_chot'], true) && $k->dai_dien_b_id) {
+            BaoTin::gui([$k->idDaiDienA(), $k->dai_dien_b_id], 'Kèo đã chốt: '.$k->tenBen('a').' ⚔ '.$k->tenBen('b'),
+                $k->trang_thai === 'cho_coc'
+                    ? 'Sân đã được giữ. Mỗi đội cọc '.number_format((int) $k->coc_moi_ben, 0, ',', '.').'đ trước '.$k->han_coc_luc?->format('H:i d/m/Y').', quá hạn đội chưa cọc bị trừ uy tín.'
+                    : 'Sân bảo lãnh, không cần cọc. Hẹn gặp ở sân '.$k->nhanGio().' '.$k->batDauLuc()->format('d/m/Y').'.',
+                route('keo.show', $k), 'trophy', true);
+        }
+
+        return $k;
     }
 
     /** Scheduler: kèo đã chốt mà hết giờ cọc → huỷ kèo, nhả sân; đội đã cọc chờ hoàn, đội chưa cọc bị trừ uy tín. */
@@ -695,6 +712,15 @@ class KeoService
             }
             $k->save();
 
+            $doiKia = $ben === 'a' ? $k->dai_dien_b_id : $k->idDaiDienA();
+            BaoTin::gui($doiKia, $k->trang_thai === 'tranh_chap' ? 'Kết quả kèo bị lệch' : 'Đối thủ đã báo kết quả',
+                $k->tenBen($ben).' báo: '.$k->nhanKetQua($ketQua).'. '.($k->trang_thai === 'tranh_chap' ? 'Hai bên báo khác nhau — chủ sân sẽ chốt.' : 'Vào xác nhận để hoàn tất kèo.'),
+                route('khach.thanh-toan'), 'flag');
+            if ($k->trang_thai === 'tranh_chap') {
+                BaoTin::gui(BaoTin::phiaSan($k->sanThuc()->chu_san_id), 'Kèo tranh chấp cần chốt',
+                    $k->tenBen('a').' ⚔ '.$k->tenBen('b').' báo kết quả khác nhau. Chủ sân vào chốt kết quả.', route('keo.show', $k), 'exclamation-diamond');
+            }
+
             return $k;
         });
     }
@@ -822,6 +848,8 @@ class KeoService
             'ket_qua' => $ketQua, 'ket_qua_chot_boi_id' => $nguoi?->id,
             'trang_thai' => 'hoan_tat', 'hoan_tat_luc' => now(),
         ])->save();
+        BaoTin::gui(array_filter([$k->idDaiDienA(), $k->dai_dien_b_id]), 'Kèo hoàn tất: '.$k->nhanKetQua($ketQua),
+            ($nguoi ? 'Chủ sân đã chốt kết quả. ' : 'Hai đội báo khớp kết quả. ').$k->tenBen('a').' ⚔ '.$k->tenBen('b').'.', route('keo.show', $k), 'trophy');
 
         // Đã có kết quả = trận đã diễn ra → ai chưa điểm danh coi như có mặt
         foreach ($k->thanhVien()->where('trang_thai', 'da_xac_nhan')->where('diem_danh', 'chua')->get() as $tg) {
@@ -943,6 +971,7 @@ class KeoService
         $tg = ThamGiaKeo::lockForUpdate()->findOrFail($gd->tham_gia_keo_id);
         $tg->forceFill(['trang_thai' => 'da_xac_nhan', 'giu_cho_den' => null])->save();
         $k = Keo::lockForUpdate()->findOrFail($tg->keo_id);
+        BaoTin::gui($tg->user_id, 'Đã xác nhận cọc kèo', 'Chủ sân đã nhận '.number_format((int) $gd->so_tien, 0, ',', '.').'đ (nội dung '.$gd->noi_dung_ck.').', route('keo.show', $k), 'check-circle');
 
         if ($k->trang_thai === 'cho_coc') {
             // Kèo trước: đủ cả hai đội cọc → kèo chốt, đơn đặt sân chuyển "Đã đặt"
@@ -984,6 +1013,10 @@ class KeoService
             'user_id' => $u->id, 'thay_doi' => $thayDoi, 'ly_do' => $lyDo, 'ghi_chu' => $ghiChu,
             'keo_id' => $k->id, 'tham_gia_keo_id' => $tg?->id, 'created_at' => now(),
         ]);
+        if ($thayDoi < 0 || $lyDo === 'chu_san_dieu_chinh') {
+            BaoTin::gui($u, ($thayDoi < 0 ? 'Bị trừ ' : 'Được cộng ').abs($thayDoi).' uy tín',
+                ($ghiChu ?: 'Kèo '.$k->nhanGio().' '.$k->batDauLuc()->format('d/m/Y')).'. Uy tín hiện tại: '.$u->fresh()->diem_uy_tin.'.', route('keo.show', $k), $thayDoi < 0 ? 'arrow-down-circle' : 'arrow-up-circle');
+        }
     }
 
     private function loi(string $s): never

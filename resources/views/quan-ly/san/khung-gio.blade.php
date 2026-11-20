@@ -18,6 +18,19 @@
 @if ($errors->any())
     <div class="alert alert-danger py-2">{{ $errors->first() }}</div>
 @endif
+@if ($gioThieu)
+    <div class="alert alert-warning py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="small"><i class="bi bi-exclamation-triangle-fill"></i> <strong>Còn giờ chưa có khung — khách không đặt được:</strong>
+            @foreach ($gioThieu as $loai => $khoang)
+                <div>{{ \App\Models\KhungGio::LOAI_NGAY[$loai] }}: {{ collect($khoang)->map(fn ($x) => \App\Support\ThoiGian::chuoi($x[0]).'–'.\App\Support\ThoiGian::chuoi($x[1]))->join(', ') }}</div>
+            @endforeach
+        </div>
+        @if ($laChu)
+            <form method="POST" action="{{ route('quan-ly.san.khung-gio.tao-bu', $san) }}">@csrf
+                <button class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-magic"></i> Tạo bù các giờ còn thiếu</button></form>
+        @endif
+    </div>
+@endif
 @if ($sanNhanGia->isNotEmpty())
     <div class="alert alert-info py-2 small"><i class="bi bi-link-45deg"></i> Bảng giá dùng chung cho {{ \App\Models\San::LOAI[$san->loai_san] }} của cơ sở:
         <strong>{{ $san->ten }}, {{ $sanNhanGia->pluck('ten')->join(', ') }}</strong> — sửa ở đây là áp dụng cho tất cả.

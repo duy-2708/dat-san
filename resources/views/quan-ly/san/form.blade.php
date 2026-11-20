@@ -30,6 +30,21 @@
                         @endforeach
                     </select>
                     <div class="form-text">Một cơ sở (VD Sân Mỹ Anh) có nhiều sân: 5A, 5B, 7A... dùng chung địa chỉ, giờ mở cửa, tiện ích; sân cùng loại dùng chung bảng giá.</div>
+                    @if ($san->co_so_id)
+                        <div class="alert alert-light border small py-2 mt-2 mb-0">
+                            <i class="bi bi-clock"></i> Giờ mở cửa <strong>{{ substr($san->gio_mo_cua, 0, 5) }}–{{ substr($san->gio_dong_cua, 0, 5) }}</strong>
+                            · <i class="bi bi-geo-alt"></i> {{ $san->dia_chi_chi_tiet }}
+                            <span class="text-muted">— theo cơ sở; muốn đổi thì vào <em>Sửa</em> một sân bất kỳ của cơ sở.</span>
+                        </div>
+                    @endif
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="gia_mac_dinh">Giá mỗi giờ <span class="text-muted small">(tạo sẵn khung giờ)</span></label>
+                    <div class="input-group">
+                        <input id="gia_mac_dinh" name="gia_mac_dinh" value="{{ old('gia_mac_dinh') }}" inputmode="numeric" class="form-control o-tien" placeholder="VD 200.000">
+                        <span class="input-group-text">đ</span>
+                    </div>
+                    <div class="form-text">Nhập là có sẵn khung 1 tiếng từ giờ mở tới giờ đóng cửa (mọi ngày), sửa từng khung sau. Sân cùng loại đã có giá thì lấy theo bảng giá chung.</div>
                 </div>
                 <div class="col-md-8 phan-moi">
                     <label class="form-label" for="ten_co_so">Tên cơ sở</label>

@@ -42,7 +42,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(Login::class, fn (Login $e) => rescue(fn () => NhatKy::ghi('dang_nhap', request()?->userAgent(), $e->user->getAuthIdentifier()), report: false));
         Event::listen(Failed::class, fn (Failed $e) => rescue(fn () => NhatKy::ghi('dang_nhap_sai', 'Email: '.($e->credentials['email'] ?? '?'),
             $e->user?->getAuthIdentifier() ?? User::where('email', mb_strtolower(trim((string) ($e->credentials['email'] ?? ''))))->value('id')), report: false));
-        Event::listen(Lockout::class, fn (Lockout $e) => rescue(fn () => NhatKy::ghi('bi_chan_dang_nhap', 'Email: '.$e->request->input('email')), report: false));
+        Event::listen(Lockout::class, function (Lockout $e) {
+            rescue(fn () => NhatKy::ghi('bi_chan_dang_nhap', 'Email: '.$e->request->input('email')), report: false);
+            \App\Support\BaoTin::gui(\App\Support\BaoTin::admins(), 'Đăng nhập sai nhiều lần',
+                'Email '.$e->request->input('email').' từ IP '.$e->request->ip().' bị chặn tạm vì sai mật khẩu liên tục.', route('admin.nhat-ky', ['hanh_dong' => 'bi_chan_dang_nhap']), 'shield-exclamation');
+        });
         Event::listen(PasswordReset::class, fn (PasswordReset $e) => rescue(fn () => NhatKy::ghi('doi_mat_khau', null, $e->user->getAuthIdentifier()), report: false));
 
         // Email xác thực bằng tiếng Việt

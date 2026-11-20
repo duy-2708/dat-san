@@ -43,6 +43,8 @@ class ThueBaoService
                 'so_tien' => (int) $goi->gia_thang * $soThang, 'tu_ngay' => $tu, 'den_ngay' => $den,
                 'trang_thai' => 'cho_thanh_toan',
             ])->save();
+            \App\Support\BaoTin::gui(\App\Support\BaoTin::admins(), 'Chủ sân mua gói '.$goi->ten,
+                ($hoSo?->ten_co_so ?? $chu->name).' mua '.$soThang.' tháng gói '.$goi->ten.', '.number_format($tb->so_tien, 0, ',', '.').'đ. Kiểm tra tiền rồi xác nhận.', route('admin.thue-bao.index'), 'bag-check');
 
             return $tb;
         });
@@ -62,6 +64,7 @@ class ThueBaoService
                 'xac_nhan_boi_id' => $admin->id, 'xac_nhan_luc' => now()])->save();
             $hoSo->forceFill(['goi_thue_bao_id' => $tb->goi_thue_bao_id, 'het_han_luc' => $den,
                 'bi_khoa_do_het_han' => false, 'da_nhac_het_han_luc' => null])->save();
+            \App\Support\BaoTin::gui($tb->chu_san_id, 'Đã gia hạn gói dịch vụ', 'Admin đã xác nhận thanh toán. Gói dùng đến '.\Carbon\Carbon::parse($den)->format('d/m/Y').'.', route('quan-ly.goi.index'), 'bag-check', true);
         });
     }
 

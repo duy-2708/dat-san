@@ -41,6 +41,7 @@ class GiaiDauService
             $dk = new DoiGiaiDau;
             $dk->forceFill(['giai_dau_id' => $g->id, 'doi_id' => $doi->id, 'trang_thai' => 'cho_duyet'])->save();
             $dk->cauThus()->sync($hopLe);
+            \App\Support\BaoTin::gui(\App\Support\BaoTin::phiaSan($g->chu_san_id), 'Đội đăng ký giải', $doi->ten.' đăng ký giải '.$g->ten.'. Vào duyệt nhé.', route('giai-dau.show', $g), 'trophy');
 
             return $dk;
         });
@@ -56,6 +57,8 @@ class GiaiDauService
             $this->loi('Giải đã đủ '.$g->so_doi_toi_da.' đội.');
         }
         $dk->forceFill(['trang_thai' => $dongY ? 'da_duyet' : 'tu_choi'])->save();
+        \App\Support\BaoTin::gui($dk->doi->doiTruong, $dongY ? 'Đội được duyệt vào giải' : 'Đăng ký giải bị từ chối',
+            $dk->doi->ten.' — giải '.$g->ten.'.', route('giai-dau.show', $g), $dongY ? 'trophy' : 'x-circle');
     }
 
     /** Đóng đăng ký, bắt đầu giải. Thể thức vòng tròn: tự sinh lịch mọi cặp gặp nhau 1 lần. */
@@ -198,6 +201,11 @@ class GiaiDauService
         $t = new TranDau;
         $t->forceFill(['giai_dau_id' => $g->id, 'doi_nha_id' => $nha, 'doi_khach_id' => $khach, 'vong' => $vong,
             'thoi_gian' => $thoiGian, 'san_id' => $sanId, 'trang_thai' => 'chua_da'])->save();
+        $doi = \App\Models\Doi::with('doiTruong')->whereIn('id', [$nha, $khach])->get();
+        if ($thoiGian) {
+            \App\Support\BaoTin::gui($doi->pluck('doiTruong'), 'Lịch trận giải '.$g->ten,
+                $doi->pluck('ten')->join(' ⚔ ').' · '.$vong.' · '.\Carbon\Carbon::parse($thoiGian)->format('H:i d/m/Y').'.', route('giai-dau.show', $g), 'calendar-event');
+        }
 
         return $t;
     }

@@ -75,6 +75,8 @@ class KeoController extends Controller
             ?? new YeuCauGoPhat;
         $yc->forceFill(['loai' => $loai, 'user_id' => $userId, 'tham_gia_keo_id' => $thamGiaId, 'trang_thai' => 'cho_duyet',
             'chu_san_id' => $request->user()->id, 'ly_do' => $request->input('ly_do')])->save();
+        \App\Support\BaoTin::gui(\App\Support\BaoTin::admins(), 'Đề nghị gỡ phạt mới', ($request->user()->hoSoChuSan?->ten_co_so ?? $request->user()->name)
+            .' đề nghị '.mb_strtolower(YeuCauGoPhat::LOAI[$loai]).' cho '.User::find($userId)?->name.'.', route('admin.duyet-go-phat'), 'shield-exclamation');
     }
 
     /** Tạo kèo hộ cho lịch đặt tại chỗ (khách gọi điện, không có tài khoản). */

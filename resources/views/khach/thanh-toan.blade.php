@@ -39,11 +39,13 @@
 @endforelse
 
 <h2 class="h6 mt-4">Còn phải trả tại sân</h2>
-@php $conTra = $donDaDat->filter(fn ($d) => $d->conLaiPhai() > 0 && $d->ketThucLuc()->isFuture()); @endphp
+@php $conTra = $donDaDat->filter(fn ($d) => $d->conLaiPhai() > 0 && $d->ketThucLuc()->isFuture())->sortBy(fn ($d) => $d->batDauLuc()); @endphp
 @forelse ($conTra as $d)
-    <div class="small bg-white rounded shadow-sm p-2 mb-1 d-flex justify-content-between">
-        <span>{{ $d->san->ten }} · {{ $d->batDauLuc()->format('H:i d/m/Y') }} · mã {{ $d->ma_don }}</span>
-        <strong>{{ $tien($d->conLaiPhai()) }}</strong>
+    @php $homNay = $d->batDauLuc()->isToday(); @endphp
+    <div class="small bg-white rounded shadow-sm p-2 mb-1 d-flex flex-wrap justify-content-between gap-2 {{ $homNay ? 'border border-2 border-danger' : '' }}">
+        <span>@if ($homNay) <span class="badge bg-danger">⚽ Hôm nay {{ $d->batDauLuc()->format('H:i') }}</span> @endif
+            {{ $d->moTaNgan() }} · mã {{ $d->ma_don }}</span>
+        <strong class="{{ $homNay ? 'text-danger' : '' }}">{{ $homNay ? 'Mang theo ' : '' }}{{ $tien($d->conLaiPhai()) }}</strong>
     </div>
 @empty
     <div class="small text-muted mb-2">Không có.</div>

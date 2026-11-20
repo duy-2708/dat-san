@@ -69,6 +69,36 @@
             </ul>
             <ul class="navbar-nav">
                 @auth
+                    @php
+                        $soChuaDoc = auth()->user()->unreadNotifications()->count();
+                        $tbMoi = auth()->user()->notifications()->limit(8)->get();
+                    @endphp
+                    <li class="nav-item dropdown me-lg-2">
+                        <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown" title="Thông báo">
+                            <i class="bi bi-bell{{ $soChuaDoc ? '-fill' : '' }} fs-5"></i>
+                            @if ($soChuaDoc) <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.65rem">{{ $soChuaDoc > 99 ? '99+' : $soChuaDoc }}</span> @endif
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end p-0 shadow" style="width: min(360px, 92vw)">
+                            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                                <strong class="small">Thông báo</strong>
+                                @if ($soChuaDoc)
+                                    <form method="POST" action="{{ route('thong-bao.doc-het') }}">@csrf<button class="btn btn-link btn-sm p-0">Đọc hết</button></form>
+                                @endif
+                            </div>
+                            <div style="max-height: 380px; overflow-y: auto">
+                                @forelse ($tbMoi as $tb)
+                                    <a href="{{ route('thong-bao.mo', $tb->id) }}" class="dropdown-item small text-wrap py-2 border-bottom {{ $tb->read_at ? '' : 'bg-warning-subtle' }}">
+                                        <div class="fw-semibold"><i class="bi bi-{{ $tb->data['icon'] ?? 'bell' }}"></i> {{ $tb->data['tieu_de'] ?? '' }}</div>
+                                        <div class="text-muted">{{ \Illuminate\Support\Str::limit($tb->data['noi_dung'] ?? '', 110) }}</div>
+                                        <div class="text-muted" style="font-size:.7rem">{{ $tb->created_at->diffForHumans() }}</div>
+                                    </a>
+                                @empty
+                                    <div class="text-muted small text-center py-3">Chưa có thông báo.</div>
+                                @endforelse
+                            </div>
+                            <a href="{{ route('thong-bao.index') }}" class="dropdown-item text-center small py-2">Xem tất cả</a>
+                        </div>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle"></i> {{ auth()->user()->name }}

@@ -23,6 +23,7 @@ class NhacHetHanGoi extends Command
                 ->get()
                 ->each(function (HoSoChuSan $h) use (&$so) {
                     $h->user?->notify(new GoiSapHetHan($h));
+                    \App\Support\BaoTin::gui($h->user, 'Gói sắp hết hạn', 'Gói dịch vụ hết hạn ngày '.$h->het_han_luc->format('d/m/Y').'. Gia hạn để khách vẫn đặt được sân.', route('quan-ly.goi.index'), 'hourglass-split');
                     $h->forceFill(['da_nhac_het_han_luc' => now()])->save(); // không nhắc 2 lần
                     $so++;
                 });

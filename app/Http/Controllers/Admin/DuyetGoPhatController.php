@@ -37,6 +37,8 @@ class DuyetGoPhatController extends Controller
                 'trang_thai' => $d['dong_y'] ? 'da_duyet' : 'tu_choi', 'admin_id' => $request->user()->id,
                 'ghi_chu_admin' => $d['ghi_chu_admin'] ?? null, 'xu_ly_luc' => now(),
             ])->save();
+            \App\Support\BaoTin::gui($yeuCau->chu_san_id, $d['dong_y'] ? 'Admin đã duyệt đề nghị gỡ phạt' : 'Admin từ chối đề nghị gỡ phạt',
+                YeuCauGoPhat::LOAI[$yeuCau->loai].' cho '.$yeuCau->user->name.(($d['ghi_chu_admin'] ?? null) ? ' — '.$d['ghi_chu_admin'] : '').'.', null, $d['dong_y'] ? 'check-circle' : 'x-circle');
         });
 
         return back()->with('thanh_cong', ($d['dong_y'] ? 'Đã duyệt: ' : 'Đã từ chối: ').YeuCauGoPhat::LOAI[$yeuCau->loai].' cho '.$yeuCau->user->name.'.');

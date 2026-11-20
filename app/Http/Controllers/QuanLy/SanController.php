@@ -86,7 +86,9 @@ class SanController extends Controller
                 if ($soLuong === 1) {
                     $san->sanCons()->sync($this->sanConHopLe($request, $san));
                 }
-                app(BangGiaChung::class)->nhanTuSanCungLoai($san);
+                if (! app(BangGiaChung::class)->nhanTuSanCungLoai($san) && ($gia = (int) $request->input('gia_mac_dinh')) > 0) {
+                    app(\App\Services\BangGia::class)->taoNhanh($san, ['ngay_thuong', 'cuoi_tuan', 'ngay_le'], 60, min($gia, 100000000));
+                }
                 $tao[] = $san;
             }
 

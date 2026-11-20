@@ -40,7 +40,65 @@ class KhungGioController extends Controller
             'cacMoc' => ThoiGian::cacMoc(ThoiGian::phut($san->gio_mo_cua), ThoiGian::phut($san->gio_dong_cua)),
             'tyLe' => (int) ($san->chuSan->hoSoChuSan?->ty_le_coc ?? 30),
             'sanNhanGia' => $this->giaChung->sanNhan($san),
+            'gioThieu' => $this->gioThieu($san),
         ]);
+    }
+
+    public function taoBu(San $san): RedirectResponse
+    {
+        Gate::authorize('update', $san);
+
+        $so = 0;
+        DB::transaction(function () use ($san, &$so) {
+            foreach ($this->gioThieu($san) as $loai => $khoang) {
+                $co = $san->khungGios()->where('loai_ngay', $loai)->get();
+                foreach ($khoang as [$tu, $den]) {
+                    $mau = $co->filter(fn ($k) => $k->phutKetThuc() <= $tu)->sortByDesc(fn ($k) => $k->phutKetThuc())->first()
+                        ?? $co->sortBy(fn ($k) => $k->phutBatDau())->first();
+                    $giaGio = $mau ? $mau->gia * 60 / max(1, $mau->soPhut()) : 0;
+                    for ($p = $tu; $p < $den; $p += 60) {
+                        $kt = min($den, $p + 60);
+                        if ($den - $kt > 0 && $den - $kt < 30) {
+                            $kt = $den;
+                        }
+                        $san->khungGios()->create([
+                            'loai_ngay' => $loai, 'gio_bat_dau' => ThoiGian::csdl($p), 'gio_ket_thuc' => ThoiGian::csdl($kt),
+                            'gia' => (int) (round($giaGio * ($kt - $p) / 60 / 1000) * 1000), 'la_gio_vang' => false, 'dang_ap_dung' => true,
+                        ]);
+                        $so++;
+                        $p = $kt - 60;
+                    }
+                }
+            }
+        });
+
+        return back()->with('thanh_cong', $this->dongBo($san, "Đã tạo bù {$so} khung giờ còn thiếu (giá theo khung gần nhất — kiểm tra lại)."));
+    }
+
+    private function gioThieu(San $san): array
+    {
+        $mo = ThoiGian::phut($san->gio_mo_cua);
+        $dong = ThoiGian::phut($san->gio_dong_cua);
+        $kq = [];
+        foreach ($san->khungGios()->get()->groupBy('loai_ngay') as $loai => $ds) {
+            $p = $mo;
+            $khoang = [];
+            foreach ($ds->sortBy(fn ($k) => $k->phutBatDau()) as $k) {
+                if ($k->phutBatDau() > $p) {
+                    $khoang[] = [$p, min($k->phutBatDau(), $dong)];
+                }
+                $p = max($p, $k->phutKetThuc());
+            }
+            if ($p < $dong) {
+                $khoang[] = [$p, $dong];
+            }
+            $khoang = array_values(array_filter($khoang, fn ($x) => $x[1] - $x[0] >= 15));
+            if ($khoang) {
+                $kq[$loai] = $khoang;
+            }
+        }
+
+        return $kq;
     }
 
     public function store(Request $request, San $san): RedirectResponse

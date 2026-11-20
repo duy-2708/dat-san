@@ -64,6 +64,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/ho-so/so-dien-thoai', [SoDienThoaiController::class, 'create'])->name('ho-so.so-dien-thoai');
     Route::post('/ho-so/so-dien-thoai', [SoDienThoaiController::class, 'store'])->name('ho-so.so-dien-thoai.store');
     Route::get('/tai-khoan/bao-mat', [BaoMatController::class, 'show'])->name('bao-mat');
+    Route::get('/thong-bao', [\App\Http\Controllers\ThongBaoController::class, 'index'])->name('thong-bao.index');
+    Route::get('/thong-bao/{id}', [\App\Http\Controllers\ThongBaoController::class, 'mo'])->name('thong-bao.mo');
+    Route::post('/thong-bao/doc-het', [\App\Http\Controllers\ThongBaoController::class, 'docHet'])->name('thong-bao.doc-het');
 
     Route::middleware('co_sdt')->group(function () {
         Route::get('/bang-dieu-khien', BangDieuKhienController::class)->name('bang-dieu-khien');
@@ -155,6 +158,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
                 Route::post('/san/{san}/khung-gio', [KhungGioController::class, 'store'])->name('san.khung-gio.store');
                 Route::post('/san/{san}/khung-gio/tao-nhanh', [KhungGioController::class, 'taoNhanh'])->name('san.khung-gio.tao-nhanh');
+                Route::post('/san/{san}/khung-gio/tao-bu', [KhungGioController::class, 'taoBu'])->name('san.khung-gio.tao-bu');
                 Route::put('/san/{san}/khung-gio', [KhungGioController::class, 'luuTatCa'])->name('san.khung-gio.luu-tat-ca');
                 Route::put('/khung-gio/{khungGio}', [KhungGioController::class, 'update'])->name('khung-gio.update');
                 Route::delete('/khung-gio/{khungGio}', [KhungGioController::class, 'destroy'])->name('khung-gio.destroy');

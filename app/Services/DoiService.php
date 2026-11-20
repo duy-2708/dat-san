@@ -43,6 +43,8 @@ class DoiService
             $this->loi($cu->trang_thai === 'cho_duyet' ? 'Bạn đã gửi yêu cầu, chờ đội trưởng duyệt.' : 'Bạn đã ở trong đội.');
         }
 
+        \App\Support\BaoTin::gui($doi->doiTruong, 'Có người xin vào đội', $u->name.' xin vào '.$doi->ten.'.', route('doi.show', $doi), 'person-plus');
+
         return $this->ghi($doi, $u, 'thanh_vien', 'cho_duyet');
     }
 
@@ -58,6 +60,8 @@ class DoiService
         }
         $this->kiemTraSiSo($doi);
 
+        \App\Support\BaoTin::gui($tv, 'Bạn được thêm vào đội', $doiTruong->name.' đã thêm bạn vào '.$doi->ten.'.', route('doi.show', $doi), 'people');
+
         return $this->ghi($doi, $tv, 'thanh_vien', 'dang_choi', $soAo);
     }
 
@@ -71,6 +75,7 @@ class DoiService
             $this->kiemTraSiSo($tv->doi);
         }
         $tv->forceFill(['trang_thai' => $dongY ? 'dang_choi' : 'da_roi'])->save();
+        \App\Support\BaoTin::gui($tv->user_id, $dongY ? 'Được duyệt vào đội' : 'Yêu cầu vào đội bị từ chối', $tv->doi->ten.'.', route('doi.show', $tv->doi), $dongY ? 'people' : 'x-circle');
     }
 
     /** Thành viên tự rời, hoặc đội trưởng mời ra. Đội trưởng không tự rời (phải chuyển quyền trước). */

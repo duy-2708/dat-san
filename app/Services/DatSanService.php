@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Support\BaoTin;
+use App\Support\Tien;
+
 use App\Models\DatSan;
 use App\Models\GiaoDich;
 use App\Models\KhungGio;
@@ -106,6 +109,8 @@ class DatSanService
                 $this->loi('Cổng thanh toán của sân đang lỗi, vui lòng thử lại sau ít phút hoặc gọi '.$hoSo->sdt_lien_he.'.');
             }
         }
+        BaoTin::gui(BaoTin::phiaSan($san->chu_san_id), 'Đơn đặt mới '.$don->ma_don,
+            $khach->name.' giữ '.$don->moTaNgan().', chờ cọc '.Tien::chuoi($don->tien_coc).'đ.', route('quan-ly.dat-san.index', ['ngay' => $don->ngay instanceof \DateTimeInterface ? $don->ngay->format('Y-m-d') : substr((string) $don->ngay, 0, 10)]), 'calendar-plus');
 
         return $don;
     }
@@ -219,6 +224,7 @@ class DatSanService
         });
 
         $don->khach?->notify(new DatSanThanhCong($don));
+        BaoTin::gui($don->khach, 'Đã xác nhận cọc '.$don->ma_don, 'Chủ sân đã nhận cọc. Lịch '.$don->moTaNgan().' đã chắc chắn.', route('dat-san.thanh-toan', $don), 'check-circle');
 
         return $don;
     }
@@ -243,7 +249,7 @@ class DatSanService
      */
     public function huy(DatSan $don, User $nguoi, ?string $lyDo = null): DatSan
     {
-        return DB::transaction(function () use ($don, $nguoi, $lyDo) {
+        $don = DB::transaction(function () use ($don, $nguoi, $lyDo) {
             $don = DatSan::lockForUpdate()->findOrFail($don->id);
             if ($don->trang_thai === 'da_huy') {
                 $this->loi('Đơn đã huỷ trước đó.');
@@ -279,6 +285,15 @@ class DatSanService
 
             return $don;
         });
+
+        $coc = ['cho_hoan' => ' Tiền cọc sẽ được chủ sân hoàn lại.', 'mat_coc' => ' Huỷ sát giờ nên mất cọc.'][$don->xu_ly_coc] ?? '';
+        if ($don->khach_id && (int) $don->khach_id !== $nguoi->id) {
+            BaoTin::gui($don->khach_id, 'Đơn '.$don->ma_don.' bị huỷ', $don->moTaNgan().($lyDo ? ' — '.$lyDo : '').'.'.$coc, route('khach.thanh-toan'), 'x-circle', true);
+        } elseif ($don->khach_id) {
+            BaoTin::gui(BaoTin::phiaSan($don->san->chu_san_id), 'Khách huỷ đơn '.$don->ma_don, $don->tenNguoiDat().' huỷ '.$don->moTaNgan().'.'.$coc, route('quan-ly.dat-san.index'), 'x-circle');
+        }
+
+        return $don;
     }
 
     // =============================================================== CHỐNG BÙNG / BÁO CHUYỂN KHOẢN
@@ -309,6 +324,8 @@ class DatSanService
         User::where(fn ($q) => $q->where('id', $san->chu_san_id)->orWhere(fn ($q) => $q->where('chu_san_id', $san->chu_san_id)->where('vai_tro', User::NHAN_VIEN)))
             ->where('trang_thai', 'hoat_dong')->get()
             ->each(fn (User $u) => $u->notify(new \App\Notifications\KhachBaoDaChuyen($don)));
+        BaoTin::gui(BaoTin::phiaSan($don->san->chu_san_id), 'Khách báo đã chuyển '.$don->ma_don,
+            $don->tenNguoiDat().' báo đã chuyển '.Tien::chuoi($don->tien_coc).'đ cho '.$don->moTaNgan().'. Kiểm tra app ngân hàng.', route('quan-ly.dat-san.index'), 'cash-coin');
 
         return $don;
     }
@@ -331,6 +348,7 @@ class DatSanService
                 $k->forceFill(['cam_dat_den' => now()->addDays(self::NGAY_CAM), 'ly_do_cam_dat' => 'báo chuyển khoản sai 2 lần trong 30 ngày'])->save();
             }
         });
+        BaoTin::gui($don->khach_id, 'Bị trừ '.self::PHAT_BAO_SAI.' uy tín', 'Chủ sân không thấy tiền cọc đơn '.$don->ma_don.' bạn báo đã chuyển. Đơn đã huỷ.', route('khach.thanh-toan'), 'exclamation-triangle');
 
         return $don;
     }
@@ -359,6 +377,7 @@ class DatSanService
             }
             $k->save();
             $this->ghiUyTin($k, -self::PHAT_KHONG_TRA_DU, 'khong_tra_du', 'Đơn '.$don->ma_don.' — báo bởi '.$chuSan->name);
+            BaoTin::gui($k, 'Bị trừ '.self::PHAT_KHONG_TRA_DU.' uy tín', 'Chủ sân báo bạn không thanh toán đủ tiền đơn '.$don->ma_don.'. '.($k->trang_thai === 'bi_khoa' ? 'Tài khoản đã bị khoá.' : 'Bạn bị cấm đặt sân và cáp kèo '.self::NGAY_CAM.' ngày.'), null, 'exclamation-triangle', true);
 
             return $k;
         });
@@ -391,6 +410,7 @@ class DatSanService
             $this->loi('Đơn này không ở trạng thái chờ hoàn cọc.');
         }
         $don->forceFill(['xu_ly_coc' => 'da_hoan', 'da_hoan_luc' => now()])->save();
+        BaoTin::gui($don->khach_id, 'Đã hoàn cọc '.$don->ma_don, 'Chủ sân đã chuyển trả '.Tien::chuoi($don->tien_coc).'đ tiền cọc. Kiểm tra tài khoản của bạn.', route('khach.thanh-toan'), 'arrow-counterclockwise', true);
 
         return $don;
     }
@@ -411,6 +431,9 @@ class DatSanService
                     $don->forceFill(['trang_thai' => 'da_huy', 'huy_luc' => now(), 'ly_do_huy' => 'Hết thời gian giữ chỗ'])->save();
                     DB::table('o_lich')->where('dat_san_id', $id)->delete();
                     GiaoDich::where('dat_san_id', $id)->where('trang_thai', 'cho_thanh_toan')->update(['trang_thai' => 'het_han']);
+                    if ($don->khach_id && ! \App\Models\Keo::where('dat_san_id', $id)->exists()) {
+                        BaoTin::gui($don->khach_id, 'Hết giờ giữ chỗ '.$don->ma_don, 'Chưa nhận được cọc nên chỗ đã nhả cho người khác. Muốn đá thì đặt lại nhé.', route('khach.thanh-toan'), 'hourglass-bottom');
+                    }
                     $so++;
                 });
             });
