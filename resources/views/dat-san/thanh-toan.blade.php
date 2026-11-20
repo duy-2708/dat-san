@@ -62,7 +62,7 @@
                 <a href="{{ route('san.show', $don->san) }}" class="btn btn-outline-secondary flex-grow-1">Lịch sân</a>
                 @can('huy', $don)
                     @if ($don->trang_thai !== 'da_huy')
-                        <form method="POST" action="{{ route('dat-san.huy', $don) }}" onsubmit="return confirm('Huỷ đơn {{ $don->ma_don }}?')">
+                        <form method="POST" action="{{ route('dat-san.huy', $don) }}" onsubmit="return confirm(@js('Huỷ đơn '.$don->ma_don."\n".$don->moTaNgan().'?'))">
                             @csrf
                             <button class="btn btn-outline-danger">Huỷ</button>
                         </form>

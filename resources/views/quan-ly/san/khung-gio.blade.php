@@ -49,7 +49,7 @@
                 <datalist id="ds-thoi-luong"><option value="60"><option value="90"><option value="120"></datalist>
             </div>
             <div class="col-12">
-                <div class="small fw-semibold mb-1">Giá theo buổi <span class="text-muted fw-normal">(sửa giờ và giá tuỳ ý; để trống giá = không tạo khung buổi đó)</span></div>
+                <div class="small fw-semibold mb-1">Giá theo buổi <span class="text-muted fw-normal">(sửa giờ và giá tuỳ ý; ô giá để trống = lấy giá dòng trên — chỉ cần nhập 1 giá là phủ cả ngày; xoá giờ của buổi nào thì không tạo buổi đó)</span></div>
                 <div class="form-check form-switch small mb-2">
                     <input class="form-check-input" type="checkbox" name="gia_khac_ngay" value="1" id="giaKhacNgay"
                            onchange="document.querySelectorAll('.cot-gia-khac').forEach(e => e.classList.toggle('d-none', ! this.checked))">

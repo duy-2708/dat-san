@@ -71,7 +71,7 @@
                     @endif
                     <div class="small text-muted">{{ $tien($k->gia) }}đ</div>
                     @if (isset($o['tong']) && $tt !== 'qua_gio')
-                        <div class="small {{ $o['con_trong'] ? 'text-success' : 'text-danger' }}" style="font-size:.75rem">Còn {{ $o['con_trong'] }}/{{ $o['tong'] }} sân</div>
+                        <div class="small text-break lh-sm {{ $o['con_trong'] ? 'text-success' : 'text-danger' }}" style="font-size:.75rem">Còn {{ $o['con_trong'] }}/{{ $o['tong'] }} sân{{ $o['con_trong'] ? ': '.implode(', ', $o['ten_trong']) : '' }}</div>
                     @endif
 
                     @if ($cheDo === 'khach')
@@ -86,6 +86,14 @@
                                         @isset($o['tong']) <input type="hidden" name="tu_xep" value="1"> @endisset
                                         <input type="hidden" name="ngay" value="{{ $n['ngay']->toDateString() }}">
                                         <input type="hidden" name="khung_gio_id" value="{{ $k->id }}">
+                                        @if ($k->soPhut() > 15)
+                                            <select name="bat_dau" class="form-select form-select-sm mb-1" title="Giờ bắt đầu đá">
+                                                @for ($p = $k->phutBatDau(); $p < $k->phutKetThuc(); $p += 15)
+                                                    @continue($n['ngay']->copy()->addMinutes($p)->lte(now()))
+                                                    <option value="{{ \App\Support\ThoiGian::chuoi($p) }}">Bắt đầu {{ \App\Support\ThoiGian::chuoi($p) }}</option>
+                                                @endfor
+                                            </select>
+                                        @endif
                                         <select name="thoi_luong" class="form-select form-select-sm mb-1" title="Đá bao lâu (tính từ {{ substr($k->gio_bat_dau, 0, 5) }})">
                                             @foreach ($k->cacThoiLuong($dongPhut) as $p)
                                                 <option value="{{ $p }}" @selected($p === $k->soPhut())>{{ $nhanPhut($p) }} · {{ $tien($k->giaTheoPhut($p)) }}đ</option>

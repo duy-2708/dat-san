@@ -35,7 +35,7 @@ class DatSanService
 
     // =============================================================== KHÁCH ĐẶT ONLINE
 
-    public function giuCho(User $khach, San $san, string $ngay, int $khungGioId, ?int $thoiLuong = null): DatSan
+    public function giuCho(User $khach, San $san, string $ngay, int $khungGioId, ?int $thoiLuong = null, ?int $batDau = null): DatSan
     {
         if ($khach->biHanChe()) {
             $this->loi('Tài khoản đang bị hạn chế đặt sân: '.$khach->ly_do_han_che.'. Liên hệ chủ sân để được gỡ.');
@@ -58,8 +58,12 @@ class DatSanService
         }
 
         $khung = $this->khungApDung($san, $ngayC, $khungGioId);
-        if ($ngayC->copy()->addMinutes($khung->phutBatDau())->lte(now())) {
-            $this->loi('Khung giờ này đã qua.');
+        $bd = $batDau ?? $khung->phutBatDau();
+        if ($bd % 15 !== 0 || $bd < $khung->phutBatDau() || $bd >= $khung->phutKetThuc()) {
+            $this->loi('Giờ bắt đầu phải nằm trong khung '.$khung->nhan().', theo bước 15 phút.');
+        }
+        if ($ngayC->copy()->addMinutes($bd)->lte(now())) {
+            $this->loi('Giờ này đã qua.');
         }
 
         $this->nhaChoQuaHan();
@@ -68,8 +72,8 @@ class DatSanService
             $this->loi('Bạn đang giữ '.$dangGiu.' khung chưa cọc. Hãy cọc hoặc huỷ bớt trước khi giữ thêm.');
         }
 
-        $phut = $this->kiemThoiLuong($san, $khung, $thoiLuong);
-        $don = $this->ghiDon($san, $ngayC->toDateString(), $khung->phutBatDau(), $khung->phutBatDau() + $phut, [
+        $phut = $this->kiemThoiLuong($san, $khung, $thoiLuong, $bd);
+        $don = $this->ghiDon($san, $ngayC->toDateString(), $bd, $bd + $phut, [
             'khach_id' => $khach->id,
             'khung_gio_id' => $khung->id,
             'gia_chot' => $khung->giaTheoPhut($phut),
@@ -459,13 +463,13 @@ class DatSanService
     }
 
     /** Thời lượng đá tính từ giờ bắt đầu khung: bội số 15', 30'–240', không quá giờ đóng cửa. Trùng giờ đã có người do ghiDon chặn. */
-    public function kiemThoiLuong(San $san, KhungGio $khung, ?int $thoiLuong): int
+    public function kiemThoiLuong(San $san, KhungGio $khung, ?int $thoiLuong, ?int $batDau = null): int
     {
         $phut = $thoiLuong ?: $khung->soPhut();
         if ($phut % 15 !== 0 || $phut < 30 || $phut > 240) {
             $this->loi('Thời lượng phải từ 30 phút đến 4 tiếng, theo bước 15 phút.');
         }
-        if ($khung->phutBatDau() + $phut > \App\Support\ThoiGian::phut($san->gio_dong_cua)) {
+        if (($batDau ?? $khung->phutBatDau()) + $phut > \App\Support\ThoiGian::phut($san->gio_dong_cua)) {
             $this->loi('Đá '.$phut.' phút sẽ quá giờ đóng cửa của sân.');
         }
 

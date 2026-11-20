@@ -27,7 +27,9 @@ class DatSanController extends Controller
             'ngay' => ['required', 'date_format:Y-m-d'],
             'khung_gio_id' => ['required', 'integer'],
             'thoi_luong' => ['nullable', 'integer'],
+            'bat_dau' => ['nullable', 'date_format:H:i'],
         ]);
+        $batDau = isset($d['bat_dau']) ? \App\Support\ThoiGian::phut($d['bat_dau']) : null;
 
         $san = San::findOrFail($d['san_id']);
         $thoiLuong = isset($d['thoi_luong']) ? (int) $d['thoi_luong'] : null;
@@ -42,7 +44,7 @@ class DatSanController extends Controller
                 continue;
             }
             try {
-                $don = $this->datSan->giuCho($request->user(), $s, $d['ngay'], (int) $kId, $thoiLuong);
+                $don = $this->datSan->giuCho($request->user(), $s, $d['ngay'], (int) $kId, $thoiLuong, $batDau);
                 break;
             } catch (\Illuminate\Validation\ValidationException $e) {
                 $loiCuoi = $e;

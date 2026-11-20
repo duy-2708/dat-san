@@ -90,6 +90,13 @@ class DatSan extends Model
         return $this->khach?->so_dien_thoai ?? (string) $this->sdt_khach_tai_cho;
     }
 
+    public function moTaNgan(): string
+    {
+        $thu = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][$this->batDauLuc()->dayOfWeek];
+
+        return $this->san?->ten.' · '.$this->batDauLuc()->format('H:i').'–'.$this->ketThucLuc()->format('H:i').' · '.$thu.' '.$this->batDauLuc()->format('d/m/Y');
+    }
+
     public function conLaiPhai(): int
     {
         return max(0, $this->gia_chot - ($this->xac_nhan_coc_luc ? $this->tien_coc : 0));

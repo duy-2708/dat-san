@@ -61,7 +61,7 @@ class KhungGioLinhHoatTest extends TestCase
                 ['tu' => '11:00', 'den' => '15:00', 'gia' => '150.000'],
                 ['tu' => '15:00', 'den' => '17:00', 'gia' => '250.000'],
                 ['tu' => '17:00', 'den' => '21:00', 'gia' => '400.000', 'vang' => 1],
-                ['tu' => '21:00', 'den' => '24:00', 'gia' => ''],               // bỏ trống = không tạo
+                ['tu' => '', 'den' => '', 'gia' => ''],
             ],
         ])->assertSessionHasNoErrors();
 

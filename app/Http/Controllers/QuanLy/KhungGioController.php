@@ -86,6 +86,16 @@ class KhungGioController extends Controller
                 'gia' => Tien::so($m['gia'] ?? null), 'vang' => ! empty($m['vang']),
                 'cuoi_tuan' => $khacNgay ? Tien::so($m['gia_cuoi_tuan'] ?? null) : null,
                 'ngay_le' => $khacNgay ? Tien::so($m['gia_le'] ?? null) : null])
+            ->pipe(function ($c) {
+                $truoc = $c->pluck('gia')->first(fn ($g) => $g !== null);
+
+                return $c->map(function ($m) use (&$truoc) {
+                    $m['gia'] ??= $truoc;
+                    $truoc = $m['gia'];
+
+                    return $m;
+                });
+            })
             ->filter(fn ($m) => $m['tu'] && $m['den'] && $m['gia'] !== null)
             ->values();
 

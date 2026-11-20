@@ -82,31 +82,42 @@ class LichSan
 
     public function tuanGop(\Illuminate\Support\Collection $sans, CarbonInterface $tuNgay, int $soNgay = 7): array
     {
-        $cacLich = $sans->values()->map(fn (San $s) => ['san' => $s, 'lich' => $this->tuan($s, $tuNgay, $soNgay)]);
-        $goc = $cacLich[0]['lich'];
-        foreach ($goc as $i => $ngay) {
-            foreach ($ngay['khungs'] as $j => $o) {
-                $bd = $o['khung']->gio_bat_dau;
-                $trong = [];
-                foreach ($cacLich as $l) {
-                    foreach ($l['lich'][$i]['khungs'] as $o2) {
-                        if ($o2['khung']->gio_bat_dau === $bd && $o2['trang_thai'] === 'trong') {
-                            $trong[] = [$l['san'], $o2['khung']];
-                            break;
-                        }
-                    }
+        $sans = $sans->values();
+        $cacLich = $sans->map(fn (San $s) => $this->tuan($s, $tuNgay, $soNgay));
+        $tenNgan = $this->tenNgan($sans);
+        $kq = [];
+        foreach ($cacLich[0] as $i => $ngay0) {
+            $theoGio = [];
+            foreach ($cacLich as $j => $lich) {
+                foreach ($lich[$i]['khungs'] as $o) {
+                    $theoGio[$o['khung']->gio_bat_dau][] = $o + ['san' => $sans[$j]];
                 }
-                $o['san'] = $cacLich[0]['san'];
-                $o['tong'] = $cacLich->count();
+            }
+            ksort($theoGio);
+            $khungs = [];
+            foreach ($theoGio as $ds) {
+                $trong = array_values(array_filter($ds, fn ($o) => $o['trang_thai'] === 'trong'));
+                $o = $trong[0] ?? $ds[0];
+                $o['tong'] = $sans->count();
                 $o['con_trong'] = count($trong);
-                if (in_array($o['trang_thai'], ['da_dat', 'dang_giu'], true) && $trong) {
-                    $o['trang_thai'] = 'trong';
-                    [$o['san'], $o['khung']] = $trong[0];
-                }
-                $goc[$i]['khungs'][$j] = $o;
+                $o['ten_trong'] = array_map(fn ($x) => $tenNgan[$x['san']->id], $trong);
+                $khungs[] = $o;
+            }
+            $kq[] = ['ngay' => $ngay0['ngay'], 'loai' => $ngay0['loai'], 'khungs' => $khungs];
+        }
+
+        return $kq;
+    }
+
+    private function tenNgan(\Illuminate\Support\Collection $sans): array
+    {
+        $chung = (string) $sans->first()->ten;
+        foreach ($sans as $s) {
+            while ($chung !== '' && ! str_starts_with($s->ten, $chung)) {
+                $chung = mb_substr($chung, 0, -1);
             }
         }
 
-        return $goc;
+        return $sans->mapWithKeys(fn ($s) => [$s->id => trim(mb_substr($s->ten, mb_strlen($chung))) ?: $s->ten])->all();
     }
 }

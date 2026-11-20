@@ -210,4 +210,29 @@ class CoSoTest extends TestCase
         $this->assertSame(0, DatSan::count());
         $this->assertNull(CoSo::find($cs->id));
     }
+
+    public function test_dat_gio_le_va_mot_gia_phu_ca_ngay(): void
+    {
+        $cs = $this->taoCoSo(2);
+        [$a, $b] = $cs->sans()->get()->all();
+        $this->actingAs($this->chu)->post("/quan-ly/san/{$a->id}/khung-gio/tao-nhanh", [
+            'loai_ngays' => ['ngay_thuong'], 'thoi_luong' => 60,
+            'muc' => [['tu' => '06:00', 'den' => '11:00', 'gia' => '200.000'], ['tu' => '11:00', 'den' => '23:00', 'gia' => '']],
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(17, $a->khungGios()->count());
+
+        $k = $a->khungGios()->where('gio_bat_dau', '17:00:00')->firstOrFail();
+        $khach = User::factory()->create();
+        $this->actingAs($khach)->get("/san/{$a->slug}")->assertSee('Còn 2/2 sân: A, B')->assertSee('Bắt đầu 17:30');
+
+        $this->actingAs($khach)->post('/dat-san', ['san_id' => $a->id, 'ngay' => '2026-11-18', 'khung_gio_id' => $k->id, 'bat_dau' => '17:30', 'thoi_luong' => 90])
+            ->assertSessionHasNoErrors();
+        $don = DatSan::firstOrFail();
+        $this->assertSame('17:30', substr($don->gio_bat_dau, 0, 5));
+        $this->assertSame('19:00', substr($don->gio_ket_thuc, 0, 5));
+        $this->assertSame(300000, (int) $don->gia_chot);
+
+        $this->actingAs(User::factory()->create())->post('/dat-san', ['san_id' => $a->id, 'ngay' => '2026-11-18', 'khung_gio_id' => $k->id, 'bat_dau' => '18:15'])
+            ->assertSessionHasErrors();
+    }
 }
