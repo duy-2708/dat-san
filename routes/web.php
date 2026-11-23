@@ -128,6 +128,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/coc-keo/{giaoDich}/xac-nhan', [QuanLyKeoController::class, 'xacNhanCoc'])->name('coc-keo.xac-nhan');
             Route::patch('/coc-keo/{giaoDich}/khong-thay-tien', [QuanLyKeoController::class, 'khongThayTienCoc'])->name('coc-keo.khong-thay-tien');
             Route::patch('/keo/{keo}/chot', [QuanLyKeoController::class, 'chot'])->name('keo.chot');
+            Route::patch('/keo/{keo}/thu-tien', [QuanLyKeoController::class, 'ghiThuTien'])->name('keo.thu-tien'); // chủ sân + nhân viên
             Route::patch('/tham-gia-keo/{thamGia}/mien-phat', [QuanLyKeoController::class, 'mienPhat'])->name('keo.mien-phat');   // chỉ chủ sân
             Route::patch('/han-che/{user}/go', [QuanLyKeoController::class, 'goHanChe'])->name('han-che.go');                      // chỉ chủ sân
             Route::get('/dat-san/{datSan}/tao-keo', [QuanLyKeoController::class, 'create'])->name('keo.create');
@@ -201,6 +202,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // ---- Trang thanh toán của 1 đơn (Policy: khách của đơn hoặc phía sân) ----
         Route::get('/dat-san/{datSan}/thanh-toan', [DatSanController::class, 'thanhToan'])->name('dat-san.thanh-toan');
         Route::get('/dat-san/{datSan}/trang-thai', [DatSanController::class, 'trangThai'])->name('dat-san.trang-thai');
+        Route::get('/dat-san/{datSan}/tra-con', [DatSanController::class, 'thanhToanConLai'])->name('dat-san.tra-con');
         Route::post('/dat-san/{datSan}/huy', [DatSanController::class, 'huy'])->name('dat-san.huy');
 
         // ---- KHÁCH ----

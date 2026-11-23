@@ -37,10 +37,11 @@
             @foreach ([
                 ['Cọc online', $tk['coc_online'], 'qr-code', 'success', 'Khách chuyển qua mã QR / PayOS'],
                 ['Cọc nhận ngoài', $tk['coc_ngoai'], 'cash', 'success', 'Tiền mặt / chuyển riêng'],
-                ['Tiền sân thu tại sân', $tk['tien_san'], 'cash-coin', 'success', 'Đã bấm "Đã nhận" ở Đơn đặt'],
+                ['Tiền sân tại sân', $tk['tien_san'], 'cash-coin', 'success', 'Bấm "Đã nhận" ở Đơn đặt'],
+                ['Kèo (thu − trả lại)', $tk['keo'], 'people', $tk['keo'] < 0 ? 'danger' : 'success', 'Trả thêm tại sân của kèo'],
                 ['Đã hoàn cọc', -$tk['hoan'], 'arrow-counterclockwise', 'danger', 'Trả lại khách'],
             ] as [$nhan, $so, $icon, $mau, $ghiChu])
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md">
                     <div class="border rounded p-2 h-100">
                         <div class="small text-muted"><i class="bi bi-{{ $icon }}"></i> {{ $nhan }}</div>
                         <div class="fs-5 fw-bold text-{{ $so < 0 ? 'danger' : 'body' }}">{{ $so < 0 ? '−'.$tien(-$so) : $tien($so) }}</div>
@@ -52,6 +53,13 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 p-2 rounded bg-success-subtle">
             <span>Tổng thực thu · {{ $tk['so_don'] }} lượt đặt trong tháng</span>
             <strong class="fs-4 text-success">{{ $tien($tk['tong']) }}</strong>
+        </div>
+        <div class="small mt-2 d-flex flex-wrap gap-3">
+            <span><i class="bi bi-cash"></i> Tiền mặt: <strong>{{ $tien($tk['tien_mat']) }}</strong></span>
+            <span><i class="bi bi-qr-code"></i> Online: <strong>{{ $tien($tk['online']) }}</strong></span>
+            @if ($tk['tien_san_chua_ro'] > 0)
+                <span class="text-warning-emphasis"><i class="bi bi-question-circle"></i> Tiền sân chưa ghi hình thức: {{ $tien($tk['tien_san_chua_ro']) }}</span>
+            @endif
         </div>
         @if ($tk['chua_thu']->isNotEmpty())
             <div class="alert alert-warning small py-2 mt-2 mb-0">

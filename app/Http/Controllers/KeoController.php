@@ -103,7 +103,7 @@ class KeoController extends Controller
     public function show(Request $request, Keo $keo): View
     {
         $keo->load(['datSan.san.chuSan.hoSoChuSan', 'datSan.san.xaPhuong.tinhThanh', 'san.chuSan.hoSoChuSan', 'san.xaPhuong.tinhThanh',
-            'khungGio', 'thamGias.user', 'nguoiTao', 'daiDienB', 'doiA', 'doiB', 'xinKeos.user', 'xinKeos.doi']);
+            'khungGio', 'thamGias.user', 'thuTien', 'nguoiTao', 'daiDienB', 'doiA', 'doiB', 'xinKeos.user', 'xinKeos.doi']);
         $u = $request->user();
 
         // Kèo riêng: chỉ ai có link (mã mời), người trong kèo / đã xin, hoặc phía sân mới xem được

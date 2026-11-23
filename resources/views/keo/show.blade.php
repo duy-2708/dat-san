@@ -242,13 +242,43 @@
     @if ($quyetToan)
         <div class="card border-0 shadow-sm mb-3"><div class="card-body">
             <h2 class="h6">Kết quả: {{ $keo->nhanKetQua($keo->ket_qua) }} — tiền sân {{ $tien($keo->tien_san) }}</h2>
-            <table class="table table-sm small mb-0">
-                <thead><tr><th></th><th class="text-end">Phải chịu</th><th class="text-end">Đã cọc</th><th class="text-end">Trả thêm tại sân</th></tr></thead>
+            <table class="table table-sm small mb-0 align-middle">
+                <thead><tr><th></th><th class="text-end">Phải chịu</th><th class="text-end">Đã cọc</th><th class="text-end">Trả thêm tại sân</th>@if ($laSan)<th>Ghi nhận</th>@endif</tr></thead>
                 <tbody>
                 @foreach (['a' => $keo->tenBen('a'), 'b' => $keo->tenBen('b')] as $ben => $ten)
-                    @php $q = $quyetToan[$ben]; @endphp
+                    @php
+                        $q = $quyetToan[$ben];
+                        $loai = $q['con'] >= 0 ? 'thu' : 'tra_lai';
+                        $can = abs($q['con']);
+                        $daGhi = $keo->thuTien->where('ben', $ben)->where('loai', $loai);
+                        $conGhi = max(0, $can - (int) $daGhi->sum('so_tien'));
+                    @endphp
                     <tr><td>{{ $ten }}</td><td class="text-end">{{ $tien($q['phan']) }}</td><td class="text-end">{{ $tien($q['da_tra']) }}</td>
-                        <td class="text-end fw-semibold">{{ $q['con'] >= 0 ? $tien($q['con']) : 'Sân trả lại '.$tien(-$q['con']) }}</td></tr>
+                        <td class="text-end fw-semibold">{{ $q['con'] >= 0 ? $tien($q['con']) : 'Sân trả lại '.$tien(-$q['con']) }}</td>
+                        @if ($laSan)
+                            <td>
+                                @if ($can === 0)
+                                    <span class="text-muted">Không có khoản</span>
+                                @else
+                                    @foreach ($daGhi as $g)
+                                        <div class="text-success small">✓ {{ $loai === 'thu' ? 'Đã thu' : 'Đã trả lại' }} {{ $tien($g->so_tien) }} · {{ $g->phuong_thuc === 'tien_mat' ? 'tiền mặt' : 'online' }}</div>
+                                    @endforeach
+                                    @if ($conGhi > 0)
+                                        <form method="POST" action="{{ route('quan-ly.keo.thu-tien', $keo) }}" class="input-group input-group-sm mt-1" style="min-width: 300px">@csrf @method('PATCH')
+                                            <input type="hidden" name="ben" value="{{ $ben }}">
+                                            <input type="hidden" name="loai" value="{{ $loai }}">
+                                            <span class="input-group-text">{{ $loai === 'thu' ? 'Thu' : 'Trả lại' }}</span>
+                                            <input name="so_tien" value="{{ $conGhi }}" inputmode="numeric" class="form-control o-tien">
+                                            <button name="phuong_thuc" value="tien_mat" class="btn btn-success">Tiền mặt</button>
+                                            <button name="phuong_thuc" value="online" class="btn btn-primary">Online</button>
+                                        </form>
+                                    @else
+                                        <span class="text-success small">✓ Đã đủ</span>
+                                    @endif
+                                @endif
+                            </td>
+                        @endif
+                    </tr>
                 @endforeach
                 </tbody>
             </table>

@@ -40,6 +40,21 @@ class KeoController extends Controller
         return back()->with('thanh_cong', 'Đã chốt kết quả: '.$keo->nhanKetQua($d['ket_qua']).'.');
     }
 
+    public function ghiThuTien(Request $request, Keo $keo): RedirectResponse
+    {
+        $this->kiemTraSan($request->user(), $keo);
+        $d = $request->validate([
+            'ben' => ['required', Rule::in(['a', 'b'])],
+            'loai' => ['required', Rule::in(['thu', 'tra_lai'])],
+            'so_tien' => ['required', 'integer', 'min:1'],
+            'phuong_thuc' => ['required', Rule::in(['tien_mat', 'online'])],
+        ]);
+        $t = $this->keo->ghiThuTien($request->user(), $keo, $d['ben'], $d['loai'], (int) $d['so_tien'], $d['phuong_thuc']);
+        $nhan = $d['loai'] === 'thu' ? 'thu' : 'trả lại';
+
+        return back()->with('thanh_cong', 'Đã ghi nhận '.$nhan.' '.number_format($t->so_tien, 0, ',', '.').'đ ('.($d['phuong_thuc'] === 'tien_mat' ? 'tiền mặt' : 'online').').');
+    }
+
     public function mienPhat(Request $request, ThamGiaKeo $thamGia): RedirectResponse
     {
         $u = $request->user();

@@ -83,6 +83,23 @@ class DatSanController extends Controller
         return view('dat-san.thanh-toan', ['don' => $datSan, 'hoSo' => $hoSo, 'qr' => $qr, 'gd' => $gd]);
     }
 
+    /** Khách trả phần còn lại tại sân bằng chuyển khoản: QR điền sẵn số tiền còn lại. Trả tiền mặt thì không cần QR. */
+    public function thanhToanConLai(DatSan $datSan): View
+    {
+        Gate::authorize('view', $datSan);
+
+        $datSan->load('san.chuSan.hoSoChuSan');
+        $conLai = $datSan->conLaiPhai();
+        abort_unless($datSan->trang_thai === 'da_dat' && $conLai > 0, 404);
+
+        $hoSo = $datSan->san->chuSan->hoSoChuSan;
+        $qr = $hoSo?->ngan_hang_bin && $hoSo->so_tai_khoan
+            ? VietQr::svg(VietQr::chuoi($hoSo->ngan_hang_bin, $hoSo->so_tai_khoan, $conLai, $datSan->ma_don))
+            : null;
+
+        return view('dat-san.thanh-toan-con', ['don' => $datSan, 'hoSo' => $hoSo, 'qr' => $qr, 'conLai' => $conLai]);
+    }
+
     /** Trang thanh toán gọi mỗi 5 giây để tự chuyển sang "Đã đặt" khi chủ sân xác nhận. */
     public function trangThai(DatSan $datSan): JsonResponse
     {

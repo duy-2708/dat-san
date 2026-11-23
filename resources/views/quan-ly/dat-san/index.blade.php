@@ -51,7 +51,7 @@
 
 {{-- CHỜ THU TIỀN SÂN --}}
 <h2 class="h6 mt-4"><i class="bi bi-cash-coin text-success"></i> Chờ thu tiền sân <span class="badge bg-success">{{ $choThu->count() }}</span></h2>
-<p class="small text-muted">Lượt đã tới giờ đá (online lẫn tại chỗ). Đá xong thu tiền khách rồi bấm "Đã nhận" — số tiền vào doanh thu tháng của đúng sân đó.</p>
+<p class="small text-muted">Lượt đã tới giờ đá (online lẫn tại chỗ). Đá xong thu tiền khách rồi bấm "Tiền mặt" hoặc "Online" — số tiền vào doanh thu tháng của đúng sân đó.</p>
 @forelse ($choThu as $d)
     <div class="card border-0 shadow-sm mb-2 border-start border-success border-4">
         <div class="card-body py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -62,10 +62,11 @@
                 · {{ $d->ma_don }} · <span class="badge bg-light text-dark border">{{ $d->nguon === 'tai_cho' ? 'Tại chỗ' : 'Online' }}</span><br>
                 Giá {{ $tien($d->gia_chot) }} · đã cọc {{ $tien($d->xac_nhan_coc_luc ? $d->tien_coc : 0) }} · <strong>còn {{ $tien($d->conLaiPhai()) }}</strong>
             </div>
-            <form method="POST" action="{{ route('quan-ly.dat-san.da-thu', $d) }}" class="input-group input-group-sm" style="max-width: 260px">@csrf @method('PATCH')
+            <form method="POST" action="{{ route('quan-ly.dat-san.da-thu', $d) }}" class="input-group input-group-sm" style="max-width: 360px">@csrf @method('PATCH')
                 <span class="input-group-text">Thu</span>
                 <input name="so_tien" value="{{ $d->conLaiPhai() }}" inputmode="numeric" class="form-control o-tien" title="Số tiền thực nhận (sửa nếu khách trả khác)">
-                <button class="btn btn-success"><i class="bi bi-check-lg"></i> Đã nhận</button></form>
+                <button name="phuong_thuc" value="tien_mat" class="btn btn-success">Tiền mặt</button>
+                <button name="phuong_thuc" value="online" class="btn btn-primary">Online</button></form>
         </div>
     </div>
 @empty

@@ -45,7 +45,10 @@
     <div class="small bg-white rounded shadow-sm p-2 mb-1 d-flex flex-wrap justify-content-between gap-2 {{ $homNay ? 'border border-2 border-danger' : '' }}">
         <span>@if ($homNay) <span class="badge bg-danger">⚽ Hôm nay {{ $d->batDauLuc()->format('H:i') }}</span> @endif
             {{ $d->moTaNgan() }} · mã {{ $d->ma_don }}</span>
-        <strong class="{{ $homNay ? 'text-danger' : '' }}">{{ $homNay ? 'Mang theo ' : '' }}{{ $tien($d->conLaiPhai()) }}</strong>
+        <span class="d-flex align-items-center gap-2">
+            <strong class="{{ $homNay ? 'text-danger' : '' }}">{{ $homNay ? 'Mang theo ' : '' }}{{ $tien($d->conLaiPhai()) }}</strong>
+            <a href="{{ route('dat-san.tra-con', $d) }}" class="btn btn-success btn-sm text-nowrap"><i class="bi bi-qr-code"></i> Thanh toán QR</a>
+        </span>
     </div>
 @empty
     <div class="small text-muted mb-2">Không có.</div>

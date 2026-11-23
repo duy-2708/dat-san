@@ -31,6 +31,11 @@ class Keo extends Model
         ];
     }
 
+    public function thuTien(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ThuTienKeo::class);
+    }
+
     public function datSan(): BelongsTo
     {
         return $this->belongsTo(DatSan::class);

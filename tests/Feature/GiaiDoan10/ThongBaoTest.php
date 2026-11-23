@@ -86,10 +86,10 @@ class ThongBaoTest extends TestCase
         $this->assertSame('da_dat', $don->fresh()->trang_thai);
         $this->assertSame('tien_mat', \App\Models\GiaoDich::where('dat_san_id', $don->id)->value('phuong_thuc'));
 
-        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu")->assertSessionHasNoErrors();
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu", ['so_tien' => '210.000', 'phuong_thuc' => 'tien_mat'])->assertSessionHasNoErrors();
         $this->assertSame(210000, $don->fresh()->tien_thu_tai_san);
         $this->assertSame(0, $don->fresh()->conLaiPhai());
-        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu")->assertSessionHasErrors();
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu", ['so_tien' => '200.000'])->assertSessionHasErrors();
 
         $this->actingAs($this->chu)->get('/quan-ly')->assertOk()
             ->assertSee('Doanh thu tháng 11/2026')->assertSee('90.000đ')->assertSee('210.000đ')->assertSee('300.000đ');
@@ -119,7 +119,7 @@ class ThongBaoTest extends TestCase
             'trang_thai' => 'da_dat', 'xac_nhan_coc_luc' => now(),
         ]);
         $don = DatSan::firstOrFail();
-        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu", ['so_tien' => '250.000'])->assertSessionHasNoErrors();
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu", ['so_tien' => '250.000', 'phuong_thuc' => 'tien_mat'])->assertSessionHasNoErrors();
         $this->assertSame(250000, $don->fresh()->tien_thu_tai_san);
 
         $k = $this->khung($this->a, '19:00');
@@ -139,7 +139,7 @@ class ThongBaoTest extends TestCase
         $this->actingAs($this->chu)->get('/quan-ly/dat-san')->assertSee('Không có lượt nào chờ thu')->assertSee('Thu sau khi tới giờ đá');
         $this->travelTo(\Carbon\Carbon::parse('2026-11-18 18:05'));
         $this->actingAs($this->chu)->get('/quan-ly/dat-san')->assertSee('Chờ thu tiền sân')->assertSee($don->ma_don)->assertDontSee('Không có lượt nào chờ thu');
-        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu", ['so_tien' => '300.000'])->assertSessionHasNoErrors();
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$don->ma_don}/da-thu", ['so_tien' => '300.000', 'phuong_thuc' => 'online'])->assertSessionHasNoErrors();
         $this->actingAs($this->chu)->get('/quan-ly/dat-san')->assertSee('Không có lượt nào chờ thu');
     }
 }

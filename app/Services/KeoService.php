@@ -8,6 +8,7 @@ use App\Models\GiaoDich;
 use App\Models\Keo;
 use App\Models\San;
 use App\Models\ThamGiaKeo;
+use App\Models\ThuTienKeo;
 use App\Models\User;
 use App\Models\XinKeo;
 use Carbon\Carbon;
@@ -833,6 +834,28 @@ class KeoService
         }
 
         return $kq;
+    }
+
+    /** Chủ sân / nhân viên ghi nhận bên đã trả thêm (thu) hoặc được sân trả lại (tra_lai), tiền mặt hoặc online. */
+    public function ghiThuTien(User $nguoi, Keo $k, string $ben, string $loai, int $soTien, string $phuongThuc): ThuTienKeo
+    {
+        $q = $this->quyetToan($k);
+        if (! $q) {
+            $this->loi('Kèo chưa có kết quả nên chưa quyết toán được.');
+        }
+        $thieu = $loai === 'thu' ? max(0, $q[$ben]['con']) : max(0, -$q[$ben]['con']);
+        $conGhi = $thieu - (int) ThuTienKeo::where('keo_id', $k->id)->where('ben', $ben)->where('loai', $loai)->sum('so_tien');
+        if ($conGhi <= 0) {
+            $this->loi($loai === 'thu' ? 'Bên này không còn tiền phải trả tại sân.' : 'Không còn tiền sân phải trả lại cho bên này.');
+        }
+        if ($soTien < 1 || $soTien > $conGhi) {
+            $this->loi('Số tiền phải từ 1 đến '.number_format($conGhi, 0, ',', '.').'đ.');
+        }
+        $t = new ThuTienKeo;
+        $t->forceFill(['keo_id' => $k->id, 'ben' => $ben, 'loai' => $loai, 'so_tien' => $soTien,
+            'phuong_thuc' => $phuongThuc, 'nguoi_id' => $nguoi->id, 'thu_luc' => now()])->save();
+
+        return $t;
     }
 
     public function goHanChe(User $u): void
