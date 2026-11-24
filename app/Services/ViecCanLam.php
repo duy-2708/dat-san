@@ -41,10 +41,10 @@ class ViecCanLam
                 'so_tien' => $tien($g->so_tien), 'url' => route('keo.coc', $g), 'nut' => 'Thanh toán cọc',
             ]));
 
-        DatSan::with('san')->where('khach_id', $u->id)->where('trang_thai', 'da_dat')->whereDate('ngay', today())->get()
-            ->filter(fn ($d) => $d->conLaiPhai() > 0 && $d->ketThucLuc()->isFuture())
+        DatSan::with('san')->where('khach_id', $u->id)->where('trang_thai', 'da_dat')->whereDate('ngay', '<=', today())->get()
+            ->filter(fn ($d) => $d->conNoSan())
             ->each(fn ($d) => $ds->push([
-                'loai' => 'tra_hom_nay', 'nhan' => 'Trả tại sân hôm nay',
+                'loai' => 'tra_hom_nay', 'nhan' => $d->batDauLuc()->isToday() ? 'Trả tại sân hôm nay' : 'Chưa thu tiền sân',
                 'mo_ta' => '⚽ '.$d->moTaNgan().' · mang theo',
                 'so_tien' => $tien($d->conLaiPhai()), 'url' => route('dat-san.thanh-toan', $d), 'nut' => 'Xem đơn',
             ]));

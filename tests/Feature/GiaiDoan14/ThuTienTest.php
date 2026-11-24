@@ -142,4 +142,18 @@ class ThuTienTest extends TestCase
         $this->actingAs($this->khach)->patch("/quan-ly/keo/{$k->id}/thu-tien", ['ben' => 'b', 'loai' => 'thu', 'so_tien' => '1000', 'phuong_thuc' => 'tien_mat'])
             ->assertForbidden();
     }
+
+    public function test_tran_da_da_xong_nhung_chua_thu_van_hien_cho_khach(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-18 19:00'));
+
+        $this->actingAs($this->khach)->get(route('khach.thanh-toan'))->assertOk()
+            ->assertSee('Đã qua giờ, chưa thu')->assertSee($this->don->ma_don);
+
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$this->don->ma_don}/da-thu", ['so_tien' => '210.000', 'phuong_thuc' => 'tien_mat'])
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($this->khach)->get(route('khach.thanh-toan'))->assertOk()
+            ->assertDontSee('Đã qua giờ, chưa thu');
+    }
 }

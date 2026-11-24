@@ -99,6 +99,13 @@ class DatSan extends Model
         return $this->san?->ten.' · '.$this->batDauLuc()->format('H:i').'–'.$this->ketThucLuc()->format('H:i').' · '.$thu.' '.$this->batDauLuc()->format('d/m/Y');
     }
 
+    /** Còn tiền phải trả tại sân, kể cả trận đã đá xong mà chủ chưa thu (trong 14 ngày gần nhất). */
+    public function conNoSan(): bool
+    {
+        return $this->trang_thai === 'da_dat' && $this->conLaiPhai() > 0
+            && \Illuminate\Support\Carbon::parse($this->ngay)->startOfDay()->gte(today()->subDays(14));
+    }
+
     public function conLaiPhai(): int
     {
         return max(0, $this->gia_chot - ($this->xac_nhan_coc_luc ? $this->tien_coc : 0) - (int) $this->tien_thu_tai_san);
