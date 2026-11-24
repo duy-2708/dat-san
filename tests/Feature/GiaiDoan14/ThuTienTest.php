@@ -156,4 +156,37 @@ class ThuTienTest extends TestCase
         $this->actingAs($this->khach)->get(route('khach.thanh-toan'))->assertOk()
             ->assertDontSee('Đã qua giờ, chưa thu');
     }
+
+    public function test_nhac_chu_sau_2_tieng_neu_khach_thieu_tien_va_chi_mot_lan(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-18 20:01'));
+        $diemTruoc = $this->khach->fresh()->diem_uy_tin;
+
+        $this->artisan('dat-san:nhac-thieu-tien')->assertSuccessful();
+        $this->artisan('dat-san:nhac-thieu-tien')->assertSuccessful();
+
+        $this->assertSame(1, $this->chu->fresh()->unreadNotifications()->count());
+        $this->assertNotNull($this->don->fresh()->nhac_thieu_tien_luc);
+        $this->assertSame($diemTruoc, $this->khach->fresh()->diem_uy_tin);
+    }
+
+    public function test_don_da_thu_du_thi_khong_nhac(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-18 20:01'));
+        $this->actingAs($this->chu)->patch("/quan-ly/dat-san/{$this->don->ma_don}/da-thu", ['so_tien' => '210.000', 'phuong_thuc' => 'online'])
+            ->assertSessionHasNoErrors();
+
+        $this->artisan('dat-san:nhac-thieu-tien')->assertSuccessful();
+
+        $this->assertSame(0, $this->chu->fresh()->unreadNotifications()->count());
+    }
+
+    public function test_chua_het_2_tieng_thi_chua_nhac(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-18 19:30'));
+
+        $this->artisan('dat-san:nhac-thieu-tien')->assertSuccessful();
+
+        $this->assertSame(0, $this->chu->fresh()->unreadNotifications()->count());
+    }
 }

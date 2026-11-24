@@ -32,6 +32,7 @@ class DatSan extends Model
     {
         return [
             'giu_cho_den' => 'datetime',
+            'nhac_thieu_tien_luc' => 'datetime',
             'bao_da_chuyen_luc' => 'datetime',
             'khong_tra_du_luc' => 'datetime',
             'da_nhac_bao_chuyen' => 'boolean',
