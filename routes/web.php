@@ -116,6 +116,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             // Đặt sân phía sân (chủ + nhân viên): xem đơn, lịch, xác nhận cọc, gia hạn, đặt tại chỗ
             Route::get('/dat-san', [QuanLyDatSanController::class, 'index'])->name('dat-san.index');
+            Route::get('/co-dinh', [\App\Http\Controllers\QuanLy\CoDinhController::class, 'index'])->name('co-dinh.index');
+            Route::post('/co-dinh', [\App\Http\Controllers\QuanLy\CoDinhController::class, 'store'])->name('co-dinh.store');
+            Route::patch('/co-dinh/{chuoi}/huy', [\App\Http\Controllers\QuanLy\CoDinhController::class, 'huyKhoang'])->name('co-dinh.huy');
             Route::get('/san/{san}/lich', [QuanLyDatSanController::class, 'lich'])->name('san.lich');
             Route::post('/san/{san}/dat-tai-cho', [QuanLyDatSanController::class, 'datTaiCho'])->name('san.dat-tai-cho');
             Route::patch('/dat-san/{datSan}/xac-nhan-coc', [QuanLyDatSanController::class, 'xacNhanCoc'])->name('dat-san.xac-nhan-coc');

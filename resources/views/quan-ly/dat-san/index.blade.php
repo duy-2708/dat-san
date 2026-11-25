@@ -49,6 +49,8 @@
     <div class="text-muted small bg-white rounded p-3 mb-3">Không có đơn chờ cọc.</div>
 @endforelse
 
+<p class="small mb-3"><a href="{{ route('quan-ly.co-dinh.index') }}" class="btn btn-sm btn-outline-success"><i class="bi bi-calendar-check"></i> Đặt cố định theo tuần</a></p>
+
 {{-- CHỜ THU TIỀN SÂN --}}
 <h2 class="h6 mt-4"><i class="bi bi-cash-coin text-success"></i> Chờ thu tiền sân <span class="badge bg-success">{{ $choThu->count() }}</span></h2>
 <p class="small text-muted">Lượt đã tới giờ đá (online lẫn tại chỗ). Đá xong thu tiền khách rồi bấm "Tiền mặt" hoặc "Online" — số tiền vào doanh thu tháng của đúng sân đó.</p>

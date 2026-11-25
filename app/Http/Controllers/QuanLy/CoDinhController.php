@@ -1,0 +1,74 @@
+<?php
+
+namespace App\Http\Controllers\QuanLy;
+
+use App\Http\Controllers\Controller;
+use App\Models\ChuoiCoDinh;
+use App\Models\KhungGio;
+use App\Models\San;
+use App\Services\DatSanService;
+use App\Support\ChuanHoa;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
+
+class CoDinhController extends Controller
+{
+    public function __construct(private DatSanService $datSan)
+    {
+    }
+
+    public function index(Request $request): View
+    {
+        $chuSanId = $request->user()->idChuSanQuanLy();
+        $sans = San::with('khungGios')->where('chu_san_id', $chuSanId)->orderBy('ten')->get();
+        $chuoi = ChuoiCoDinh::with('san.khungGios')->whereHas('san', fn ($q) => $q->where('chu_san_id', $chuSanId))
+            ->latest('id')->get();
+
+        return view('quan-ly.co-dinh.index', compact('sans', 'chuoi'));
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $request->merge(['sdt' => ChuanHoa::soDienThoai($request->input('sdt'))]);
+        $d = $request->validate([
+            'khung_gio_id' => ['required', 'integer'],
+            'thu' => ['required', 'integer', 'between:0,6'],
+            'ten' => ['required', 'string', 'max:100'],
+            'sdt' => ['required', 'regex:'.ChuanHoa::REGEX_SDT],
+            'tu_ngay' => ['required', 'date_format:Y-m-d'],
+        ], ['sdt.regex' => 'Số điện thoại không hợp lệ.']);
+
+        $khung = KhungGio::findOrFail($d['khung_gio_id']);
+        $san = $khung->san;
+        Gate::authorize('view', $san);
+
+        $ket = $this->datSan->taoChuoiCoDinh($request->user(), $san, (int) $d['thu'], (int) $d['khung_gio_id'],
+            $d['ten'], $d['sdt'], $d['tu_ngay']);
+
+        $msg = "Đã đặt cố định {$ket['so']} buổi cho {$d['ten']} đến hết năm.";
+        if ($ket['bo_qua']) {
+            $msg .= ' Bỏ qua các buổi trùng lịch: '.implode(', ', $ket['bo_qua']).'.';
+        }
+
+        return redirect()->route('quan-ly.co-dinh.index')->with('thanh_cong', $msg);
+    }
+
+    public function huyKhoang(Request $request, ChuoiCoDinh $chuoi): RedirectResponse
+    {
+        abort_unless((int) $chuoi->san->chu_san_id === $request->user()->idChuSanQuanLy(), 403);
+        $d = $request->validate([
+            'tu' => ['required', 'date_format:Y-m-d'],
+            'den' => ['required', 'date_format:Y-m-d', 'after_or_equal:tu'],
+        ]);
+        $ket = $this->datSan->huyChuoiTrongKhoang($chuoi, $request->user(), $d['tu'], $d['den']);
+
+        $msg = "Đã bỏ {$ket['huy']} buổi trong khoảng đã chọn.";
+        if ($ket['giu'] > 0) {
+            $msg .= " {$ket['giu']} buổi đã thu tiền sân nên được giữ lại.";
+        }
+
+        return back()->with('thanh_cong', $msg);
+    }
+}

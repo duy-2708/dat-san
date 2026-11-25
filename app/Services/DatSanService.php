@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Support\BaoTin;
 use App\Support\Tien;
 
+use App\Models\ChuoiCoDinh;
 use App\Models\DatSan;
 use App\Models\GiaoDich;
 use App\Models\KhungGio;
@@ -530,6 +531,56 @@ class DatSanService
     }
 
     /** @return never */
+    /** Đặt cố định theo tuần cho khách tại chỗ, từ ngày đã chọn đến hết năm. Buổi trùng hoặc đã qua thì bỏ qua và báo lại. */
+    public function taoChuoiCoDinh(User $nguoi, San $san, int $thu, int $khungGioId, string $ten, string $sdt, string $tuNgay, ?int $thoiLuong = null): array
+    {
+        $bd = Carbon::parse($tuNgay)->startOfDay();
+        if ($bd->lt(today())) {
+            $this->loi('Ngày bắt đầu không được ở quá khứ.');
+        }
+        $chuoi = new ChuoiCoDinh;
+        $chuoi->forceFill(['san_id' => $san->id, 'thu' => $thu, 'khung_gio_id' => $khungGioId, 'ten' => $ten,
+            'sdt' => $sdt, 'thoi_luong' => $thoiLuong, 'nguoi_tao_id' => $nguoi->id])->save();
+
+        $d = $bd->copy();
+        while ($d->dayOfWeek !== $thu) {
+            $d->addDay();
+        }
+        $cuoi = $bd->copy()->endOfYear();
+        $so = 0;
+        $boQua = [];
+        for (; $d->lte($cuoi); $d->addWeek()) {
+            try {
+                $don = $this->datTaiCho($nguoi, $san, $d->toDateString(), $khungGioId, $ten, $sdt, false, 'Cố định hằng tuần', $thoiLuong);
+                $don->forceFill(['chuoi_co_dinh_id' => $chuoi->id])->save();
+                $so++;
+            } catch (ValidationException) {
+                $boQua[] = $d->format('d/m/Y');
+            }
+        }
+
+        return ['chuoi' => $chuoi, 'so' => $so, 'bo_qua' => $boQua];
+    }
+
+    /** Bỏ các buổi còn hiệu lực của chuỗi trong khoảng ngày. Buổi đã thu tiền sân thì giữ lại để không lệch thống kê. */
+    public function huyChuoiTrongKhoang(ChuoiCoDinh $chuoi, User $nguoi, string $tu, string $den): array
+    {
+        $huy = 0;
+        $giu = 0;
+        $chuoi->dat()->where('trang_thai', '!=', 'da_huy')->whereBetween('ngay', [$tu, $den])->orderBy('ngay')->get()
+            ->each(function (DatSan $don) use ($nguoi, &$huy, &$giu) {
+                if ($don->da_thu_tien_luc) {
+                    $giu++;
+
+                    return;
+                }
+                $this->huy($don, $nguoi, 'Bỏ lịch cố định');
+                $huy++;
+            });
+
+        return ['huy' => $huy, 'giu' => $giu];
+    }
+
     private function loi(string $thongBao): never
     {
         throw ValidationException::withMessages(['dat_san' => $thongBao]);
