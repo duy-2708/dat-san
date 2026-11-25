@@ -167,19 +167,20 @@ class DatSanService
     // =============================================================== CHỦ SÂN / NHÂN VIÊN
 
     /** Đánh dấu đặt tại chỗ (khách gọi điện / đến trực tiếp) → "Đã đặt" ngay. */
-    public function datTaiCho(User $nguoiTao, San $san, string $ngay, int $khungGioId, string $ten, string $sdt, bool $daThuCoc, ?string $ghiChu = null, ?int $thoiLuong = null): DatSan
+    public function datTaiCho(User $nguoiTao, San $san, string $ngay, int $khungGioId, string $ten, string $sdt, bool $daThuCoc, ?string $ghiChu = null, ?int $thoiLuong = null, ?int $batDau = null): DatSan
     {
         $ngayC = Carbon::parse($ngay)->startOfDay();
         $khung = $this->khungApDung($san, $ngayC, $khungGioId);
-        if ($ngayC->copy()->addMinutes($khung->phutKetThuc())->lte(now())) {
+        $bd = $batDau ?? $khung->phutBatDau();
+        $phut = $this->kiemThoiLuong($san, $khung, $thoiLuong, $bd);
+        if ($ngayC->copy()->addMinutes($bd + $phut)->lte(now())) {
             $this->loi('Khung giờ này đã kết thúc.');
         }
 
         $tyLe = $san->chuSan->hoSoChuSan?->ty_le_coc ?? 30;
-        $phut = $this->kiemThoiLuong($san, $khung, $thoiLuong);
         $coc = $daThuCoc ? $khung->cocTheoPhut($phut, $tyLe) : 0;
 
-        $don = $this->ghiDon($san, $ngayC->toDateString(), $khung->phutBatDau(), $khung->phutBatDau() + $phut, [
+        $don = $this->ghiDon($san, $ngayC->toDateString(), $bd, $bd + $phut, [
             'ten_khach_tai_cho' => $ten,
             'sdt_khach_tai_cho' => $sdt,
             'khung_gio_id' => $khung->id,
@@ -532,26 +533,44 @@ class DatSanService
 
     /** @return never */
     /** Đặt cố định theo tuần cho khách tại chỗ, từ ngày đã chọn đến hết năm. Buổi trùng hoặc đã qua thì bỏ qua và báo lại. */
-    public function taoChuoiCoDinh(User $nguoi, San $san, int $thu, int $khungGioId, string $ten, string $sdt, string $tuNgay, ?int $thoiLuong = null): array
+    public function taoChuoiCoDinh(User $nguoi, San $san, int $thu, int $batDau, int $ketThuc, string $ten, string $sdt, string $tuNgay, ?string $denNgay = null): array
     {
         $bd = Carbon::parse($tuNgay)->startOfDay();
         if ($bd->lt(today())) {
             $this->loi('Ngày bắt đầu không được ở quá khứ.');
         }
-        $chuoi = new ChuoiCoDinh;
-        $chuoi->forceFill(['san_id' => $san->id, 'thu' => $thu, 'khung_gio_id' => $khungGioId, 'ten' => $ten,
-            'sdt' => $sdt, 'thoi_luong' => $thoiLuong, 'nguoi_tao_id' => $nguoi->id])->save();
-
-        $d = $bd->copy();
-        while ($d->dayOfWeek !== $thu) {
-            $d->addDay();
+        if ($batDau % ThoiGian::BUOC_PHUT !== 0 || $ketThuc % ThoiGian::BUOC_PHUT !== 0) {
+            $this->loi('Giờ bắt đầu và giờ kết thúc phải theo bước 15 phút.');
         }
-        $cuoi = $bd->copy()->endOfYear();
+        if ($ketThuc <= $batDau) {
+            $this->loi('Giờ kết thúc phải sau giờ bắt đầu.');
+        }
+        $cuoi = $denNgay ? Carbon::parse($denNgay)->endOfDay() : $bd->copy()->endOfYear();
+        $thoiLuong = $ketThuc - $batDau;
+
+        $d0 = $bd->copy();
+        while ($d0->dayOfWeek !== $thu) {
+            $d0->addDay();
+        }
+        $khung0 = $this->khungTaiGio($san, $d0, $batDau);
+        if (! $khung0) {
+            $this->loi('Giờ bắt đầu không nằm trong khung giá nào của ngày '.$d0->format('d/m/Y').'.');
+        }
+
+        $chuoi = new ChuoiCoDinh;
+        $chuoi->forceFill(['san_id' => $san->id, 'thu' => $thu, 'khung_gio_id' => $khung0->id, 'ten' => $ten,
+            'sdt' => $sdt, 'gio_bat_dau' => ThoiGian::csdl($batDau), 'gio_ket_thuc' => ThoiGian::csdl($ketThuc),
+            'den_ngay' => $cuoi->toDateString(), 'thoi_luong' => $thoiLuong, 'nguoi_tao_id' => $nguoi->id])->save();
+
         $so = 0;
         $boQua = [];
-        for (; $d->lte($cuoi); $d->addWeek()) {
+        for ($d = $d0->copy(); $d->lte($cuoi); $d->addWeek()) {
             try {
-                $don = $this->datTaiCho($nguoi, $san, $d->toDateString(), $khungGioId, $ten, $sdt, false, 'Cố định hằng tuần', $thoiLuong);
+                $khung = $this->khungTaiGio($san, $d, $batDau);
+                if (! $khung) {
+                    $this->loi('Không có khung giá.');
+                }
+                $don = $this->datTaiCho($nguoi, $san, $d->toDateString(), $khung->id, $ten, $sdt, false, 'Cố định hằng tuần', $thoiLuong, $batDau);
                 $don->forceFill(['chuoi_co_dinh_id' => $chuoi->id])->save();
                 $so++;
             } catch (ValidationException) {
@@ -560,6 +579,13 @@ class DatSanService
         }
 
         return ['chuoi' => $chuoi, 'so' => $so, 'bo_qua' => $boQua];
+    }
+
+    /** Khung giá áp dụng cho ngày đó mà chứa giờ bắt đầu, hoặc null nếu giờ đó nằm ngoài mọi khung. */
+    private function khungTaiGio(San $san, Carbon $ngay, int $batDau): ?KhungGio
+    {
+        return $this->bangGia->khungGioTrongNgay($san, $ngay)
+            ->first(fn (KhungGio $k) => $k->phutBatDau() <= $batDau && $batDau < $k->phutKetThuc());
     }
 
     /** Bỏ các buổi còn hiệu lực của chuỗi trong khoảng ngày. Buổi đã thu tiền sân thì giữ lại để không lệch thống kê. */

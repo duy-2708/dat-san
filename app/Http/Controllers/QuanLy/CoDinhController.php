@@ -4,10 +4,11 @@ namespace App\Http\Controllers\QuanLy;
 
 use App\Http\Controllers\Controller;
 use App\Models\ChuoiCoDinh;
-use App\Models\KhungGio;
 use App\Models\San;
 use App\Services\DatSanService;
 use App\Support\ChuanHoa;
+use App\Support\ThoiGian;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -22,8 +23,8 @@ class CoDinhController extends Controller
     public function index(Request $request): View
     {
         $chuSanId = $request->user()->idChuSanQuanLy();
-        $sans = San::with('khungGios')->where('chu_san_id', $chuSanId)->orderBy('ten')->get();
-        $chuoi = ChuoiCoDinh::with('san.khungGios')->whereHas('san', fn ($q) => $q->where('chu_san_id', $chuSanId))
+        $sans = San::where('chu_san_id', $chuSanId)->orderBy('ten')->get();
+        $chuoi = ChuoiCoDinh::with('san')->whereHas('san', fn ($q) => $q->where('chu_san_id', $chuSanId))
             ->latest('id')->get();
 
         return view('quan-ly.co-dinh.index', compact('sans', 'chuoi'));
@@ -33,23 +34,27 @@ class CoDinhController extends Controller
     {
         $request->merge(['sdt' => ChuanHoa::soDienThoai($request->input('sdt'))]);
         $d = $request->validate([
-            'khung_gio_id' => ['required', 'integer'],
+            'san_id' => ['required', 'integer'],
             'thu' => ['required', 'integer', 'between:0,6'],
+            'gio_bat_dau' => ['required', 'date_format:H:i'],
+            'gio_ket_thuc' => ['required', 'date_format:H:i'],
             'ten' => ['required', 'string', 'max:100'],
             'sdt' => ['required', 'regex:'.ChuanHoa::REGEX_SDT],
             'tu_ngay' => ['required', 'date_format:Y-m-d'],
+            'den_ngay' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:tu_ngay'],
         ], ['sdt.regex' => 'Số điện thoại không hợp lệ.']);
 
-        $khung = KhungGio::findOrFail($d['khung_gio_id']);
-        $san = $khung->san;
+        $san = San::findOrFail($d['san_id']);
         Gate::authorize('view', $san);
 
-        $ket = $this->datSan->taoChuoiCoDinh($request->user(), $san, (int) $d['thu'], (int) $d['khung_gio_id'],
-            $d['ten'], $d['sdt'], $d['tu_ngay']);
+        $ket = $this->datSan->taoChuoiCoDinh($request->user(), $san, (int) $d['thu'],
+            ThoiGian::phut($d['gio_bat_dau']), ThoiGian::phut($d['gio_ket_thuc']),
+            $d['ten'], $d['sdt'], $d['tu_ngay'], $d['den_ngay'] ?? null);
 
-        $msg = "Đã đặt cố định {$ket['so']} buổi cho {$d['ten']} đến hết năm.";
+        $den = $d['den_ngay'] ? Carbon::parse($d['den_ngay'])->format('d/m/Y') : 'hết năm';
+        $msg = "Đã đặt cố định {$ket['so']} buổi cho {$d['ten']} đến {$den}.";
         if ($ket['bo_qua']) {
-            $msg .= ' Bỏ qua các buổi trùng lịch: '.implode(', ', $ket['bo_qua']).'.';
+            $msg .= ' Bỏ qua các buổi trùng lịch hoặc ngoài khung giá: '.implode(', ', $ket['bo_qua']).'.';
         }
 
         return redirect()->route('quan-ly.co-dinh.index')->with('thanh_cong', $msg);

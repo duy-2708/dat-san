@@ -26,7 +26,7 @@ class CoDinhTest extends TestCase
         $khung = $this->khung($this->a, '17:00');
 
         $this->actingAs($this->chu)->post(route('quan-ly.co-dinh.store'), [
-            'khung_gio_id' => $khung->id, 'thu' => 3, 'tu_ngay' => '2026-11-18',
+            'san_id' => $this->a->id, 'gio_bat_dau' => '17:00', 'gio_ket_thuc' => '18:00', 'thu' => 3, 'tu_ngay' => '2026-11-18',
             'ten' => 'Nhóm Anh Ba', 'sdt' => '0911222333',
         ])->assertSessionHasNoErrors();
 
@@ -40,13 +40,13 @@ class CoDinhTest extends TestCase
     {
         $khung = $this->khung($this->a, '17:00');
         $this->actingAs($this->chu)->post(route('quan-ly.co-dinh.store'), [
-            'khung_gio_id' => $khung->id, 'thu' => 3, 'tu_ngay' => '2026-11-25',
+            'san_id' => $this->a->id, 'gio_bat_dau' => '17:00', 'gio_ket_thuc' => '18:00', 'thu' => 3, 'tu_ngay' => '2026-11-25',
             'ten' => 'Anh Ba', 'sdt' => '0911222333',
         ])->assertSessionHasNoErrors();
         $this->assertSame(6, ChuoiCoDinh::firstOrFail()->dat()->count());
 
         $this->actingAs($this->chu)->post(route('quan-ly.co-dinh.store'), [
-            'khung_gio_id' => $khung->id, 'thu' => 3, 'tu_ngay' => '2026-11-25',
+            'san_id' => $this->a->id, 'gio_bat_dau' => '17:00', 'gio_ket_thuc' => '18:00', 'thu' => 3, 'tu_ngay' => '2026-11-25',
             'ten' => 'Anh Tư', 'sdt' => '0911222444',
         ])->assertSessionHasNoErrors();
         $this->assertSame(0, ChuoiCoDinh::where('ten', 'Anh Tư')->firstOrFail()->dat()->count());
@@ -57,7 +57,7 @@ class CoDinhTest extends TestCase
     {
         $khung = $this->khung($this->a, '17:00');
         $this->actingAs($this->chu)->post(route('quan-ly.co-dinh.store'), [
-            'khung_gio_id' => $khung->id, 'thu' => 3, 'tu_ngay' => '2026-11-25',
+            'san_id' => $this->a->id, 'gio_bat_dau' => '17:00', 'gio_ket_thuc' => '18:00', 'thu' => 3, 'tu_ngay' => '2026-11-25',
             'ten' => 'Anh Ba', 'sdt' => '0911222333',
         ])->assertSessionHasNoErrors();
         $chuoi = ChuoiCoDinh::firstOrFail();
@@ -81,16 +81,48 @@ class CoDinhTest extends TestCase
         $khach = User::factory()->create();
 
         $this->actingAs($khach)->post(route('quan-ly.co-dinh.store'), [
-            'khung_gio_id' => $khung->id, 'thu' => 3, 'tu_ngay' => '2026-11-25',
+            'san_id' => $this->a->id, 'gio_bat_dau' => '17:00', 'gio_ket_thuc' => '18:00', 'thu' => 3, 'tu_ngay' => '2026-11-25',
             'ten' => 'Khach La', 'sdt' => '0911222333',
         ])->assertForbidden();
 
         $this->actingAs($this->chu)->post(route('quan-ly.co-dinh.store'), [
-            'khung_gio_id' => $khung->id, 'thu' => 3, 'tu_ngay' => '2026-11-25',
+            'san_id' => $this->a->id, 'gio_bat_dau' => '17:00', 'gio_ket_thuc' => '18:00', 'thu' => 3, 'tu_ngay' => '2026-11-25',
             'ten' => 'Anh Ba', 'sdt' => '0911222333',
         ]);
         $chuoi = ChuoiCoDinh::firstOrFail();
         $this->actingAs($khach)->patch(route('quan-ly.co-dinh.huy', $chuoi), ['tu' => '2026-11-25', 'den' => '2026-12-31'])
             ->assertForbidden();
+    }
+
+    public function test_gio_tu_do_tinh_gia_theo_phut_va_den_ngay(): void
+    {
+        $khung = $this->khung($this->a, '18:00');
+        $this->actingAs($this->chu)->post(route('quan-ly.co-dinh.store'), [
+            'san_id' => $this->a->id, 'gio_bat_dau' => '18:30', 'gio_ket_thuc' => '20:00', 'thu' => 3,
+            'tu_ngay' => '2026-11-18', 'den_ngay' => '2026-12-01', 'ten' => 'Anh Năm', 'sdt' => '0911222555',
+        ])->assertSessionHasNoErrors();
+
+        $chuoi = ChuoiCoDinh::where('ten', 'Anh Năm')->firstOrFail();
+        $this->assertSame('18:30:00', $chuoi->gio_bat_dau);
+        $this->assertSame('2026-12-01', $chuoi->den_ngay->toDateString());
+        $this->assertSame(2, $chuoi->dat()->count());
+        $don = $chuoi->dat()->orderBy('ngay')->firstOrFail();
+        $this->assertSame('18:30:00', $don->gio_bat_dau);
+        $this->assertSame('20:00:00', $don->gio_ket_thuc);
+        $this->assertSame($khung->giaTheoPhut(90), $don->gia_chot);
+    }
+
+    public function test_gio_tu_choi_khi_sai_khoang_hoac_ngoai_khung_gia(): void
+    {
+        $this->khung($this->a, '18:00');
+        $this->actingAs($this->chu)->post(route('quan-ly.co-dinh.store'), [
+            'san_id' => $this->a->id, 'gio_bat_dau' => '18:00', 'gio_ket_thuc' => '17:00', 'thu' => 3,
+            'tu_ngay' => '2026-11-18', 'ten' => 'Anh Sáu', 'sdt' => '0911222666',
+        ])->assertSessionHasErrors();
+        $this->actingAs($this->chu)->post(route('quan-ly.co-dinh.store'), [
+            'san_id' => $this->a->id, 'gio_bat_dau' => '03:00', 'gio_ket_thuc' => '04:00', 'thu' => 3,
+            'tu_ngay' => '2026-11-18', 'ten' => 'Anh Bảy', 'sdt' => '0911222777',
+        ])->assertSessionHasErrors();
+        $this->assertSame(0, ChuoiCoDinh::count());
     }
 }

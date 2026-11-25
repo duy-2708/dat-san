@@ -12,6 +12,11 @@ class ChuoiCoDinh extends Model
 
     protected $guarded = ['*'];
 
+    protected function casts(): array
+    {
+        return ['den_ngay' => 'date'];
+    }
+
     public function san(): BelongsTo
     {
         return $this->belongsTo(San::class);
