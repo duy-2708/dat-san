@@ -70,6 +70,10 @@
             <div class="col-auto"><label class="form-label small mb-0">đến ngày</label><input type="date" name="den" class="form-control form-control-sm" value="{{ today()->endOfYear()->toDateString() }}" required></div>
             <div class="col-auto"><button class="btn btn-sm btn-danger">Bỏ các buổi này</button></div>
         </form>
+        <form method="POST" action="{{ route('quan-ly.co-dinh.xoa', $c) }}" class="mt-2"
+              onsubmit="return confirm('Xóa lịch cố định này? Các buổi sắp tới sẽ bị huỷ, buổi đã thu tiền sân được giữ lại.')">@csrf @method('PATCH')
+            <button class="btn btn-sm btn-outline-danger">Xóa lịch cố định</button>
+        </form>
     </div></div>
 @empty
     <div class="text-muted small bg-white rounded p-3">Chưa có lịch cố định nào.</div>

@@ -125,4 +125,21 @@ class CoDinhTest extends TestCase
         ])->assertSessionHasErrors();
         $this->assertSame(0, ChuoiCoDinh::count());
     }
+
+    public function test_xoa_lich_huy_buoi_sap_toi_giu_buoi_da_thu_va_an_khoi_danh_sach(): void
+    {
+        $this->actingAs($this->chu)->post(route('quan-ly.co-dinh.store'), [
+            'san_id' => $this->a->id, 'gio_bat_dau' => '17:00', 'gio_ket_thuc' => '18:00', 'thu' => 3,
+            'tu_ngay' => '2026-11-18', 'ten' => 'Anh Tám', 'sdt' => '0911222888',
+        ])->assertSessionHasNoErrors();
+        $chuoi = ChuoiCoDinh::where('ten', 'Anh Tám')->firstOrFail();
+        $daThu = DatSan::where('chuoi_co_dinh_id', $chuoi->id)->where('ngay', '2026-12-02')->firstOrFail();
+        $daThu->forceFill(['da_thu_tien_luc' => now(), 'phuong_thuc_thu_tai_san' => 'tien_mat'])->save();
+
+        $this->actingAs($this->chu)->patch(route('quan-ly.co-dinh.xoa', $chuoi))->assertSessionHasNoErrors();
+
+        $this->assertSame('da_dat', $daThu->fresh()->trang_thai);
+        $this->assertSame(0, DatSan::where('chuoi_co_dinh_id', $chuoi->id)->where('ngay', '2026-12-09')->where('trang_thai', 'da_dat')->count());
+        $this->actingAs($this->chu)->get(route('quan-ly.co-dinh.index'))->assertSee('Chưa có lịch cố định nào');
+    }
 }

@@ -119,6 +119,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/co-dinh', [\App\Http\Controllers\QuanLy\CoDinhController::class, 'index'])->name('co-dinh.index');
             Route::post('/co-dinh', [\App\Http\Controllers\QuanLy\CoDinhController::class, 'store'])->name('co-dinh.store');
             Route::patch('/co-dinh/{chuoi}/huy', [\App\Http\Controllers\QuanLy\CoDinhController::class, 'huyKhoang'])->name('co-dinh.huy');
+            Route::patch('/co-dinh/{chuoi}/xoa', [\App\Http\Controllers\QuanLy\CoDinhController::class, 'xoa'])->name('co-dinh.xoa');
             Route::get('/san/{san}/lich', [QuanLyDatSanController::class, 'lich'])->name('san.lich');
             Route::post('/san/{san}/dat-tai-cho', [QuanLyDatSanController::class, 'datTaiCho'])->name('san.dat-tai-cho');
             Route::patch('/dat-san/{datSan}/xac-nhan-coc', [QuanLyDatSanController::class, 'xacNhanCoc'])->name('dat-san.xac-nhan-coc');

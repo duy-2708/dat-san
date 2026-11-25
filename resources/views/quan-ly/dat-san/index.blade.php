@@ -38,7 +38,7 @@
                     <form method="POST" action="{{ route('quan-ly.dat-san.gia-han', $d) }}">@csrf @method('PATCH')
                         <button class="btn btn-sm btn-secondary">+15 phút</button></form>
                     @if ($laChu)
-                        <form method="POST" action="{{ route('quan-ly.dat-san.huy', $d) }}" onsubmit="return confirm(@js('Huỷ giữ chỗ '.$d->ma_don."\n".$d->moTaNgan()."\nKhách: ".$d->tenNguoiDat().'?'))">@csrf @method('PATCH')
+                        <form method="POST" action="{{ route('quan-ly.dat-san.huy', $d) }}" data-confirm="{{ 'Huỷ giữ chỗ '.$d->ma_don."\n".$d->moTaNgan()."\nKhách: ".$d->tenNguoiDat().'?' }}" onsubmit="return confirm(this.dataset.confirm)">@csrf @method('PATCH')
                             <button class="btn btn-sm btn-danger">Huỷ</button></form>
                     @endif
                 </div>
@@ -170,7 +170,7 @@
                             <button class="btn btn-sm btn-dark">Không thanh toán đủ</button></form>
                     @endif
                 @else
-                    <form method="POST" action="{{ route('quan-ly.dat-san.huy', $d) }}" onsubmit="return confirm(@js('Huỷ đơn '.$d->ma_don."\n".$d->moTaNgan()."\nKhách: ".$d->tenNguoiDat()."?\nNếu khách đã cọc, bạn cần hoàn cọc.'))">@csrf @method('PATCH')
+                    <form method="POST" action="{{ route('quan-ly.dat-san.huy', $d) }}" data-confirm="{{ 'Huỷ đơn '.$d->ma_don."\n".$d->moTaNgan()."\nKhách: ".$d->tenNguoiDat().'?\nNếu khách đã cọc, bạn cần hoàn cọc.' }}" onsubmit="return confirm(this.dataset.confirm)">@csrf @method('PATCH')
                         <button class="btn btn-sm btn-danger">Huỷ</button></form>
                 @endif
             @endif
